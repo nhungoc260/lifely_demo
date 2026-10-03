@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Design tokens (bản đầy đủ làm ở PHASE 5).
+   Màu đỏ Crimson chỉ dành cho CTA, emergency, branding. */
+:root {
+  --background: #fbf9f8;
+  --foreground: #1f2328;
+  --muted: #f1eeee;
+  --muted-foreground: #5b6470;
+  --border: #e5e0e0;
+  --ring: #9f1239;
+  --primary: #9f1239;
+  --primary-foreground: #ffffff;
+  --secondary: #fde8ec;
+  --secondary-foreground: #7f1d1d;
+  --success: #059669;
+  --warning: #d97706;
+  --critical: #dc2626;
+}
+
+.dark {
+  --background: #14110f;
+  --foreground: #f3efee;
+  --muted: #211c1a;
+  --muted-foreground: #a8a09d;
+  --border: #332c29;
+  --ring: #fb7185;
+  --primary: #e11d48;
+  --primary-foreground: #ffffff;
+  --secondary: #3a1a22;
+  --secondary-foreground: #fecdd3;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --critical: #f87171;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

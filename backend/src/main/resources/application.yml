@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: lifely-backend
+  config:
+    # Đọc .env nếu có: chạy từ backend/ thì .env nằm ở thư mục gốc (../.env).
+    import: optional:file:./.env[.properties],optional:file:../.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/lifely}
+    username: ${DB_USERNAME:lifely}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate        # schema do Flyway quản lý, Hibernate chỉ kiểm tra
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  autoconfigure:
+    exclude:
+      # Không dùng user mặc định do Spring tự sinh; xác thực JWT làm ở Phase 4.
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+server:
+  port: 8080
+  error:
+    include-stacktrace: never
+    include-message: never
+
+lifely:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: 60
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

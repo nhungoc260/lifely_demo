@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "LIFELY API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:8080" }],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health check",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('success = true', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('database UP', () => pm.expect(body.data.database.status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected endpoint without token (expects 401)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/donors/me" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 UNAUTHORIZED', () => pm.response.to.have.status(401));",
+                  "pm.test('code UNAUTHORIZED', () => pm.expect(pm.response.json().code).to.eql('UNAUTHORIZED'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
