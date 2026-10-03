@@ -14,6 +14,26 @@ public class AppException extends RuntimeException {
         this.code = code;
     }
 
+    public static AppException badRequest(String code, String message) {
+        return new AppException(HttpStatus.BAD_REQUEST, code, message);
+    }
+
+    public static AppException notFound(String code, String message) {
+        return new AppException(HttpStatus.NOT_FOUND, code, message);
+    }
+
+    public static AppException conflict(String code, String message) {
+        return new AppException(HttpStatus.CONFLICT, code, message);
+    }
+
+    public static AppException forbidden(String code, String message) {
+        return new AppException(HttpStatus.FORBIDDEN, code, message);
+    }
+
+    public static AppException unauthorized(String code, String message) {
+        return new AppException(HttpStatus.UNAUTHORIZED, code, message);
+    }
+
     public String getCode() {
         return code;
     }

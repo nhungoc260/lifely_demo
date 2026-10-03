@@ -11,11 +11,15 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate        # schema do Flyway quản lý, Hibernate chỉ kiểm tra
+      ddl-auto: none            # schema do Flyway quản lý (đổi thành validate để Hibernate kiểm tra khớp schema)
     properties:
       hibernate:
         jdbc:
           time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -31,6 +35,23 @@ server:
     include-message: never
 
 lifely:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  demo-environment: ${DEMO_ENVIRONMENT:true}
+  demo:
+    refresh-deadlines-on-startup: ${DEMO_REFRESH_DEADLINES:true}
+  auth:
+    # Prototype chưa có email/SMS. true = in link đặt lại mật khẩu vào log máy chủ (CHỈ dev). Production: false.
+    log-reset-link: ${LOG_RESET_LINK:true}
+  rate-limit:
+    per-minute: 30
+  storage:
+    dir: ${UPLOAD_DIR:./uploads}
+  jobs:
+    expiry-interval-ms: 60000
+    escalation-interval-ms: 30000
+  matching:
+    min-days-between-donations: 84
+    level-radius-km: [5, 10, 20, 50]
   jwt:
     secret: ${JWT_SECRET}
     expiration-minutes: 60
