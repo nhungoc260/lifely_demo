@@ -14,11 +14,11 @@ export interface ApiFailure {
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
 export interface HealthStatus {
-  status: "UP" | "DEGRADED";
+  status: "UP";
   service: string;
   timestamp: string;
   database: {
-    status: "UP" | "DOWN";
+    status: "UP";
     migrationVersion: string | null;
   };
 }
