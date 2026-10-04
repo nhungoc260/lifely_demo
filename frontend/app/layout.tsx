@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
+import { HelpWidget } from "@/components/support/help-widget";
 import { AppProviders } from "@/providers/app-providers";
 import "./globals.css";
 
@@ -30,7 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
           Skip to content
         </a>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          {children}
+          <HelpWidget />
+        </AppProviders>
       </body>
     </html>
   );

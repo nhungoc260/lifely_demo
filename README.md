@@ -29,6 +29,7 @@ Donor · Requester · Organization (bệnh viện/trung tâm, cần admin xác m
 | Organization | Hồ sơ, tải tài liệu xác minh, dashboard, request của tổ chức, xác minh request gắn với bệnh viện mình |
 | Admin | Dashboard + biểu đồ, quản lý user/request/tổ chức/report, audit log |
 | Bản đồ | Leaflet + OpenStreetMap, lọc, bán kính, tìm địa điểm; không bao giờ hiển thị vị trí donor |
+| Hỗ trợ | Nút "Need help?" trên mọi trang: gọi nhân viên (Như Ngọc, đổi được trong `.env`), nhắc gọi 115 khi nguy kịch, trợ lý FAQ **theo kịch bản, không AI** |
 | Khác | Dark mode (thiết kế riêng), responsive (sidebar / bottom nav), accessibility, Swagger |
 
 ## 6. Architecture
@@ -87,6 +88,7 @@ npm run dev                           # http://localhost:3000
 | `DEMO_ENVIRONMENT`, `DEMO_REFRESH_DEADLINES` | backend | dời deadline dữ liệu seed mỗi lần chạy để demo luôn còn hiệu lực |
 | `LOG_RESET_LINK` | backend | `true` = in link đặt lại mật khẩu vào log (chưa có email). **Đặt `false` ở production** |
 | `UPLOAD_DIR` | backend | thư mục lưu tài liệu tổ chức |
+| `NEXT_PUBLIC_SUPPORT_NAME`, `NEXT_PUBLIC_SUPPORT_PHONE` | frontend | tên và số điện thoại nhân viên hỗ trợ hiển thị công khai |
 | `NEXT_PUBLIC_API_URL` | frontend | mặc định `http://localhost:8080` |
 
 ## 14. Demo Accounts

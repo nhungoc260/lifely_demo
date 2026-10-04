@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
+import { SUPPORT } from "@/lib/support";
 
 interface Doc { title: string; intro: string; sections: { h: string; p: string }[] }
 
@@ -34,7 +35,8 @@ const DOCS: Record<string, Doc> = {
     title: "Contact",
     intro: "We would love to hear from you.",
     sections: [
-      { h: "Support", p: "support@lifely.demo (demo address for this prototype)." },
+      { h: `Staff hotline: ${SUPPORT.name}`, p: `Call ${SUPPORT.phoneDisplay} for help creating a request, joining as a donor, or any question about LIFELY. If a patient is in danger, call emergency services ${SUPPORT.emergencyNumber} or the hospital first: LIFELY is a coordination platform, not an emergency service.` },
+      { h: "Email", p: "support@lifely.demo (demo address for this prototype)." },
       { h: "Partnerships", p: "Hospitals and blood centers can register directly from the sign-up page; our team will review your documents." },
     ],
   },

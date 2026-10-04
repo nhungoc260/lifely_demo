@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
+import { SUPPORT } from "@/lib/support";
 
 const COLS = [
   { title: "Platform", links: [["How it works", "/#how-it-works"], ["Emergency Requests", "/#requests"], ["For Donors", "/#donors"], ["For Organizations", "/#organizations"]] },
@@ -15,6 +16,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 text-sm text-muted-foreground">Connect. Donate. Save a Life.</p>
+          <p className="mt-4 text-sm">Need help? Call <a className="font-medium text-primary hover:underline" href={SUPPORT.telHref}>{SUPPORT.name} · {SUPPORT.phoneDisplay}</a></p>
         </div>
         {COLS.map((c) => (
           <nav key={c.title} aria-label={c.title}>
