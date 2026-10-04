@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shell/page-header";
 import { BloodChip, StatusBadge, UrgencyBadge } from "@/components/ui/badges";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Countdown } from "@/components/ui/countdown";
 import { DataTable } from "@/components/ui/data-table";
@@ -60,6 +61,7 @@ export default function AdminRequests() {
               { key: "st", header: "Status", cell: (r) => <StatusBadge status={r.request.status} /> },
               { key: "act", header: "Actions", align: "right", cell: (r) => (
                 <div className="flex justify-end gap-2">
+                  <Link href={`/admin/requests/${r.request.id}`} className={buttonVariants({ size: "sm", variant: "ghost" })}>View</Link>
                   {r.request.status === "PENDING_VERIFICATION" && <><Button size="sm" onClick={() => setAction({ row: r, kind: "verify" })}>Verify</Button><Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "reject" })}>Reject</Button></>}
                   {["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"].includes(r.request.status) && <Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "cancel" })}>Cancel</Button>}
                 </div>

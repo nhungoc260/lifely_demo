@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { MatchCard } from "@/components/donor/match-card";
+import { ReadinessCard } from "@/components/donor/readiness-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +33,7 @@ export default function DonorDashboard() {
   const { version } = useNotifications();
   const now = useNow();
   const dash = useQuery(`donor-dash:${version}`, donorApi.dashboard);
+  const profile = useQuery("donor-dash-profile", donorApi.me);
   const matches = useQuery(`donor-open-matches:${version}`, () => donorApi.matches());
   const [available, setAvailable] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
@@ -90,6 +92,8 @@ export default function DonorDashboard() {
           <StatCard label="Confirmed Donations" value={dash.data?.confirmedDonations ?? 0} icon={Bell} loading={dash.initialLoading} />
         </div>
       )}
+
+      {profile.data && <div className="mt-6"><ReadinessCard lastDonationDate={profile.data.lastDonationDate} totalDonations={profile.data.totalDonations} /></div>}
 
       <section className="mt-10" aria-labelledby="needs-you">
         <div className="mb-4 flex items-end justify-between"><h2 id="needs-you" className="text-xl font-semibold tracking-tight">Requests that may need you</h2><Link href="/donor/requests" className="text-sm font-medium text-primary hover:underline">View all</Link></div>

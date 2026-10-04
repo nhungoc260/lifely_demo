@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +21,15 @@ public class UserController {
     public record OnboardingRequest(@Min(1) @Max(6) int step, boolean completed) {
     }
 
-    private final UserRepository userRepository;
+    public record DeleteRequest(@NotBlank String password) {
+    }
 
-    public UserController(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final UserDataService dataService;
+
+    public UserController(UserRepository userRepository, UserDataService dataService) {
         this.userRepository = userRepository;
+        this.dataService = dataService;
     }
 
     @GetMapping
@@ -40,6 +46,19 @@ public class UserController {
         user.setOnboardingStep(req.step());
         user.setOnboardingCompleted(req.completed());
         return ApiResponse.ok("Progress saved", UserSummary.from(userRepository.save(user)));
+    }
+
+    /** Tải xuống toàn bộ dữ liệu cá nhân của chính mình (JSON). */
+    @GetMapping("/export")
+    public ApiResponse<java.util.Map<String, Object>> export(@AuthenticationPrincipal AuthUser auth) {
+        return ApiResponse.ok("Your data", dataService.export(auth));
+    }
+
+    /** Xóa (ẩn danh hóa) tài khoản. Bắt buộc nhập lại mật khẩu. */
+    @PostMapping("/delete")
+    public ApiResponse<Void> delete(@AuthenticationPrincipal AuthUser auth, @Valid @RequestBody DeleteRequest req) {
+        dataService.deleteAccount(auth, req.password());
+        return ApiResponse.ok("Your account has been deleted", null);
     }
 
     private User load(AuthUser auth) {

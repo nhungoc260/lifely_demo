@@ -1,6 +1,6 @@
 import { get, post, put, qs, apiFetch } from "@/lib/api";
 import type {
-  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
+  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, HistoryEntry, MatchStatus, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
@@ -56,6 +56,8 @@ export const requestApi = {
   create: (b: CreateRequestInput) => post<BloodRequest>("/api/requests", b),
   list: (p: { status?: RequestStatus; page?: number; size?: number }) => get<Page<BloodRequest>>(`/api/requests${qs(p)}`),
   dashboard: () => get<RequesterDashboard>("/api/requests/dashboard"),
+  coverage: (bloodType: string, lat: number, lng: number) =>
+    get<CoverageRing[]>(`/api/requests/coverage${qs({ bloodType, lat, lng })}`),
   detail: (id: string) => get<BloodRequest>(`/api/requests/${id}`),
   history: (id: string) => get<HistoryEntry[]>(`/api/requests/${id}/history`),
   matches: (id: string) => get<RequestMatchEntry[]>(`/api/requests/${id}/matches`),
@@ -68,6 +70,10 @@ export const notificationApi = {
   unread: () => get<{ unread: number }>("/api/notifications/unread-count"),
   read: (id: string) => put<AppNotification>(`/api/notifications/${id}/read`),
   readAll: () => put<{ updated: number }>("/api/notifications/read-all"),
+};
+
+export const accountApi = {
+  delete: (password: string) => post<null>("/api/users/me/delete", { password }),
 };
 
 export const reportApi = {
@@ -98,6 +104,8 @@ export const adminApi = {
   setUserStatus: (id: string, action: "suspend" | "activate") => post<AdminUser>(`/api/admin/users/${id}/${action}`),
   requests: (p: { urgency?: string; bloodType?: string; status?: string; city?: string; page?: number; size?: number; sort?: string; dir?: string }) =>
     get<Page<AdminRequestRow>>(`/api/admin/requests${qs(p)}`),
+  request: (id: string) => get<AdminRequestRow>(`/api/admin/requests/${id}`),
+  requestHistory: (id: string) => get<HistoryEntry[]>(`/api/admin/requests/${id}/history`),
   requestAction: (id: string, action: "verify" | "reject" | "cancel", note?: string) =>
     post<BloodRequest>(`/api/admin/requests/${id}/${action}`, action === "verify" ? undefined : { note }),
   organizations: (p: { status?: OrgStatus; q?: string; page?: number; size?: number }) =>

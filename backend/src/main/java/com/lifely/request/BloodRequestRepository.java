@@ -20,6 +20,10 @@ public interface BloodRequestRepository extends JpaRepository<BloodRequest, UUID
     @Query("select r from BloodRequest r where r.id = :id")
     Optional<BloodRequest> findByIdForUpdate(@Param("id") UUID id);
 
+    List<BloodRequest> findByRequesterIdOrderByCreatedAtDesc(UUID requesterId);
+
+    List<BloodRequest> findByRequesterIdAndStatusIn(UUID requesterId, Collection<RequestStatus> statuses);
+
     long countByRequesterIdAndStatusIn(UUID requesterId, Collection<RequestStatus> statuses);
 
     long countByRequesterIdAndStatus(UUID requesterId, RequestStatus status);

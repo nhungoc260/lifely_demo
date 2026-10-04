@@ -91,7 +91,7 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
     }
   }
 
-  const finish = handleSubmit((_v) =>
+  const finish = handleSubmit(() =>
     guard(async () => {
       await persist(5, true);
       toast.success("You're all set. Thank you for joining LIFELY.");

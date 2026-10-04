@@ -229,6 +229,11 @@ public class AdminService {
     }
 
     // verify/reject/cancel của request dùng lại RequestService để có đầy đủ transaction, lịch sử và thông báo
+    @Transactional(readOnly = true)
+    public java.util.List<com.lifely.request.dto.HistoryEntry> requestHistory(AuthUser admin, UUID id) {
+        return requestService.history(admin, id);
+    }
+
     public RequestResponse verifyRequest(AuthUser admin, UUID id) {
         return requestService.verifyByAdmin(admin, id);
     }

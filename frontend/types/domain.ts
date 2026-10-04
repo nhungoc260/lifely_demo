@@ -310,6 +310,12 @@ export interface NotificationEvent {
   unreadCount: number;
 }
 
+export interface CoverageRing {
+  radiusKm: number;
+  level: "NONE" | "FEW" | "SOME" | "MANY";
+  count: number | null;
+}
+
 export type ContactStatus = "NEW" | "READ" | "RESOLVED";
 
 export interface ContactMessage {

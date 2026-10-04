@@ -7,6 +7,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AccountDataCard } from "@/components/account/account-data-card";
+import { ReadinessCard } from "@/components/donor/readiness-card";
 import { LocationPicker } from "@/components/map/location-picker";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
@@ -72,6 +74,8 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
   }
 
   return (
+    <div className="space-y-6">
+    <ReadinessCard lastDonationDate={profile.lastDonationDate} totalDonations={profile.totalDonations} />
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
       <form onSubmit={handleSubmit(save)} noValidate className="space-y-6">
         <Card>
@@ -121,7 +125,9 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
             <p className="text-xs text-muted-foreground">Exact location and phone number are never public.</p>
           </CardContent>
         </Card>
+        <AccountDataCard />
       </div>
+    </div>
     </div>
   );
 }

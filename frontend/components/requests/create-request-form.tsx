@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { LocationPicker } from "@/components/map/location-picker";
+import { CoveragePanel } from "@/components/requests/coverage-panel";
 import { PageHeader } from "@/components/shell/page-header";
 import { BloodChip, UrgencyBadge } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
@@ -120,6 +121,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
               <div><dt className="text-muted-foreground">Contact</dt><dd className="font-medium">{p.contactPhone}</dd></div>
               {p.description && <div className="sm:col-span-2"><dt className="text-muted-foreground">Description</dt><dd className="whitespace-pre-wrap">{p.description}</dd></div>}
             </dl>
+            <div className="mt-6"><CoveragePanel bloodType={p.bloodType} latitude={p.latitude} longitude={p.longitude} /></div>
             <p className="mt-6 flex gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0" aria-hidden />Requests are verified before donors are contacted. Do not include patient names or medical details. Your phone number is shown only to donors who accept.</p>
             {formError && <p role="alert" className="mt-4 text-sm text-critical">{formError}</p>}
             <div className="mt-6 flex flex-wrap justify-between gap-3">
@@ -192,6 +194,8 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
             )}
           </CardContent>
         </Card>
+
+        <CoveragePanel bloodType={bt} latitude={lat ?? null} longitude={lng ?? null} />
 
         <Card>
           <CardHeader><CardTitle>Deadline &amp; contact</CardTitle></CardHeader>

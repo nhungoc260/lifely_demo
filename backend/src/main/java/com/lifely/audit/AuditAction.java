@@ -20,6 +20,8 @@ public final class AuditAction {
     public static final String REPORT_CREATED = "REPORT_CREATED";
     public static final String REPORT_UPDATED = "REPORT_UPDATED";
     public static final String PASSWORD_RESET = "PASSWORD_RESET";
+    public static final String ACCOUNT_EXPORTED = "ACCOUNT_EXPORTED";
+    public static final String ACCOUNT_DELETED = "ACCOUNT_DELETED";
 
     private AuditAction() {
     }

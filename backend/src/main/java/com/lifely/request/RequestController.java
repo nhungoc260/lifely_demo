@@ -6,10 +6,15 @@ import com.lifely.common.PageResponse;
 import com.lifely.request.dto.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.lifely.common.Patterns;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,13 +23,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/requests")
 @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION')")
+@Validated
 @Tag(name = "Blood requests")
 public class RequestController {
 
     private final RequestService service;
+    private final CoverageService coverageService;
 
-    public RequestController(RequestService service) {
+    public RequestController(RequestService service, CoverageService coverageService) {
         this.service = service;
+        this.coverageService = coverageService;
     }
 
     @PostMapping
@@ -40,6 +48,15 @@ public class RequestController {
                                                                @RequestParam(defaultValue = "0") int page,
                                                                @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.ok("OK", service.listMine(user, status, page, size));
+    }
+
+    /** Ước lượng có bao nhiêu donor phù hợp quanh điểm cần máu (chỉ mức độ, không lộ danh tính). */
+    @GetMapping("/coverage")
+    public ApiResponse<List<CoverageService.Ring>> coverage(
+            @RequestParam @Pattern(regexp = Patterns.BLOOD_TYPE) String bloodType,
+            @RequestParam @DecimalMin("-90") @DecimalMax("90") double lat,
+            @RequestParam @DecimalMin("-180") @DecimalMax("180") double lng) {
+        return ApiResponse.ok("OK", coverageService.coverage(bloodType, lat, lng));
     }
 
     @GetMapping("/dashboard")

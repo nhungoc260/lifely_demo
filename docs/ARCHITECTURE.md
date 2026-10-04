@@ -148,3 +148,68 @@ flowchart TB
 | Race condition | `SELECT ... FOR UPDATE` + kiểm tra sau khóa + CHECK constraint ở DB |
 | Rò rỉ riêng tư | Không trả tọa độ donor ra API công khai; SĐT chỉ hiện sau khi donor chấp nhận |
 | Upload độc hại | Kiểm tra magic bytes, giới hạn 5 MB, tên file ngẫu nhiên, tải qua endpoint có phân quyền |
+
+## 8. Class diagram (các lớp chính)
+```mermaid
+classDiagram
+  class User { UUID id; String email; String fullName; UserStatus status; Set~Role~ roles }
+  class DonorProfile { UUID id; BloodType bloodType; BigDecimal latitude; BigDecimal longitude; LocalDate lastDonationDate; AvailabilityStatus availability }
+  class Organization { UUID id; String name; OrgVerificationStatus verificationStatus }
+  class BloodRequest { UUID id; BloodType bloodType; int unitsRequired; int unitsConfirmed; Urgency urgency; RequestStatus status; Instant deadline }
+  class Match { UUID id; BigDecimal matchingScore; BigDecimal distanceKm; MatchStatus status }
+  class Notification { UUID id; NotificationType type; boolean readFlag }
+  class RequestService { create() verifyByAdmin() cancel() }
+  class MatchingService { score() rank() startMatching() escalate() }
+  class MatchService { accept() reject() complete() }
+  class RequestLifecycle { transition() note() publish() }
+  class NotificationService { notify() markRead() }
+  class RealtimePublisher { onRequestChanged() onNotification() }
+  class CoverageService { coverage() }
+  class UserDataService { export() deleteAccount() }
+  User "1" --> "0..1" DonorProfile
+  User "1" --> "0..1" Organization
+  User "1" --> "*" BloodRequest : creates
+  BloodRequest "1" --> "*" Match
+  DonorProfile "1" --> "*" Match
+  User "1" --> "*" Notification
+  RequestService --> RequestLifecycle
+  RequestService --> MatchingService
+  MatchService --> RequestLifecycle
+  MatchService --> MatchingService
+  MatchingService --> NotificationService
+  NotificationService ..> RealtimePublisher : event sau commit
+  RequestLifecycle ..> RealtimePublisher : event sau commit
+```
+
+## 9. Activity diagram: donor phản hồi một request
+```mermaid
+flowchart TD
+  A([Nhận thông báo NEW_MATCH]) --> B[Mở chi tiết request + lý do được ghép]
+  B --> C{Quyết định}
+  C -- Từ chối --> D[Xác nhận 'Decline'] --> E[match = REJECTED] --> Z([Kết thúc])
+  C -- Chấp nhận --> F[POST /matches/id/accept]
+  F --> G[Khóa dòng request FOR UPDATE]
+  G --> H{Còn chỗ và còn hạn?}
+  H -- Không --> I[409 REQUEST_FULFILLED / REQUEST_CLOSED] --> Z
+  H -- Có --> J[units_confirmed + 1, match = ACCEPTED]
+  J --> K{Đã đủ số lượng?}
+  K -- Có --> L[request = FULFILLED, báo các donor còn chờ]
+  K -- Chưa --> M[request = PARTIALLY_FULFILLED]
+  L --> N[Thông báo + WebSocket cho requester]
+  M --> N
+  N --> O[Donor thấy SĐT liên hệ] --> Z
+```
+
+## 10. Activity diagram: leo thang khi chưa đủ người
+```mermaid
+flowchart TD
+  S([Job mỗi 30 giây]) --> R[Lấy request ACTIVE, đã xác minh, chưa đủ, còn hạn]
+  R --> D{Quá thời gian chờ theo mức khẩn cấp?}
+  D -- Chưa --> S
+  D -- Rồi --> L{Đã ở cấp 4?}
+  L -- Có --> S
+  L -- Chưa --> U[Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 km]
+  U --> M[Lọc → Haversine → chấm điểm → sắp xếp → top N]
+  M --> C[Tạo match + thông báo, không gửi cho tất cả cùng lúc]
+  C --> T[Thông báo requester: Search area widened] --> S
+```

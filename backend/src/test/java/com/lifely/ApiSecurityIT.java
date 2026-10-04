@@ -131,4 +131,33 @@ class ApiSecurityIT {
         String admin = login("admin@lifely.demo", PASSWORD);
         mvc.perform(get("/api/admin/messages").header("Authorization", "Bearer " + admin)).andExpect(status().isOk());
     }
+
+    @Test
+    void coverageIsRestrictedAndNeverExposesPersonalData() throws Exception {
+        mvc.perform(get("/api/requests/coverage?bloodType=O%2B&lat=10.77&lng=106.70")).andExpect(status().isUnauthorized());
+        String donor = login("donor@lifely.demo", PASSWORD);
+        mvc.perform(get("/api/requests/coverage?bloodType=O%2B&lat=10.77&lng=106.70").header("Authorization", "Bearer " + donor))
+                .andExpect(status().isForbidden());
+        String requester = login("requester@lifely.demo", PASSWORD);
+        mvc.perform(get("/api/requests/coverage?bloodType=O%2B&lat=10.77&lng=106.70").header("Authorization", "Bearer " + requester))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.length()").value(4))
+                .andExpect(jsonPath("$.data[0].radiusKm").value(5));
+        mvc.perform(get("/api/requests/coverage?bloodType=ZZ&lat=10.77&lng=106.70").header("Authorization", "Bearer " + requester))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void ownerCanExportDataAndDeleteNeedsCorrectPassword() throws Exception {
+        String donor = login("donor@lifely.demo", PASSWORD);
+        mvc.perform(get("/api/users/me/export").header("Authorization", "Bearer " + donor))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.account.email").value("donor@lifely.demo"))
+                .andExpect(jsonPath("$.data.account.passwordHash").doesNotExist());
+        mvc.perform(post("/api/users/me/delete").header("Authorization", "Bearer " + donor)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"wrong-password\"}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("WRONG_PASSWORD"));
+        String admin = login("admin@lifely.demo", PASSWORD);
+        mvc.perform(post("/api/users/me/delete").header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"" + PASSWORD + "\"}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("CANNOT_DELETE_ADMIN"));
+    }
 }

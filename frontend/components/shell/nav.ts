@@ -29,6 +29,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/requester/requests/create", label: "New request", icon: FilePlus2, mobile: true },
     { href: "/map", label: "Map", icon: Map, mobile: true },
     { href: "/requester/notifications", label: "Notifications", icon: Bell, mobile: true, badge: "unread" },
+    { href: "/requester/account", label: "My data", icon: UserRound },
   ],
   ORGANIZATION: [
     { href: "/organization/dashboard", label: "Home", icon: LayoutDashboard, mobile: true },

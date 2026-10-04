@@ -1,0 +1,36 @@
+# Profile production: chạy với  SPRING_PROFILES_ACTIVE=prod
+# Mặc định an toàn hơn môi trường demo. Mọi bí mật vẫn chỉ đến từ biến môi trường.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate          # schema do Flyway quản lý; Hibernate chỉ kiểm tra cho khớp
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+  forward-headers-strategy: framework   # đứng sau reverse proxy / HTTPS
+
+lifely:
+  demo-environment: false
+  demo:
+    refresh-deadlines-on-startup: false  # KHÔNG dời deadline dữ liệu thật
+  auth:
+    log-reset-link: false                # KHÔNG ghi link đặt lại mật khẩu vào log; cần bật email (MAIL_ENABLED=true)
+  rate-limit:
+    per-minute: 20
+
+springdoc:
+  api-docs:
+    enabled: false                       # tắt tài liệu API công khai
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN

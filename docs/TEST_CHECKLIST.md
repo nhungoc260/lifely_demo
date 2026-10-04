@@ -38,3 +38,19 @@
 | 3 | Bật `MAIL_ENABLED=true` + App Password, gửi tin mới | Gmail admin nhận email "[LIFELY] Tin nhan lien he moi..." |
 | 4 | Admin dashboard → "Email me this report" | Gmail nhận báo cáo tổng hợp; nếu chưa cấu hình email thì báo lỗi `MAIL_DISABLED` rõ ràng |
 | 5 | Gửi 6+ tin liên tiếp trong 1 phút | bị giới hạn tần suất (429) |
+
+## D. Tính năng bổ sung
+| # | Kịch bản | Kỳ vọng |
+|---|---|---|
+| 1 | Requester tạo request, chọn nhóm máu + vị trí | khung "Donor coverage" hiện 4 vòng 5/10/20/50 km; vùng quá ít donor chỉ ghi "A few", không có số |
+| 2 | Chọn vị trí rất xa (ví dụ Hà Nội) | báo "No available donors…" kèm số điện thoại nhân viên |
+| 3 | Request đã verified → trang chi tiết → "Share this request" | Copy link / Share / Printable poster hoạt động |
+| 4 | Mở poster, bấm Print | A4 có nhóm máu lớn, QR; quét QR mở `/requests/{id}` |
+| 5 | Request chưa verified | mục Share báo "available once verified"; `/requests/{id}` public trả 404 |
+| 6 | Donor: Profile / Dashboard | thấy thẻ "Ready to be matched" hoặc "Resting until …" và cột mốc huy hiệu |
+| 7 | Donor → Profile → "Download my data" | tải file JSON, **không** chứa mật khẩu |
+| 8 | Donor → "Delete account" nhập sai mật khẩu | báo "Password is incorrect" |
+| 9 | Dùng tài khoản test mới → xóa tài khoản đúng mật khẩu | bị đăng xuất; đăng nhập lại thất bại; admin vẫn thấy request cũ ở dạng ẩn danh |
+| 10 | Admin → Requests → View | thấy chi tiết, donor đã ghép, lịch sử, nút Verify/Reject/Cancel |
+| 11 | Vào đường dẫn không tồn tại | trang 404 của LIFELY; lỗi giao diện → trang "Something went wrong" có Try again |
+| 12 | `npm test` trong `frontend/` | 19 test đạt |

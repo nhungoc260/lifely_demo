@@ -88,6 +88,12 @@ public class AdminController {
         return ApiResponse.ok("OK", service.request(id));
     }
 
+    @GetMapping("/requests/{id}/history")
+    public ApiResponse<java.util.List<com.lifely.request.dto.HistoryEntry>> requestHistory(
+            @AuthenticationPrincipal AuthUser admin, @PathVariable UUID id) {
+        return ApiResponse.ok("OK", service.requestHistory(admin, id));
+    }
+
     @PostMapping("/requests/{id}/verify")
     public ApiResponse<RequestResponse> verifyRequest(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id) {
         return ApiResponse.ok("Request verified. Matching has started", service.verifyRequest(admin, id));

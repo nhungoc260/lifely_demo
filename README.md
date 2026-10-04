@@ -30,6 +30,7 @@ Donor · Requester · Organization (bệnh viện/trung tâm, cần admin xác m
 | Admin | Dashboard + biểu đồ, quản lý user/request/tổ chức/report, audit log |
 | Bản đồ | Leaflet + OpenStreetMap, lọc, bán kính, tìm địa điểm; không bao giờ hiển thị vị trí donor |
 | Liên hệ & báo cáo | Form liên hệ lưu vào DB, admin xem ở *Admin > Messages* và nhận email; báo cáo thống kê gửi email hằng tuần hoặc bấm "Email me this report" |
+| Tính năng riêng của LIFELY | **Độ phủ donor** (ước lượng có bao nhiêu donor phù hợp quanh bệnh viện trước khi gửi yêu cầu, chỉ hiện mức độ, ẩn danh) · **chia sẻ + poster A4 có mã QR** để gia đình dán ở bệnh viện · **lịch nghỉ giữa hai lần hiến + cột mốc** cho donor · **tải/xóa dữ liệu cá nhân** (ẩn danh hóa) |
 | Hỗ trợ | Nút "Need help?" trên mọi trang: gọi nhân viên (Như Ngọc, đổi được trong `.env`), nhắc gọi 115 khi nguy kịch, trợ lý FAQ **theo kịch bản, không AI** |
 | Khác | Dark mode (thiết kế riêng), responsive (sidebar / bottom nav), accessibility, Swagger |
 
@@ -51,6 +52,7 @@ Backend: Controller → Service → Repository → Database.
 ## 8. Database Design
 Flyway migration trong `backend/src/main/resources/db/migration`:
 `V1__baseline` · `V2__create_tables` · `V3__create_constraints` · `V4__create_indexes` · `V5__seed_data` · `V6__contact_messages`.
+Chạy production: `SPRING_PROFILES_ACTIVE=prod` (tắt Swagger, tắt demo, không ghi link reset vào log, `ddl-auto: validate`).
 Điểm đáng chú ý: `CHECK (units_confirmed <= units_required)`, `UNIQUE (request_id, donor_id)`, ma trận tương thích máu, index cho truy vấn matching, `updated_at` tự cập nhật bằng trigger.
 Dữ liệu demo sinh bởi `database/tools/generate_seed.py` (50 users, 30 donors, 8 tổ chức, 20 requests, 107 matches, 102 notifications, đủ 8 nhóm máu và mọi trạng thái).
 
@@ -115,6 +117,8 @@ Swagger/OpenAPI: `/swagger-ui.html` · JSON: `/api-docs`. Postman: `postman/LIFE
 ## 16. Testing
 ```bash
 cd backend
+cd ../frontend && npm test             # 19 unit test frontend (vitest)
+cd ../backend
 mvn test                              # unit test (không cần DB): Haversine, tương thích máu, điểm matching, sanitizer
 mvn test -Dtest=ApiSecurityIT         # integration: auth, phân quyền, IDOR, validation (cần PostgreSQL + seed)
 mvn test -Dtest=ConcurrentAcceptIT    # 6 donor accept cùng lúc request cần 2: đúng 2 thành công

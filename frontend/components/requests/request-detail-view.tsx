@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ShareRequest } from "@/components/requests/share-request";
 import { MatchBadge, StatusBadge, UrgencyBadge, BloodChip } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -139,6 +140,8 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                 </CardContent>
               </Card>
             </div>
+
+            <ShareRequest r={r} />
 
             <Card>
               <CardHeader><CardTitle>Activity</CardTitle></CardHeader>
