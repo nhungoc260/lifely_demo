@@ -8,6 +8,8 @@
 :root {
   --background: #fbf9f8;
   --foreground: #1f2328;
+  --card: #ffffff;
+  --surface: #f4f6f8;
   --muted: #f1eeee;
   --muted-foreground: #5b6470;
   --border: #e5e0e0;
@@ -24,6 +26,8 @@
 .dark {
   --background: #14110f;
   --foreground: #f3efee;
+  --card: #1c1715;
+  --surface: #191514;
   --muted: #211c1a;
   --muted-foreground: #a8a09d;
   --border: #332c29;
@@ -40,6 +44,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -54,6 +60,13 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+@keyframes lifely-pulse {
+  0% { transform: scale(0.8); opacity: 0.55; }
+  70%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.pulse-ring { animation: lifely-pulse 2.4s ease-out infinite; transform-origin: center; transform-box: fill-box; }
 
 body {
   background: var(--background);

@@ -123,7 +123,7 @@ public class DonorService {
         User user = user(userId);
         DonorProfile profile = profile(userId);
         long open = matchRepository.countOpenForDonor(profile.getId(), java.time.Instant.now());
-        long unread = notificationRepository.countByUserIdAndReadFalse(userId);
+        long unread = notificationRepository.countByUserIdAndReadFlagFalse(userId);
         return new DonorDashboardResponse(user.getFullName(),
                 profile.getBloodType() == null ? null : profile.getBloodType().getCode(),
                 profile.getAvailabilityStatus(), open, profile.getTotalDonations(), unread,

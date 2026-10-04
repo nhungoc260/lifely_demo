@@ -1,42 +1,887 @@
 {
   "info": {
     "name": "LIFELY API",
+    "description": "Chạy theo thứ tự từ trên xuống. Mật khẩu demo: Lifely@2027. Yêu cầu backend chạy tại baseUrl.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "variable": [{ "key": "baseUrl", "value": "http://localhost:8080" }],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "donorToken",
+      "value": ""
+    },
+    {
+      "key": "requesterToken",
+      "value": ""
+    },
+    {
+      "key": "hospitalToken",
+      "value": ""
+    },
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "matchId",
+      "value": ""
+    }
+  ],
   "item": [
     {
-      "name": "System",
+      "name": "1. System",
       "item": [
         {
-          "name": "Health check",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/health" },
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('success = true', () => pm.expect(body.success).to.eql(true));",
-                  "pm.test('database UP', () => pm.expect(body.data.database.status).to.eql('UP'));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('database UP', () => pm.expect(pm.response.json().data.database.status).to.eql('UP'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Protected endpoint without token (expects 401)",
-          "request": { "method": "GET", "url": "{{baseUrl}}/api/donors/me" },
+          "name": "Protected without token → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('401 UNAUTHORIZED', () => pm.response.to.have.status(401));",
-                  "pm.test('code UNAUTHORIZED', () => pm.expect(pm.response.json().code).to.eql('UNAUTHORIZED'));"
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('code', () => pm.expect(pm.response.json().code).to.eql('UNAUTHORIZED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/requests?size=5"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', b.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login donor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"donor@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('donorToken', b.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login requester",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"requester@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('requesterToken', b.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login hospital",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hospital@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('hospitalToken', b.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid login → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"donor@lifely.demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('generic code', () => pm.expect(pm.response.json().code).to.eql('INVALID_CREDENTIALS'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register with ADMIN role → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Eve\",\n  \"email\": \"eve@x.test\",\n  \"phone\": \"0901234567\",\n  \"password\": \"Passw0rdOK\",\n  \"confirmPassword\": \"Passw0rdOK\",\n  \"role\": \"ADMIN\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register weak password → 400 VALIDATION_ERROR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Eve\",\n  \"email\": \"eve@x.test\",\n  \"phone\": \"0901234567\",\n  \"password\": \"weak\",\n  \"confirmPassword\": \"weak\",\n  \"role\": \"DONOR\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "pm.test('field errors', () => pm.expect(pm.response.json().errors).to.have.property('password'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Authorization",
+      "item": [
+        {
+          "name": "Donor → /api/admin/users → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requester → /api/admin/requests → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{requesterToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/requests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requester → /api/donors/me → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{requesterToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor accept unknown match (IDOR) → 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/matches/00000000-0000-0000-0000-000000000001/accept"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin dashboard → 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Donor",
+      "item": [
+        {
+          "name": "Get profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/dashboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/availability",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availability\": \"AVAILABLE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My matches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/matches"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const m = pm.response.json().data.find(x => x.status === 'CONTACTED');",
+                  "if (m) pm.collectionVariables.set('matchId', m.matchId);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Request lifecycle",
+      "item": [
+        {
+          "name": "Create request (requester → PENDING_VERIFICATION)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{requesterToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodType\": \"O+\",\n  \"unitsRequired\": 2,\n  \"hospitalName\": \"Postman Test Clinic\",\n  \"city\": \"TP. Hồ Chí Minh\",\n  \"district\": \"Quận 1\",\n  \"latitude\": 10.7769,\n  \"longitude\": 106.7009,\n  \"urgency\": \"URGENT\",\n  \"deadline\": \"2099-01-01T00:00:00Z\",\n  \"contactPhone\": \"0901234567\",\n  \"description\": \"Postman\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deadline in 2099 is rejected (max 7 days)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create request with invalid input → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{requesterToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodType\": \"X+\",\n  \"unitsRequired\": 99,\n  \"hospitalName\": \"\",\n  \"city\": \"\",\n  \"latitude\": 10,\n  \"longitude\": 106,\n  \"urgency\": \"URGENT\",\n  \"deadline\": \"2020-01-01T00:00:00Z\",\n  \"contactPhone\": \"123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "pm.test('has field errors', () => pm.expect(pm.response.json().errors).to.be.an('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requester dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{requesterToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/dashboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin: pending requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/requests?status=PENDING_VERIFICATION"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const it = pm.response.json().data.items[0];",
+                  "if (it) pm.collectionVariables.set('requestId', it.request.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin: verify request (starts matching)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/requests/{{requestId}}/verify"
+          }
+        },
+        {
+          "name": "Admin: audit log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?action=REQUEST_VERIFIED"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Accept / reject",
+      "item": [
+        {
+          "name": "Donor accepts match",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/matches/{{matchId}}/accept"
+          }
+        },
+        {
+          "name": "Donor accepts again → 409 MATCH_ALREADY_RESPONDED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/matches/{{matchId}}/accept"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Notifications",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications?size=5"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unread count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unread-count"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark all read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/read-all"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Organization",
+      "item": [
+        {
+          "name": "Organization dashboard (hospital)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hospitalToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/me/dashboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verified hospitals (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/organizations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }

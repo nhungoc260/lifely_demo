@@ -15,6 +15,7 @@ Thumbs.db
 # Backend
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
+backend/uploads/
 backend/HELP.md
 *.log
 

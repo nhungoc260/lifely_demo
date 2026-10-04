@@ -35,21 +35,21 @@ public class NotificationService {
         n.setReferenceId(referenceId);
         n = repository.save(n);
         events.publishEvent(new NotificationCreatedEvent(userId, NotificationDto.from(n),
-                repository.countByUserIdAndReadFalse(userId)));
+                repository.countByUserIdAndReadFlagFalse(userId)));
     }
 
     @Transactional(readOnly = true)
     public PageResponse<NotificationDto> list(UUID userId, boolean unreadOnly, int page, int size) {
         PageRequest pr = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
         Page<Notification> result = unreadOnly
-                ? repository.findByUserIdAndReadFalseOrderByCreatedAtDesc(userId, pr)
+                ? repository.findByUserIdAndReadFlagFalseOrderByCreatedAtDesc(userId, pr)
                 : repository.findByUserIdOrderByCreatedAtDesc(userId, pr);
         return PageResponse.of(result, NotificationDto::from);
     }
 
     @Transactional(readOnly = true)
     public long unreadCount(UUID userId) {
-        return repository.countByUserIdAndReadFalse(userId);
+        return repository.countByUserIdAndReadFlagFalse(userId);
     }
 
     /** Chỉ chủ sở hữu mới đánh dấu đã đọc được thông báo của mình (chống IDOR). */
@@ -58,7 +58,7 @@ public class NotificationService {
         Notification n = repository.findById(id)
                 .filter(x -> x.getUserId().equals(userId))
                 .orElseThrow(() -> AppException.notFound("NOTIFICATION_NOT_FOUND", "Notification not found"));
-        n.setRead(true);
+        n.setReadFlag(true);
         return NotificationDto.from(repository.save(n));
     }
 
