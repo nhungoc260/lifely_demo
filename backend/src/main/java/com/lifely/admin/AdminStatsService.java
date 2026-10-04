@@ -33,7 +33,8 @@ public class AdminStatsService {
                   (SELECT count(*) FROM matches WHERE status IN ('ACCEPTED','COMPLETED')) AS confirmed_matches,
                   (SELECT count(*) FROM blood_requests WHERE status = 'PENDING_VERIFICATION') AS pending_verification,
                   (SELECT count(*) FROM organizations WHERE verification_status = 'UNDER_REVIEW') AS organizations_under_review,
-                  (SELECT count(*) FROM reports WHERE status IN ('OPEN','INVESTIGATING')) AS open_reports
+                  (SELECT count(*) FROM reports WHERE status IN ('OPEN','INVESTIGATING')) AS open_reports,
+                  (SELECT count(*) FROM contact_messages WHERE status = 'NEW') AS new_messages
                 """.formatted(ACTIVE, ACTIVE));
 
         List<Map<String, Object>> requestsOverTime = jdbc.queryForList("""

@@ -118,4 +118,17 @@ class ApiSecurityIT {
         mvc.perform(post("/api/requests").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(bad))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors").exists());
     }
+
+    @Test
+    void contactFormIsPublicValidatesInputAndAdminOnlyCanRead() throws Exception {
+        String bad = "{\"name\":\"A\",\"email\":\"not-an-email\",\"message\":\"short\"}";
+        mvc.perform(post("/api/public/contact").contentType(MediaType.APPLICATION_JSON).content(bad))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        String ok = "{\"name\":\"Khach\",\"email\":\"khach@example.com\",\"message\":\"Toi can ho tro dang ky hien mau\"}";
+        mvc.perform(post("/api/public/contact").contentType(MediaType.APPLICATION_JSON).content(ok)).andExpect(status().isCreated());
+        String donor = login("donor@lifely.demo", PASSWORD);
+        mvc.perform(get("/api/admin/messages").header("Authorization", "Bearer " + donor)).andExpect(status().isForbidden());
+        String admin = login("admin@lifely.demo", PASSWORD);
+        mvc.perform(get("/api/admin/messages").header("Authorization", "Bearer " + admin)).andExpect(status().isOk());
+    }
 }

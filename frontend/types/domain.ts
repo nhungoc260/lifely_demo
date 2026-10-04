@@ -277,7 +277,7 @@ export interface AdminDashboard {
   kpi: {
     users: number; donors: number; activeRequests: number; criticalRequests: number;
     verifiedOrganizations: number; completedMatches: number; confirmedMatches: number;
-    pendingVerification: number; organizationsUnderReview: number; openReports: number;
+    pendingVerification: number; organizationsUnderReview: number; openReports: number; newMessages: number;
   };
   requestsOverTime: { day: string; total: number; critical: number }[];
   donorGrowth: { month: string; donors: number }[];
@@ -308,4 +308,18 @@ export interface NotificationEvent {
   userId: string;
   notification: AppNotification;
   unreadCount: number;
+}
+
+export type ContactStatus = "NEW" | "READ" | "RESOLVED";
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: ContactStatus;
+  fromRegisteredUser: boolean;
+  createdAt: string;
+  handledAt: string | null;
 }

@@ -1,6 +1,6 @@
 import {
   Bell, ClipboardList, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
-  Building2, UserRound, Users, type LucideIcon,
+  Building2, MessageSquare, UserRound, Users, type LucideIcon,
 } from "lucide-react";
 
 import type { Role } from "@/types/domain";
@@ -44,6 +44,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/organizations", label: "Organizations", icon: Building2, mobile: true },
     { href: "/admin/users", label: "Users", icon: Users, mobile: true },
     { href: "/admin/reports", label: "Reports", icon: ShieldAlert, mobile: true },
+    { href: "/admin/messages", label: "Messages", icon: MessageSquare },
     { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   ],
 };

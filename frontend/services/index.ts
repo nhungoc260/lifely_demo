@@ -1,6 +1,6 @@
 import { get, post, put, qs, apiFetch } from "@/lib/api";
 import type {
-  AdminDashboard, AdminRequestRow, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
+  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, HistoryEntry, MatchStatus, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
@@ -25,6 +25,8 @@ export const publicApi = {
   request: (id: string, lat?: number, lng?: number) =>
     get<PublicRequest>(`/api/public/requests/${id}${qs({ lat, lng })}`, false),
   organizations: () => get<PublicOrg[]>("/api/public/organizations", false),
+  contact: (b: { name: string; email: string; phone?: string; message: string }) =>
+    post<null>("/api/public/contact", b),
 };
 
 // ---- donor
@@ -104,5 +106,8 @@ export const adminApi = {
     post<Organization>(`/api/admin/organizations/${id}/${action}`, { note }),
   reports: (p: { status?: ReportStatus; page?: number; size?: number }) => get<Page<Report>>(`/api/admin/reports${qs(p)}`),
   updateReport: (id: string, status: ReportStatus) => put<Report>(`/api/admin/reports/${id}`, { status }),
+  messages: (p: { status?: ContactStatus; page?: number; size?: number }) => get<Page<ContactMessage>>(`/api/admin/messages${qs(p)}`),
+  updateMessage: (id: string, status: ContactStatus) => put<ContactMessage>(`/api/admin/messages/${id}`, { status }),
+  emailSummary: () => post<null>("/api/admin/summary/email"),
   auditLogs: (p: { action?: string; page?: number; size?: number }) => get<Page<AuditLogEntry>>(`/api/admin/audit-logs${qs(p)}`),
 };

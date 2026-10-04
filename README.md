@@ -29,6 +29,7 @@ Donor · Requester · Organization (bệnh viện/trung tâm, cần admin xác m
 | Organization | Hồ sơ, tải tài liệu xác minh, dashboard, request của tổ chức, xác minh request gắn với bệnh viện mình |
 | Admin | Dashboard + biểu đồ, quản lý user/request/tổ chức/report, audit log |
 | Bản đồ | Leaflet + OpenStreetMap, lọc, bán kính, tìm địa điểm; không bao giờ hiển thị vị trí donor |
+| Liên hệ & báo cáo | Form liên hệ lưu vào DB, admin xem ở *Admin > Messages* và nhận email; báo cáo thống kê gửi email hằng tuần hoặc bấm "Email me this report" |
 | Hỗ trợ | Nút "Need help?" trên mọi trang: gọi nhân viên (Như Ngọc, đổi được trong `.env`), nhắc gọi 115 khi nguy kịch, trợ lý FAQ **theo kịch bản, không AI** |
 | Khác | Dark mode (thiết kế riêng), responsive (sidebar / bottom nav), accessibility, Swagger |
 
@@ -49,7 +50,7 @@ Backend: Controller → Service → Repository → Database.
 
 ## 8. Database Design
 Flyway migration trong `backend/src/main/resources/db/migration`:
-`V1__baseline` · `V2__create_tables` · `V3__create_constraints` · `V4__create_indexes` · `V5__seed_data`.
+`V1__baseline` · `V2__create_tables` · `V3__create_constraints` · `V4__create_indexes` · `V5__seed_data` · `V6__contact_messages`.
 Điểm đáng chú ý: `CHECK (units_confirmed <= units_required)`, `UNIQUE (request_id, donor_id)`, ma trận tương thích máu, index cho truy vấn matching, `updated_at` tự cập nhật bằng trigger.
 Dữ liệu demo sinh bởi `database/tools/generate_seed.py` (50 users, 30 donors, 8 tổ chức, 20 requests, 107 matches, 102 notifications, đủ 8 nhóm máu và mọi trạng thái).
 
@@ -87,6 +88,7 @@ npm run dev                           # http://localhost:3000
 | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | backend | mặc định `http://localhost:3000` |
 | `DEMO_ENVIRONMENT`, `DEMO_REFRESH_DEADLINES` | backend | dời deadline dữ liệu seed mỗi lần chạy để demo luôn còn hiệu lực |
 | `LOG_RESET_LINK` | backend | `true` = in link đặt lại mật khẩu vào log (chưa có email). **Đặt `false` ở production** |
+| `MAIL_ENABLED`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `ADMIN_NOTIFY_EMAIL` | backend | gửi email qua Gmail SMTP (cần *App Password*): thông báo tin nhắn liên hệ, báo cáo thống kê hằng tuần (8h sáng thứ Hai), email quên mật khẩu. Tắt thì mọi thứ vẫn chạy, tin nhắn lưu trong DB |
 | `UPLOAD_DIR` | backend | thư mục lưu tài liệu tổ chức |
 | `NEXT_PUBLIC_SUPPORT_NAME`, `NEXT_PUBLIC_SUPPORT_PHONE` | frontend | tên và số điện thoại nhân viên hỗ trợ hiển thị công khai |
 | `NEXT_PUBLIC_API_URL` | frontend | mặc định `http://localhost:8080` |
@@ -128,7 +130,7 @@ Tọa độ chính xác của donor chỉ dùng để matching, **không** có t
 
 ## 19. Limitations
 - Prototype **chưa** tích hợp EMR bệnh viện, hồ sơ sức khỏe quốc gia, kho máu, xác minh danh tính của nhà nước, cổng SMS chính thức, xác minh đủ điều kiện hiến máu chính thức. **Hệ thống không kết nối với bệnh viện thật.**
-- Chưa có email/SMS: link đặt lại mật khẩu được ghi vào log (dev).
+- Email dùng Gmail SMTP (giới hạn khoảng 500 email/ngày, phù hợp prototype). Chưa có SMS. Nếu không bật email, link đặt lại mật khẩu được ghi vào log (dev).
 - JWT lưu trong `localStorage` (đủ cho prototype; production nên dùng cookie httpOnly + CSRF).
 - Rate limit và WebSocket broker chạy trong bộ nhớ một instance (nhiều instance cần Redis/broker ngoài).
 - Tài liệu xác minh lưu trên đĩa cục bộ (production nên dùng object storage riêng tư).

@@ -6,6 +6,7 @@ import com.lifely.auth.dto.*;
 import com.lifely.common.AppException;
 import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
+import com.lifely.mail.MailService;
 import com.lifely.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditService auditService;
+    private final MailService mailService;
     private final boolean logResetLink;
     private final String frontendUrl;
     private final SecureRandom random = new SecureRandom();
@@ -49,7 +51,7 @@ public class AuthService {
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                        PrivacySettingsRepository privacyRepository, DonorProfileRepository donorProfileRepository,
                        PasswordResetTokenRepository resetTokenRepository, PasswordEncoder passwordEncoder,
-                       JwtService jwtService, AuditService auditService,
+                       JwtService jwtService, AuditService auditService, MailService mailService,
                        @Value("${lifely.auth.log-reset-link:false}") boolean logResetLink,
                        @Value("${lifely.frontend-url:http://localhost:3000}") String frontendUrl) {
         this.userRepository = userRepository;
@@ -60,6 +62,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.auditService = auditService;
+        this.mailService = mailService;
         this.logResetLink = logResetLink;
         this.frontendUrl = frontendUrl;
         this.dummyHash = passwordEncoder.encode("not-a-real-password");
@@ -147,10 +150,14 @@ public class AuthService {
             entity.setTokenHash(sha256(token));
             entity.setExpiresAt(Instant.now().plus(Duration.ofMinutes(30)));
             resetTokenRepository.save(entity);
-            // Prototype chưa tích hợp email/SMS. Ở môi trường dev, link đặt lại được ghi vào log máy chủ.
-            if (logResetLink) {
-                log.info("[DEV ONLY] Password reset link for {}: {}/reset-password?token={}",
-                        user.getEmail(), frontendUrl, token);
+            String link = frontendUrl + "/reset-password?token=" + token;
+            if (mailService.isEnabled()) {
+                mailService.send(user.getEmail(), "Dat lai mat khau LIFELY",
+                        "Xin chao " + user.getFullName() + ",\n\nBam vao lien ket sau de dat lai mat khau (hieu luc 30 phut):\n"
+                                + link + "\n\nNeu ban khong yeu cau, hay bo qua email nay.");
+            } else if (logResetLink) {
+                // Chưa cấu hình email: ở môi trường dev, link đặt lại được ghi vào log máy chủ.
+                log.info("[DEV ONLY] Password reset link for {}: {}", user.getEmail(), link);
             }
         });
     }

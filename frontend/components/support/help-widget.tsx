@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown, LifeBuoy, PhoneCall, Search, X } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -52,6 +53,7 @@ export function HelpWidget() {
               <p className="mt-1 font-semibold">{SUPPORT.name}</p>
               <a href={SUPPORT.telHref} className={cn(buttonVariants({ size: "lg" }), "mt-3 w-full")}><PhoneCall /> Call {SUPPORT.phoneDisplay}</a>
             </div>
+            <Link href="/info/contact#message" onClick={() => setOpen(false)} className="mt-3 block rounded-xl border border-border px-4 py-3 text-center text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Or send us a message</Link>
             <p className="mt-3 rounded-xl border border-critical/30 bg-critical/5 p-3 text-xs leading-relaxed">
               <strong>Patient in danger?</strong> Call emergency services <a className="font-semibold underline" href={`tel:${SUPPORT.emergencyNumber}`}>{SUPPORT.emergencyNumber}</a> or the hospital first. LIFELY is a coordination platform, not an emergency service.
             </p>

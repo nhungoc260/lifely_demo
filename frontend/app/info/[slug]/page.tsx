@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
+import { ContactForm } from "@/components/support/contact-form";
 import { SUPPORT } from "@/lib/support";
 
 interface Doc { title: string; intro: string; sections: { h: string; p: string }[] }
@@ -93,6 +94,7 @@ export default async function InfoPage({ params }: { params: Promise<{ slug: str
             </section>
           ))}
         </div>
+        {slug === "contact" && <div className="mt-12"><ContactForm /></div>}
       </main>
       <Footer />
     </>

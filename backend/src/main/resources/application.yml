@@ -16,6 +16,17 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}      # Gmail App Password, KHÔNG phải mật khẩu đăng nhập Gmail
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   servlet:
     multipart:
       max-file-size: 5MB
@@ -39,6 +50,11 @@ lifely:
   demo-environment: ${DEMO_ENVIRONMENT:true}
   demo:
     refresh-deadlines-on-startup: ${DEMO_REFRESH_DEADLINES:true}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:${MAIL_USERNAME:}}
+    admin-recipient: ${ADMIN_NOTIFY_EMAIL:}
+    weekly-report-cron: "0 0 8 * * MON"
   auth:
     # Prototype chưa có email/SMS. true = in link đặt lại mật khẩu vào log máy chủ (CHỈ dev). Production: false.
     log-reset-link: ${LOG_RESET_LINK:true}

@@ -4,8 +4,8 @@
 | # | Việc | Kỳ vọng |
 |---|---|---|
 | 1 | Tạo DB: chạy `database/00_create_database.sql` | user + database `lifely` |
-| 2 | `cp .env.example .env` rồi `cd backend && mvn -N wrapper:wrapper && ./mvnw spring-boot:run` | log: `Successfully applied 5 migrations`, `Started LifelyApplication`, `Demo data refreshed` |
-| 3 | `curl localhost:8080/api/health` | `database.status = UP`, `migrationVersion = 5` |
+| 2 | `cp .env.example .env` rồi `cd backend && mvn -N wrapper:wrapper && ./mvnw spring-boot:run` | log: `Successfully applied 6 migrations`, `Started LifelyApplication`, `Demo data refreshed` |
+| 3 | `curl localhost:8080/api/health` | `database.status = UP`, `migrationVersion = 6` |
 | 4 | `cd frontend && npm install && npm run dev` | http://localhost:3000 hiện landing, "LIFELY NETWORK ACTIVE", số liệu thật |
 | 5 | `mvn test` | các unit test đạt |
 | 6 | `mvn test -Dtest=ApiSecurityIT` và `-Dtest=ConcurrentAcceptIT` | đạt |
@@ -29,3 +29,12 @@
 | 13 | 5 lần đăng nhập sai | tài khoản khóa 15 phút (429) |
 | 14 | Dark mode, màn 375 / 768 / 1280 px | không tràn ngang, sidebar ↔ bottom nav |
 | 15 | Chờ ~5 phút với request CRITICAL chưa đủ người | thông báo "Search area widened", level 2 |
+
+## C. Liên hệ & email
+| # | Kịch bản | Kỳ vọng |
+|---|---|---|
+| 1 | Vào `/info/contact`, gửi tin nhắn (đăng nhập hoặc không) | thông báo "Message sent" |
+| 2 | Admin → Messages | thấy tin ở trạng thái New, dashboard hiện "1 new message(s)" |
+| 3 | Bật `MAIL_ENABLED=true` + App Password, gửi tin mới | Gmail admin nhận email "[LIFELY] Tin nhan lien he moi..." |
+| 4 | Admin dashboard → "Email me this report" | Gmail nhận báo cáo tổng hợp; nếu chưa cấu hình email thì báo lỗi `MAIL_DISABLED` rõ ràng |
+| 5 | Gửi 6+ tin liên tiếp trong 1 phút | bị giới hạn tần suất (429) |
