@@ -19,7 +19,7 @@ Chưa chạy được vì cần Mockito/Spring/PostgreSQL: `HealthServiceTest`, 
 | Endpoint trùng trong 71 endpoint | 0 |
 | Thuộc tính sai trong JPQL / derived query (17 repository) | 0 |
 | Key cấu hình thiếu | 0 |
-| 154 trường entity so với schema PostgreSQL thật | 0 lệch |
+| 153 trường entity so với schema PostgreSQL thật | 0 lệch |
 | 25 cặp DTO backend ↔ interface TypeScript | 0 lệch |
 
 Mỗi script đã được thử bằng cách cài lỗi cố ý. Lần thử đầu cho thấy hai script có lỗi (không bắt được vòng phụ thuộc, và phần kiểm query chưa từng chạy); cả hai đã sửa rồi kiểm lại trước khi tin kết quả.

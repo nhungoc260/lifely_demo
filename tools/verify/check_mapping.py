@@ -11,6 +11,14 @@ OK={ 'UUID':{'uuid'},'String':{'character varying','text'},'int':{'integer','sma
  'Short':{'smallint'},'BigDecimal':{'numeric'},'Instant':{'timestamp with time zone'},'LocalDate':{'date'},
  'boolean':{'boolean'},'Map<String, Object>':{'jsonb'}}
 problems=0; checked=0
+def back(lines,idx):
+    # gom các dòng annotation ngay phía trên một trường, dừng khi gặp thành viên trước đó (dòng kết thúc bằng ; { hoặc })
+    out=[]; i=idx-1
+    while i>=0:
+        t=lines[i].strip()
+        if t.endswith(';') or t.endswith('{') or t=='}' : break
+        out.append(t); i-=1
+    return ' '.join(reversed(out))
 for f in glob.glob(J+'/**/*.java',recursive=True):
     t=open(f).read()
     if '@Entity' not in t: continue
@@ -18,12 +26,12 @@ for f in glob.glob(J+'/**/*.java',recursive=True):
     tbl=re.search(r'@Table\(name\s*=\s*"(\w+)"',t).group(1)
     if tbl not in db: print("MISSING TABLE",cls,tbl); problems+=1; continue
     lines=t.split('\n'); i=0; pending=[]
-    for ln in lines:
+    for idx,ln in enumerate(lines):
         s=ln.strip()
         if s.startswith('@'): pending.append(s); continue
         m=re.match(r'private\s+(?!static)([\w.<>, ?]+?)\s+(\w+)\s*(=.*)?;',s)
         if m:
-            typ,name=m.group(1).strip(),m.group(2); ann=' '.join(pending); pending=[]
+            typ,name=m.group(1).strip(),m.group(2); ann=back(lines,idx); pending=[]
             if '@Transient' in ann or '@ManyToMany' in ann or '@OneToMany' in ann: continue   # quan hệ qua bảng nối, không phải cột
             checked+=1
             col=re.search(r'@(?:Column|JoinColumn)\(.*?name\s*=\s*"(\w+)"',ann)
