@@ -44,6 +44,12 @@ public class DemoDataRefresher implements ApplicationRunner {
                 WHERE status IN ('PENDING_VERIFICATION','VERIFIED','MATCHING','DONORS_CONTACTED','PARTIALLY_FULFILLED')
                   AND deadline < now() + interval '30 minutes'
                 """);
-        log.info("Demo data refreshed: scenario={}, other open requests={}", scenario, others);
+        // Đặt mốc leo thang = bây giờ để dữ liệu seed không bị leo thang hàng loạt ngay khi vừa khởi động.
+        int stamped = jdbc.update("""
+                UPDATE blood_requests SET last_escalated_at = now()
+                WHERE status IN ('VERIFIED','MATCHING','DONORS_CONTACTED','PARTIALLY_FULFILLED')
+                  AND last_escalated_at IS NULL
+                """);
+        log.info("Demo data refreshed: scenario={}, other open requests={}, escalation clock reset={}", scenario, others, stamped);
     }
 }

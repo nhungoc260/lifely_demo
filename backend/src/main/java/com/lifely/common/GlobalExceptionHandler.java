@@ -13,6 +13,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -73,6 +74,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error("Invalid value for parameter '" + ex.getName() + "'", "INVALID_PARAMETER"));
+    }
+
+    /** Spring 6.1+: validation của tham số @RequestParam/@PathVariable (không có @Validated ở lớp) ném lỗi này. */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodValidation(HandlerMethodValidationException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Some request parameters are invalid", "VALIDATION_ERROR"));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

@@ -123,7 +123,7 @@ mvn test                              # unit test (không cần DB): Haversine, 
 mvn test -Dtest=ApiSecurityIT         # integration: auth, phân quyền, IDOR, validation (cần PostgreSQL + seed)
 mvn test -Dtest=ConcurrentAcceptIT    # 6 donor accept cùng lúc request cần 2: đúng 2 thành công
 ```
-Checklist chạy thử toàn hệ thống: **[docs/TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md)**.
+Checklist chạy thử toàn hệ thống: **[docs/TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md)**. Báo cáo những gì đã/chưa kiểm chứng: **[docs/VERIFICATION.md](docs/VERIFICATION.md)**. Bộ kiểm tra tĩnh (vòng phụ thuộc bean, JPQL, entity ↔ schema, DTO ↔ TypeScript): `tools/verify/`.
 
 ## 17. Security
 JWT stateless · BCrypt · mặc định mọi endpoint cần đăng nhập · `@PreAuthorize` theo role · kiểm tra quyền sở hữu ở service (chống IDOR) · khóa tài khoản + rate limit · CHECK constraint + khóa dòng cho accept đồng thời · sanitize đầu vào · upload kiểm tra magic bytes · không lộ stack trace · audit log (không ghi mật khẩu/JWT) · WebSocket xác thực JWT ở CONNECT và phân quyền ở SUBSCRIBE.

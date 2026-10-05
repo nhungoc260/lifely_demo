@@ -33,6 +33,8 @@ export function ConfirmDialog({
       await onConfirm(reason.trim());
       onOpenChange(false);
       setReason("");
+    } catch {
+      /* người gọi đã hiện thông báo lỗi; giữ hộp thoại mở để thử lại */
     } finally {
       setBusy(false);
     }
