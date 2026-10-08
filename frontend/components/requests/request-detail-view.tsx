@@ -31,7 +31,7 @@ function Lifecycle({ status }: { status: RequestStatus }) {
   const idx = FLOW.indexOf(status);
   const steps = terminalBad ? [...FLOW.slice(0, 3), status] : FLOW;
   return (
-    <ol className="space-y-3" aria-label="Request lifecycle">
+    <ol className="space-y-3" aria-label="Vòng đời yêu cầu">
       {steps.map((s, i) => {
         const done = terminalBad ? i < steps.length - 1 : i < idx;
         const current = terminalBad ? i === steps.length - 1 : i === idx;
@@ -64,25 +64,25 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
   });
 
   async function cancel(reason: string) {
-    try { const upd = await requestApi.cancel(id, reason || undefined); req.mutate(() => upd); hist.reload(); matches.reload(); toast.success("Request cancelled"); }
+    try { const upd = await requestApi.cancel(id, reason || undefined); req.mutate(() => upd); hist.reload(); matches.reload(); toast.success("Đã hủy yêu cầu"); }
     catch (e) { toast.error(toApiError(e).message); throw e; }
   }
 
   async function complete(matchId: string) {
     setBusy(matchId);
-    try { await requestApi.complete(matchId); toast.success("Donation recorded. Thank you!"); matches.reload(); }
+    try { await requestApi.complete(matchId); toast.success("Đã ghi nhận lần hiến máu. Cảm ơn bạn!"); matches.reload(); }
     catch (e) { toast.error(toApiError(e).message); } finally { setBusy(null); }
   }
 
   async function verifyLinked() {
     setBusy("verify");
-    try { const upd = await orgApi.verifyRequest(id); req.mutate(() => upd); hist.reload(); toast.success("Request verified. Matching has started."); }
+    try { const upd = await orgApi.verifyRequest(id); req.mutate(() => upd); hist.reload(); toast.success("Đã xác minh yêu cầu. Hệ thống bắt đầu tìm người hiến máu."); }
     catch (e) { toast.error(toApiError(e).message); } finally { setBusy(null); }
   }
 
   return (
     <>
-      <Link href={`${basePath}/requests`} className="mb-5 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> My requests</Link>
+      <Link href={`${basePath}/requests`} className="mb-5 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Yêu cầu của tôi</Link>
       {req.initialLoading ? <Skeleton className="h-96" />
         : req.error && !r ? <ErrorState message={req.error.message} onRetry={req.reload} />
         : r ? (
@@ -90,34 +90,34 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
             <Card className="p-6 sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2"><UrgencyBadge urgency={r.urgency} /><StatusBadge status={r.status} /></div>
-                <span className={cn("inline-flex items-center gap-1.5 text-xs", live === "live" ? "text-success" : "text-muted-foreground")}><Radio className="size-3.5" aria-hidden />{live === "live" ? "Live" : "Reconnecting…"}</span>
+                <span className={cn("inline-flex items-center gap-1.5 text-xs", live === "live" ? "text-success" : "text-muted-foreground")}><Radio className="size-3.5" aria-hidden />{live === "live" ? "Trực tiếp" : "Đang kết nối lại…"}</span>
               </div>
               <div className="mt-6 grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
                 <div>
-                  <div className="flex items-center gap-4"><BloodChip type={r.bloodType} className="text-2xl" /><h1 className="text-3xl font-semibold tracking-tight">Need {r.unitsRequired} unit{r.unitsRequired === 1 ? "" : "s"}</h1></div>
+                  <div className="flex items-center gap-4"><BloodChip type={r.bloodType} className="text-2xl" /><h1 className="text-3xl font-semibold tracking-tight">Cần {r.unitsRequired} đơn vị</h1></div>
                   <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="size-4" aria-hidden />{r.hospitalName}{r.district ? `, ${r.district}` : ""}</p>
                 </div>
                 <div className="flex gap-8">
-                  <div><p className="text-xs text-muted-foreground">Confirmed</p><p aria-live="polite" className="text-4xl font-semibold tabular-nums tracking-tight">{r.unitsConfirmed} <span className="text-muted-foreground">/ {r.unitsRequired}</span></p></div>
-                  <div><p className="text-xs text-muted-foreground">Time remaining</p><p className="text-4xl font-semibold tracking-tight">{["FULFILLED", "CANCELLED", "EXPIRED"].includes(r.status) ? "–" : <Countdown deadline={r.deadline} />}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Đã xác nhận</p><p aria-live="polite" className="text-4xl font-semibold tabular-nums tracking-tight">{r.unitsConfirmed} <span className="text-muted-foreground">/ {r.unitsRequired}</span></p></div>
+                  <div><p className="text-xs text-muted-foreground">Thời gian còn lại</p><p className="text-4xl font-semibold tracking-tight">{["FULFILLED", "CANCELLED", "EXPIRED"].includes(r.status) ? "–" : <Countdown deadline={r.deadline} />}</p></div>
                 </div>
               </div>
-              <ProgressBar className="mt-6" value={r.unitsConfirmed} max={r.unitsRequired} label="Donors confirmed" />
+              <ProgressBar className="mt-6" value={r.unitsConfirmed} max={r.unitsRequired} label="Người hiến máu đã xác nhận" />
               {r.status === "PENDING_VERIFICATION" && (
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warning/10 p-4 text-sm"><p>Waiting for verification. Donors are contacted as soon as the request is verified.</p>
-                  {basePath === "/organization" && r.organizationId && <Button size="sm" onClick={verifyLinked} disabled={busy === "verify"}>{busy === "verify" && <Loader2 className="animate-spin" />} Verify this request</Button>}</div>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warning/10 p-4 text-sm"><p>Đang chờ xác minh. Người hiến máu sẽ được liên hệ ngay khi yêu cầu được xác minh.</p>
+                  {basePath === "/organization" && r.organizationId && <Button size="sm" onClick={verifyLinked} disabled={busy === "verify"}>{busy === "verify" && <Loader2 className="animate-spin" />} Xác minh yêu cầu này</Button>}</div>
               )}
-              {r.status === "CANCELLED" && r.cancelReason && <p className="mt-6 rounded-xl bg-muted p-4 text-sm">Cancelled: {r.cancelReason}</p>}
-              {CANCELLABLE.includes(r.status) && <div className="mt-6 flex justify-end"><Button variant="outline" onClick={() => setCancelOpen(true)}>Cancel request</Button></div>}
+              {r.status === "CANCELLED" && r.cancelReason && <p className="mt-6 rounded-xl bg-muted p-4 text-sm">Đã hủy: {r.cancelReason}</p>}
+              {CANCELLABLE.includes(r.status) && <div className="mt-6 flex justify-end"><Button variant="outline" onClick={() => setCancelOpen(true)}>Hủy yêu cầu</Button></div>}
             </Card>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
               <Card>
-                <CardHeader><CardTitle>Progress</CardTitle></CardHeader>
-                <CardContent><Lifecycle status={r.status} /><p className="mt-5 text-xs text-muted-foreground">Search level {r.escalationLevel} of 4. The search widens automatically if more donors are needed.</p></CardContent>
+                <CardHeader><CardTitle>Tiến độ</CardTitle></CardHeader>
+                <CardContent><Lifecycle status={r.status} /><p className="mt-5 text-xs text-muted-foreground">Cấp tìm kiếm {r.escalationLevel} trên 4. Phạm vi tìm kiếm tự động mở rộng nếu cần thêm người hiến máu.</p></CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>Matched donors</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Người hiến máu được kết nối</CardTitle></CardHeader>
                 <CardContent>
                   {matches.initialLoading ? <Skeleton className="h-32" />
                     : matches.data && matches.data.length > 0 ? (
@@ -131,12 +131,12 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                             </div>
                             <div className="flex items-center gap-2">
                               <MatchBadge status={m.status} />
-                              {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} Mark donated</Button>}
+                              {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} Đánh dấu đã hiến</Button>}
                             </div>
                           </li>
                         ))}
                       </ul>
-                    ) : <EmptyState title="No donors contacted yet" description="Donors appear here once the request is verified and matching starts." />}
+                    ) : <EmptyState title="Chưa liên hệ người hiến máu nào" description="Người hiến máu sẽ hiện ở đây khi yêu cầu được xác minh và bắt đầu tìm kiếm." />}
                 </CardContent>
               </Card>
             </div>
@@ -144,7 +144,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
             <ShareRequest r={r} />
 
             <Card>
-              <CardHeader><CardTitle>Activity</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Hoạt động</CardTitle></CardHeader>
               <CardContent>
                 {hist.data && hist.data.length > 0 ? (
                   <ol className="relative space-y-4 border-l border-border pl-6">
@@ -156,13 +156,13 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                       </li>
                     ))}
                   </ol>
-                ) : <p className="text-sm text-muted-foreground">No activity yet.</p>}
+                ) : <p className="text-sm text-muted-foreground">Chưa có hoạt động.</p>}
               </CardContent>
             </Card>
-            <p className="flex items-center gap-2 text-xs text-muted-foreground"><Clock className="size-3.5" aria-hidden />Final donation eligibility must be confirmed by healthcare professionals.</p>
+            <p className="flex items-center gap-2 text-xs text-muted-foreground"><Clock className="size-3.5" aria-hidden />Điều kiện hiến máu cuối cùng phải do nhân viên y tế xác nhận.</p>
           </div>
         ) : null}
-      <ConfirmDialog open={cancelOpen} onOpenChange={setCancelOpen} title="Cancel request?" description="Donors who were contacted or accepted will be told this request was cancelled. This cannot be undone." confirmLabel="Cancel request" destructive reasonLabel="Reason (optional)" onConfirm={cancel} />
+      <ConfirmDialog open={cancelOpen} onOpenChange={setCancelOpen} title="Hủy yêu cầu?" description="Những người hiến máu đã được liên hệ hoặc đã nhận lời sẽ được báo là yêu cầu đã bị hủy. Không thể hoàn tác." confirmLabel="Hủy yêu cầu" destructive reasonLabel="Lý do (không bắt buộc)" onConfirm={cancel} />
     </>
   );
 }

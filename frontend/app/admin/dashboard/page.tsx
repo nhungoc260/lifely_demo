@@ -24,7 +24,7 @@ export default function AdminDashboard() {
 
   async function emailReport() {
     setSending(true);
-    try { await adminApi.emailSummary(); toast.success("The summary report is on its way to your mailbox"); }
+    try { await adminApi.emailSummary(); toast.success("Báo cáo tổng hợp đang được gửi tới hộp thư của bạn"); }
     catch (e) { toast.error(toApiError(e).message); } finally { setSending(false); }
   }
   const d = q.data;
@@ -33,34 +33,34 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <PageHeader title="Admin dashboard" description="System health and coordination activity." actions={<Button variant="outline" size="sm" onClick={emailReport} disabled={sending}><Mail /> Email me this report</Button>} />
+      <PageHeader title="Tổng quan quản trị" description="Tình trạng hệ thống và hoạt động điều phối." actions={<Button variant="outline" size="sm" onClick={emailReport} disabled={sending}><Mail /> Gửi báo cáo này qua email</Button>} />
       {q.error && !d ? <ErrorState message={q.error.message} onRetry={q.reload} /> : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <StatCard label="Users" value={k?.users ?? 0} icon={Users} loading={L} />
-            <StatCard label="Donors" value={k?.donors ?? 0} icon={HeartPulse} loading={L} />
-            <StatCard label="Active Requests" value={k?.activeRequests ?? 0} icon={ClipboardList} accent loading={L} />
-            <StatCard label="Critical Requests" value={k?.criticalRequests ?? 0} icon={AlertOctagon} loading={L} />
-            <StatCard label="Verified Organizations" value={k?.verifiedOrganizations ?? 0} icon={Building2} loading={L} />
-            <StatCard label="Completed Matches" value={k?.completedMatches ?? 0} icon={Handshake} loading={L} hint={`${k?.confirmedMatches ?? 0} confirmed in total`} />
+            <StatCard label="Người dùng" value={k?.users ?? 0} icon={Users} loading={L} />
+            <StatCard label="Người hiến máu" value={k?.donors ?? 0} icon={HeartPulse} loading={L} />
+            <StatCard label="Yêu cầu đang hoạt động" value={k?.activeRequests ?? 0} icon={ClipboardList} accent loading={L} />
+            <StatCard label="Yêu cầu nguy kịch" value={k?.criticalRequests ?? 0} icon={AlertOctagon} loading={L} />
+            <StatCard label="Tổ chức đã xác minh" value={k?.verifiedOrganizations ?? 0} icon={Building2} loading={L} />
+            <StatCard label="Lượt hiến máu hoàn tất" value={k?.completedMatches ?? 0} icon={Handshake} loading={L} hint={`Tổng cộng ${k?.confirmedMatches ?? 0} lượt đã xác nhận`} />
           </div>
           {k && (k.pendingVerification > 0 || k.organizationsUnderReview > 0 || k.openReports > 0 || k.newMessages > 0) && (
             <Card className="mt-6 border-warning/40 bg-warning/5 p-5">
-              <p className="flex items-center gap-2 font-medium"><CheckCheck className="size-4" aria-hidden />Needs your attention</p>
+              <p className="flex items-center gap-2 font-medium"><CheckCheck className="size-4" aria-hidden />Cần bạn xử lý</p>
               <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                {k.pendingVerification > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/requests">{k.pendingVerification} request(s)</Link> awaiting verification</li>}
-                {k.organizationsUnderReview > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/organizations">{k.organizationsUnderReview} organization(s)</Link> under review</li>}
-                {k.newMessages > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/messages">{k.newMessages} new message(s)</Link></li>}
-                {k.openReports > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/reports">{k.openReports} open report(s)</Link></li>}
+                {k.pendingVerification > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/requests">{k.pendingVerification} yêu cầu</Link> đang chờ xác minh</li>}
+                {k.organizationsUnderReview > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/organizations">{k.organizationsUnderReview} tổ chức</Link> đang được xem xét</li>}
+                {k.newMessages > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/messages">{k.newMessages} tin nhắn mới</Link></li>}
+                {k.openReports > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/reports">{k.openReports} báo cáo đang mở</Link></li>}
               </ul>
             </Card>
           )}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Card><CardHeader><CardTitle>Requests over time (14 days)</CardTitle></CardHeader><CardContent>{d ? <RequestsOverTime data={d.requestsOverTime} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
-            <Card><CardHeader><CardTitle>Donor growth (6 months)</CardTitle></CardHeader><CardContent>{d ? <DonorGrowth data={d.donorGrowth} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
-            <Card><CardHeader><CardTitle>Blood type distribution</CardTitle></CardHeader><CardContent>{d ? <BloodTypeChart data={d.bloodTypeDistribution} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
-            <Card><CardHeader><CardTitle>Request status</CardTitle></CardHeader><CardContent>{d ? <StatusChart data={d.requestStatus} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
-            <Card className="lg:col-span-2"><CardHeader><CardTitle>Emergency response: average minutes from contact to reply</CardTitle></CardHeader><CardContent>{d ? (d.emergencyResponse.length ? <ResponseChart data={d.emergencyResponse} /> : <p className="py-10 text-center text-sm text-muted-foreground">No responses recorded yet.</p>) : <Skeleton className="h-[260px]" />}</CardContent></Card>
+            <Card><CardHeader><CardTitle>Yêu cầu theo thời gian (14 ngày)</CardTitle></CardHeader><CardContent>{d ? <RequestsOverTime data={d.requestsOverTime} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
+            <Card><CardHeader><CardTitle>Tăng trưởng người hiến máu (6 tháng)</CardTitle></CardHeader><CardContent>{d ? <DonorGrowth data={d.donorGrowth} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
+            <Card><CardHeader><CardTitle>Phân bố nhóm máu</CardTitle></CardHeader><CardContent>{d ? <BloodTypeChart data={d.bloodTypeDistribution} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
+            <Card><CardHeader><CardTitle>Trạng thái yêu cầu</CardTitle></CardHeader><CardContent>{d ? <StatusChart data={d.requestStatus} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>
+            <Card className="lg:col-span-2"><CardHeader><CardTitle>Phản hồi khẩn cấp: số phút trung bình từ lúc liên hệ đến lúc trả lời</CardTitle></CardHeader><CardContent>{d ? (d.emergencyResponse.length ? <ResponseChart data={d.emergencyResponse} /> : <p className="py-10 text-center text-sm text-muted-foreground">Chưa ghi nhận phản hồi nào.</p>) : <Skeleton className="h-[260px]" />}</CardContent></Card>
           </div>
         </>
       )}

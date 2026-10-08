@@ -21,26 +21,26 @@ export default function RequestPoster() {
 
   return (
     <main id="main" className="mx-auto min-h-dvh max-w-3xl px-6 py-8 print:max-w-none print:p-0">
-      <div className="mb-6 flex justify-end print:hidden"><Button onClick={() => window.print()} disabled={!r}><Printer /> Print poster</Button></div>
+      <div className="mb-6 flex justify-end print:hidden"><Button onClick={() => window.print()} disabled={!r}><Printer /> In poster</Button></div>
       {q.initialLoading ? <Skeleton className="h-[40rem]" />
-        : !r ? <EmptyState title="This request is no longer open" description="Posters are only available for open, verified requests." />
+        : !r ? <EmptyState title="Yêu cầu này không còn mở" description="Chỉ có poster cho các yêu cầu đang mở và đã xác minh." />
         : (
           <article className="rounded-3xl border-4 border-primary bg-white p-10 text-center text-black print:rounded-none print:border-8">
-            <p className="text-lg font-semibold uppercase tracking-[0.3em] text-primary">Urgent · Blood needed</p>
+            <p className="text-lg font-semibold uppercase tracking-[0.3em] text-primary">KHẨN · CẦN MÁU</p>
             <p className="mt-6 text-[9rem] font-bold leading-none tracking-tight text-primary">{r.bloodType}</p>
-            <p className="mt-4 text-4xl font-semibold">{r.unitsNeeded} unit{r.unitsNeeded === 1 ? "" : "s"} needed</p>
+            <p className="mt-4 text-4xl font-semibold">Cần {r.unitsNeeded} đơn vị</p>
             <p className="mt-8 text-2xl font-medium">{r.hospitalName}</p>
             <p className="text-lg text-neutral-600">{[r.district, r.city].filter(Boolean).join(", ")}</p>
-            <p className="mt-6 text-xl">Needed before <strong>{formatDateTime(r.deadline)}</strong></p>
+            <p className="mt-6 text-xl">Cần trước <strong>{formatDateTime(r.deadline)}</strong></p>
             <div className="mt-8 flex flex-col items-center gap-3">
               {qr.data ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={qr.data} alt="QR code linking to the live request status" width={220} height={220} />
+                <img src={qr.data} alt="Mã QR dẫn đến trạng thái trực tiếp của yêu cầu" width={220} height={220} />
               ) : <Skeleton className="size-[220px]" />}
-              <p className="text-lg font-medium">Scan to see the live status and how to help</p>
+              <p className="text-lg font-medium">Quét để xem trạng thái trực tiếp và cách giúp đỡ</p>
             </div>
-            <p className="mt-8 text-lg">Questions? Call {SUPPORT.name}: <strong>{SUPPORT.phoneDisplay}</strong></p>
-            <p className="mx-auto mt-6 max-w-xl text-xs leading-relaxed text-neutral-500">Powered by LIFELY, a coordination platform. LIFELY does not provide medical diagnosis, treatment, transfusion decisions, or final donor eligibility decisions. Healthcare professionals decide eligibility.</p>
+            <p className="mt-8 text-lg">Cần hỗ trợ? Gọi {SUPPORT.name}: <strong>{SUPPORT.phoneDisplay}</strong></p>
+            <p className="mx-auto mt-6 max-w-xl text-xs leading-relaxed text-neutral-500">Cung cấp bởi LIFELY, nền tảng điều phối. LIFELY không đưa ra chẩn đoán, điều trị, quyết định truyền máu hay quyết định cuối cùng về điều kiện hiến máu. Nhân viên y tế quyết định điều kiện hiến máu.</p>
           </article>
         )}
     </main>

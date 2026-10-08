@@ -45,24 +45,24 @@ public class UserController {
         User user = load(auth);
         user.setOnboardingStep(req.step());
         user.setOnboardingCompleted(req.completed());
-        return ApiResponse.ok("Progress saved", UserSummary.from(userRepository.save(user)));
+        return ApiResponse.ok("Đã lưu tiến độ", UserSummary.from(userRepository.save(user)));
     }
 
     /** Tải xuống toàn bộ dữ liệu cá nhân của chính mình (JSON). */
     @GetMapping("/export")
     public ApiResponse<java.util.Map<String, Object>> export(@AuthenticationPrincipal AuthUser auth) {
-        return ApiResponse.ok("Your data", dataService.export(auth));
+        return ApiResponse.ok("Dữ liệu của bạn", dataService.export(auth));
     }
 
     /** Xóa (ẩn danh hóa) tài khoản. Bắt buộc nhập lại mật khẩu. */
     @PostMapping("/delete")
     public ApiResponse<Void> delete(@AuthenticationPrincipal AuthUser auth, @Valid @RequestBody DeleteRequest req) {
         dataService.deleteAccount(auth, req.password());
-        return ApiResponse.ok("Your account has been deleted", null);
+        return ApiResponse.ok("Tài khoản của bạn đã được xóa", null);
     }
 
     private User load(AuthUser auth) {
         return userRepository.findById(auth.getId())
-                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "User not found"));
+                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng"));
     }
 }

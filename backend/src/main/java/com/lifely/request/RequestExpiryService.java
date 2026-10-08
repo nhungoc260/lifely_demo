@@ -33,11 +33,11 @@ public class RequestExpiryService {
                 || r.getDeadline().isAfter(Instant.now())) {
             return false;
         }
-        lifecycle.transition(r, RequestStatus.EXPIRED, "Deadline passed", null);
+        lifecycle.transition(r, RequestStatus.EXPIRED, "Đã quá hạn", null);
         matchingService.expireOpenMatches(r);
-        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_EXPIRED, "Request expired",
-                "Your " + r.getBloodType().getCode() + " request passed its deadline with "
-                        + r.getUnitsConfirmed() + " / " + r.getUnitsRequired() + " units confirmed.",
+        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_EXPIRED, "Yêu cầu đã hết hạn",
+                "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã quá hạn với "
+                        + r.getUnitsConfirmed() + " / " + r.getUnitsRequired() + " đơn vị đã xác nhận.",
                 "REQUEST", r.getId());
         return true;
     }

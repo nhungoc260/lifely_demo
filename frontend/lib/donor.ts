@@ -33,10 +33,10 @@ export interface Milestone {
 }
 
 export const MILESTONES: Milestone[] = [
-  { id: "first", label: "First step", description: "Your first donation", threshold: 1 },
-  { id: "three", label: "Regular", description: "3 donations", threshold: 3 },
-  { id: "five", label: "Dedicated", description: "5 donations", threshold: 5 },
-  { id: "ten", label: "Lifesaver", description: "10 donations", threshold: 10 },
+  { id: "first", label: "Bước đầu tiên", description: "Lần hiến máu đầu tiên của bạn", threshold: 1 },
+  { id: "three", label: "Thường xuyên", description: "3 lần hiến máu", threshold: 3 },
+  { id: "five", label: "Tận tâm", description: "5 lần hiến máu", threshold: 5 },
+  { id: "ten", label: "Người cứu sinh mạng", description: "10 lần hiến máu", threshold: 10 },
 ];
 
 export function milestoneProgress(total: number): { earned: Milestone[]; next: Milestone | null } {

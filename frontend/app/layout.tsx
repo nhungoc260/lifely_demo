@@ -8,16 +8,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: "LIFELY – Emergency Blood Donor Coordination", template: "%s · LIFELY" },
+  title: { default: "LIFELY – Điều phối người hiến máu khẩn cấp", template: "%s · LIFELY" },
   description:
-    "LIFELY helps connect people who need blood with nearby donors and coordinates responses through one trusted platform.",
+    "LIFELY giúp kết nối người cần máu với người hiến máu ở gần và điều phối phản hồi trên một nền tảng đáng tin cậy.",
   openGraph: {
-    title: "LIFELY – Emergency Blood Donor Coordination",
-    description: "Connect. Donate. Save a Life.",
+    title: "LIFELY – Điều phối người hiến máu khẩn cấp",
+    description: "Kết nối. Hiến máu. Cứu một sinh mạng.",
     type: "website",
     siteName: "LIFELY",
   },
-  twitter: { card: "summary", title: "LIFELY – Emergency Blood Donor Coordination", description: "Connect. Donate. Save a Life." },
+  twitter: { card: "summary", title: "LIFELY – Điều phối người hiến máu khẩn cấp", description: "Kết nối. Hiến máu. Cứu một sinh mạng." },
 };
 
 export const viewport: Viewport = {
@@ -26,10 +26,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
+    <html lang="vi" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
-          Skip to content
+          Bỏ qua, đến nội dung
         </a>
         <AppProviders>
           {children}

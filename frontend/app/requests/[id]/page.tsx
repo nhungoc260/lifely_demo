@@ -30,38 +30,38 @@ export default function PublicRequestPage() {
     <>
       <Navbar />
       <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-5 py-10">
-        <Link href="/#requests" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> All requests</Link>
+        <Link href="/#requests" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Tất cả yêu cầu</Link>
         {q.initialLoading ? (
           <Skeleton className="mt-6 h-96" />
         ) : q.error && !r ? (
           q.error.status === 404 ? (
-            <EmptyState className="mt-6" title="This request is no longer open" description="It may have been fulfilled, cancelled or expired." action={<Link href="/#requests" className={buttonVariants()}>See open requests</Link>} />
+            <EmptyState className="mt-6" title="Yêu cầu này không còn mở" description="Có thể yêu cầu đã đủ người, bị hủy hoặc hết hạn." action={<Link href="/#requests" className={buttonVariants()}>Xem các yêu cầu đang mở</Link>} />
           ) : <ErrorState className="mt-6" message={q.error.message} onRetry={q.reload} />
         ) : r ? (
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
             <Card className="p-6 sm:p-8">
               <div className="flex items-center justify-between"><UrgencyBadge urgency={r.urgency} /><BloodChip type={r.bloodType} className="text-lg" /></div>
-              <h1 className="mt-6 text-4xl font-semibold tracking-tight">{r.unitsNeeded} unit{r.unitsNeeded === 1 ? "" : "s"} needed</h1>
+              <h1 className="mt-6 text-4xl font-semibold tracking-tight">Cần {r.unitsNeeded} đơn vị</h1>
               <div className="mt-6">
-                <div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">Confirmed</span><span className="font-medium tabular-nums">{r.unitsConfirmed} / {r.unitsRequired}</span></div>
-                <ProgressBar value={r.unitsConfirmed} max={r.unitsRequired} label="Donors confirmed" />
+                <div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">Đã xác nhận</span><span className="font-medium tabular-nums">{r.unitsConfirmed} / {r.unitsRequired}</span></div>
+                <ProgressBar value={r.unitsConfirmed} max={r.unitsRequired} label="Người hiến máu đã xác nhận" />
               </div>
               <dl className="mt-8 space-y-4 text-sm">
-                <div className="flex gap-3"><MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden /><div><dt className="text-muted-foreground">Hospital</dt><dd className="font-medium">{r.hospitalName}</dd><dd className="text-muted-foreground">{[r.district, r.city].filter(Boolean).join(", ")}</dd></div></div>
-                <div className="flex gap-3"><Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden /><div><dt className="text-muted-foreground">Needed within</dt><dd className="text-2xl font-semibold"><Countdown deadline={r.deadline} /></dd></div></div>
+                <div className="flex gap-3"><MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden /><div><dt className="text-muted-foreground">Bệnh viện</dt><dd className="font-medium">{r.hospitalName}</dd><dd className="text-muted-foreground">{[r.district, r.city].filter(Boolean).join(", ")}</dd></div></div>
+                <div className="flex gap-3"><Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden /><div><dt className="text-muted-foreground">Cần trong vòng</dt><dd className="text-2xl font-semibold"><Countdown deadline={r.deadline} /></dd></div></div>
               </dl>
               <div className="mt-8 rounded-xl bg-muted p-4 text-sm text-muted-foreground">
                 {status === "authenticated" && role === "DONOR" ? (
-                  <>If this request fits you, LIFELY will notify you directly. <Link href="/donor/requests" className="font-medium text-primary hover:underline">See your matched requests</Link>.</>
+                  <>Nếu yêu cầu này phù hợp với bạn, LIFELY sẽ thông báo trực tiếp. <Link href="/donor/requests" className="font-medium text-primary hover:underline">Xem các yêu cầu được kết nối với bạn</Link>.</>
                 ) : (
-                  <>Want to help? <Link href="/register?role=DONOR" className="font-medium text-primary hover:underline">Join as a donor</Link> so LIFELY can notify you when a request matches you.</>
+                  <>Muốn giúp đỡ? <Link href="/register?role=DONOR" className="font-medium text-primary hover:underline">Tham gia làm người hiến máu</Link> để LIFELY thông báo khi có yêu cầu phù hợp với bạn.</>
                 )}
               </div>
               {status === "authenticated" && <div className="mt-4 flex justify-end"><ReportDialog targetType="REQUEST" targetId={r.id} /></div>}
             </Card>
             <div className="space-y-4">
               <MapContainerLazy center={[r.latitude, r.longitude]} zoom={14} requests={[r]} height={320} scrollWheelZoom={false} />
-              <p className="text-xs text-muted-foreground">Final donation eligibility must be confirmed by healthcare professionals. Contact details are shared only with donors who accept.</p>
+              <p className="text-xs text-muted-foreground">Điều kiện hiến máu cuối cùng phải do nhân viên y tế xác nhận. Thông tin liên hệ chỉ chia sẻ với người hiến máu đã nhận lời.</p>
             </div>
           </div>
         ) : null}

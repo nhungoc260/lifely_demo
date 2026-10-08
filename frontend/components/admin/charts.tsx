@@ -2,6 +2,10 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart, Legend } from "recharts";
 
+import { STATUS_LABEL, } from "@/lib/format";
+import { URGENCY_LABEL } from "@/lib/labels";
+import type { Urgency } from "@/types/domain";
+
 const AXIS = { fontSize: 12, fill: "var(--muted-foreground)" } as const;
 const TIP = { background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12, color: "var(--foreground)" } as const;
 const PALETTE = ["#9f1239", "#d97706", "#059669", "#2563eb", "#7c3aed", "#64748b", "#db2777", "#0891b2", "#ca8a04"];
@@ -15,8 +19,8 @@ export function RequestsOverTime({ data }: { data: { day: string; total: number;
         <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TIP} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Line type="monotone" dataKey="total" name="All requests" stroke="#9f1239" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="critical" name="Critical" stroke="#dc2626" strokeWidth={2} strokeDasharray="5 4" dot={false} />
+        <Line type="monotone" dataKey="total" name="Tất cả yêu cầu" stroke="#9f1239" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="critical" name="Nguy kịch" stroke="#dc2626" strokeWidth={2} strokeDasharray="5 4" dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -31,7 +35,7 @@ export function DonorGrowth({ data }: { data: { month: string; donors: number }[
         <XAxis dataKey="month" tick={AXIS} tickLine={false} axisLine={false} />
         <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TIP} />
-        <Area type="monotone" dataKey="donors" name="New donors" stroke="#9f1239" strokeWidth={2} fill="url(#dg)" />
+        <Area type="monotone" dataKey="donors" name="Người hiến mới" stroke="#9f1239" strokeWidth={2} fill="url(#dg)" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -45,14 +49,14 @@ export function BloodTypeChart({ data }: { data: { bloodType: string; donors: nu
         <XAxis dataKey="bloodType" tick={AXIS} tickLine={false} axisLine={false} />
         <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TIP} cursor={{ fill: "var(--muted)" }} />
-        <Bar dataKey="donors" name="Donors" fill="#9f1239" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="donors" name="Người hiến máu" fill="#9f1239" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
 export function StatusChart({ data }: { data: { status: string; total: number }[] }) {
-  const label = (s: string) => s.replaceAll("_", " ").toLowerCase();
+  const label = (s: string) => STATUS_LABEL[s] ?? s;
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -71,10 +75,10 @@ export function ResponseChart({ data }: { data: { urgency: string; avgMinutes: n
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ left: -16, right: 8, top: 8 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="urgency" tick={AXIS} tickLine={false} axisLine={false} />
-        <YAxis tick={AXIS} tickLine={false} axisLine={false} unit=" m" />
+        <XAxis dataKey="urgency" tickFormatter={(v: string) => URGENCY_LABEL[v as Urgency] ?? v} tick={AXIS} tickLine={false} axisLine={false} />
+        <YAxis tick={AXIS} tickLine={false} axisLine={false} unit=" ph" />
         <Tooltip contentStyle={TIP} cursor={{ fill: "var(--muted)" }} />
-        <Bar dataKey="avgMinutes" name="Avg. response (min)" fill="#d97706" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="avgMinutes" name="Phản hồi TB (phút)" fill="#d97706" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

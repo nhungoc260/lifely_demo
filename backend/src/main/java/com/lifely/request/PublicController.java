@@ -83,7 +83,7 @@ public class PublicController {
                                                      @RequestParam(required = false) Double lng) {
         BloodRequest r = requestRepository.findById(id)
                 .filter(x -> x.isVerified() && x.getStatus().isActive())
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         return ApiResponse.ok("OK", PublicRequestSummary.from(r, distance(lat, lng, r)));
     }
 

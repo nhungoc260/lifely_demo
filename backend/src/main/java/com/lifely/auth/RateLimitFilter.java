@@ -61,7 +61,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             mapper.writeValue(response.getWriter(),
-                    ApiResponse.error("Too many attempts. Please wait a minute and try again.", "RATE_LIMITED"));
+                    ApiResponse.error("Bạn thao tác quá nhiều lần. Vui lòng đợi một phút rồi thử lại.", "RATE_LIMITED"));
             return;
         }
         if (hits.size() > 10_000) {

@@ -42,7 +42,7 @@ public class OrganizationController {
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<OrganizationDto> update(@AuthenticationPrincipal AuthUser user,
                                                @Valid @RequestBody UpdateOrganizationRequest req) {
-        return ApiResponse.ok("Organization profile saved", service.upsert(user.getId(), req));
+        return ApiResponse.ok("Đã lưu hồ sơ tổ chức", service.upsert(user.getId(), req));
     }
 
     @PostMapping(value = "/me/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -50,13 +50,13 @@ public class OrganizationController {
     public ApiResponse<OrganizationDto> upload(@AuthenticationPrincipal AuthUser user,
                                                @RequestParam(defaultValue = "OTHER") String docType,
                                                @RequestParam("file") MultipartFile file) {
-        return ApiResponse.ok("Document uploaded", service.addDocument(user.getId(), docType, file));
+        return ApiResponse.ok("Đã tải giấy tờ lên", service.addDocument(user.getId(), docType, file));
     }
 
     @PostMapping("/me/submit")
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<OrganizationDto> submit(@AuthenticationPrincipal AuthUser user) {
-        return ApiResponse.ok("Submitted for verification", service.submitForReview(user.getId()));
+        return ApiResponse.ok("Đã gửi để xác minh", service.submitForReview(user.getId()));
     }
 
     @GetMapping("/me/dashboard")
@@ -77,7 +77,7 @@ public class OrganizationController {
     @PostMapping("/me/requests/{id}/verify")
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<RequestResponse> verifyRequest(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Request verified", service.verifyLinkedRequest(user.getId(), id));
+        return ApiResponse.ok("Yêu cầu đã được xác minh", service.verifyLinkedRequest(user.getId(), id));
     }
 
     @GetMapping("/documents/{id}/download")

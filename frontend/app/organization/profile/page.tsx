@@ -24,20 +24,20 @@ import { orgApi } from "@/services";
 import type { Organization } from "@/types/domain";
 
 const schema = z.object({
-  name: z.string().trim().min(2, "Enter the organization name"),
+  name: z.string().trim().min(2, "Nhập tên tổ chức"),
   type: z.enum(["HOSPITAL", "BLOOD_CENTER", "CLINIC", "NGO"]),
-  address: z.string().trim().min(3, "Enter the address"),
-  city: z.string().trim().min(1, "Enter the city"),
+  address: z.string().trim().min(3, "Nhập địa chỉ"),
+  city: z.string().trim().min(1, "Nhập thành phố"),
   district: z.string().trim(),
-  latitude: z.number({ message: "Pick the location on the map" }),
-  longitude: z.number({ message: "Pick the location on the map" }),
-  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Enter a valid Vietnamese phone number"),
-  email: z.string().email("Enter a valid email"),
-  contactPerson: z.string().trim().min(2, "Enter the contact person"),
+  latitude: z.number({ message: "Chọn vị trí trên bản đồ" }),
+  longitude: z.number({ message: "Chọn vị trí trên bản đồ" }),
+  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
+  email: z.string().email("Email không hợp lệ"),
+  contactPerson: z.string().trim().min(2, "Nhập người liên hệ"),
 });
 type Values = z.infer<typeof schema>;
 
-const DOC_TYPES = [["OPERATING_LICENSE", "Operating license"], ["BUSINESS_REGISTRATION", "Business registration"], ["AUTHORIZATION_LETTER", "Authorization letter"], ["OTHER", "Other"]];
+const DOC_TYPES = [["OPERATING_LICENSE", "Giấy phép hoạt động"], ["BUSINESS_REGISTRATION", "Đăng ký kinh doanh"], ["AUTHORIZATION_LETTER", "Giấy ủy quyền"], ["OTHER", "Khác"]];
 
 function OrgForm({ org, reload }: { org: Organization | null; reload: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -52,19 +52,19 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
   const lng = watch("longitude");
 
   async function save(v: Values) {
-    try { await orgApi.save({ ...v, district: v.district || null }); toast.success("Organization profile saved"); reload(); }
+    try { await orgApi.save({ ...v, district: v.district || null }); toast.success("Đã lưu hồ sơ tổ chức"); reload(); }
     catch (e) { if (!applyServerErrors(e, setError)) toast.error(toApiError(e).message); }
   }
 
   async function upload(file: File) {
     setUploading(true);
-    try { await orgApi.upload(docType, file); toast.success("Document uploaded"); reload(); }
+    try { await orgApi.upload(docType, file); toast.success("Đã tải giấy tờ lên"); reload(); }
     catch (e) { toast.error(toApiError(e).message); } finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
   }
 
   async function submit() {
     setSubmitting(true);
-    try { await orgApi.submit(); toast.success("Submitted for verification"); reload(); }
+    try { await orgApi.submit(); toast.success("Đã gửi để xác minh"); reload(); }
     catch (e) { toast.error(toApiError(e).message); } finally { setSubmitting(false); }
   }
 
@@ -74,7 +74,7 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
       if (!res.ok) throw new Error();
       const url = URL.createObjectURL(await res.blob());
       const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
-    } catch { toast.error("Could not download the document."); }
+    } catch { toast.error("Không tải được tài liệu."); }
   }
 
   const canSubmit = org && (org.verificationStatus === "PENDING" || org.verificationStatus === "REJECTED");
@@ -83,48 +83,48 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
       <form onSubmit={handleSubmit(save)} noValidate className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Organization details</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Thông tin tổ chức</CardTitle></CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
-            <Field label="Organization name" htmlFor="name" error={errors.name?.message} className="sm:col-span-2"><Input id="name" {...register("name")} aria-invalid={!!errors.name} /></Field>
-            <Field label="Type" htmlFor="type"><Select id="type" {...register("type")}><option value="HOSPITAL">Hospital</option><option value="BLOOD_CENTER">Blood center</option><option value="CLINIC">Clinic</option><option value="NGO">NGO</option></Select></Field>
-            <Field label="Contact person" htmlFor="contactPerson" error={errors.contactPerson?.message}><Input id="contactPerson" {...register("contactPerson")} aria-invalid={!!errors.contactPerson} /></Field>
-            <Field label="Phone" htmlFor="phone" error={errors.phone?.message}><Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} /></Field>
+            <Field label="Tên tổ chức" htmlFor="name" error={errors.name?.message} className="sm:col-span-2"><Input id="name" {...register("name")} aria-invalid={!!errors.name} /></Field>
+            <Field label="Loại hình" htmlFor="type"><Select id="type" {...register("type")}><option value="HOSPITAL">Bệnh viện</option><option value="BLOOD_CENTER">Trung tâm máu</option><option value="CLINIC">Phòng khám</option><option value="NGO">Tổ chức phi chính phủ</option></Select></Field>
+            <Field label="Người liên hệ" htmlFor="contactPerson" error={errors.contactPerson?.message}><Input id="contactPerson" {...register("contactPerson")} aria-invalid={!!errors.contactPerson} /></Field>
+            <Field label="Số điện thoại" htmlFor="phone" error={errors.phone?.message}><Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} /></Field>
             <Field label="Email" htmlFor="email" error={errors.email?.message}><Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} /></Field>
-            <Field label="Address" htmlFor="address" error={errors.address?.message} className="sm:col-span-2"><Input id="address" {...register("address")} aria-invalid={!!errors.address} /></Field>
-            <Field label="City" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} /></Field>
-            <Field label="District" htmlFor="district"><Input id="district" {...register("district")} /></Field>
+            <Field label="Địa chỉ" htmlFor="address" error={errors.address?.message} className="sm:col-span-2"><Input id="address" {...register("address")} aria-invalid={!!errors.address} /></Field>
+            <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} /></Field>
+            <Field label="Quận/Huyện" htmlFor="district"><Input id="district" {...register("district")} /></Field>
             <div className="sm:col-span-2">
-              <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} help="Used as the exact location for your requests." />
-              {(errors.latitude || errors.longitude) && <p role="alert" className="mt-2 text-xs font-medium text-critical">Pick the location on the map</p>}
+              <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} help="Dùng làm vị trí chính xác cho các yêu cầu của bạn." />
+              {(errors.latitude || errors.longitude) && <p role="alert" className="mt-2 text-xs font-medium text-critical">Chọn vị trí trên bản đồ</p>}
             </div>
           </CardContent>
         </Card>
-        {org?.verificationStatus === "VERIFIED" && <p className="rounded-xl bg-warning/10 p-4 text-sm">Changing your name, address or location will require re-verification.</p>}
-        <div className="flex justify-end"><Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="animate-spin" />} Save profile</Button></div>
+        {org?.verificationStatus === "VERIFIED" && <p className="rounded-xl bg-warning/10 p-4 text-sm">Đổi tên, địa chỉ hoặc vị trí sẽ phải xác minh lại.</p>}
+        <div className="flex justify-end"><Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="animate-spin" />} Lưu hồ sơ</Button></div>
       </form>
 
       <div className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Verification</CardTitle>{org && <OrgStatusBadge status={org.verificationStatus} />}</CardHeader>
+          <CardHeader><CardTitle>Xác minh</CardTitle>{org && <OrgStatusBadge status={org.verificationStatus} />}</CardHeader>
           <CardContent className="space-y-4 text-sm">
-            {!org ? <p className="text-muted-foreground">Save your details first, then upload documents.</p> : (
+            {!org ? <p className="text-muted-foreground">Hãy lưu thông tin trước, rồi tải giấy tờ lên.</p> : (
               <>
                 {org.verificationNote && <p className="rounded-xl bg-muted p-3">{org.verificationNote}</p>}
-                {org.verifiedAt && <p className="text-muted-foreground">Verified on {formatDate(org.verifiedAt)}</p>}
+                {org.verifiedAt && <p className="text-muted-foreground">Xác minh ngày {formatDate(org.verifiedAt)}</p>}
                 <ul className="divide-y divide-border">
-                  {org.documents.length === 0 && <li className="py-3 text-muted-foreground">No documents uploaded yet.</li>}
+                  {org.documents.length === 0 && <li className="py-3 text-muted-foreground">Chưa tải giấy tờ nào lên.</li>}
                   {org.documents.map((d) => (
-                    <li key={d.id} className="flex items-center justify-between gap-3 py-3"><span className="flex min-w-0 items-center gap-2"><FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden /><span className="truncate">{d.fileName}</span></span><Button size="sm" variant="ghost" onClick={() => download(d.id, d.fileName)}>Download</Button></li>
+                    <li key={d.id} className="flex items-center justify-between gap-3 py-3"><span className="flex min-w-0 items-center gap-2"><FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden /><span className="truncate">{d.fileName}</span></span><Button size="sm" variant="ghost" onClick={() => download(d.id, d.fileName)}>Tải xuống</Button></li>
                   ))}
                 </ul>
                 {(org.verificationStatus === "PENDING" || org.verificationStatus === "REJECTED") && (
                   <div className="space-y-3 border-t border-border pt-4">
-                    <Field label="Document type" htmlFor="doctype"><Select id="doctype" value={docType} onChange={(e) => setDocType(e.target.value)}>{DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
+                    <Field label="Loại giấy tờ" htmlFor="doctype"><Select id="doctype" value={docType} onChange={(e) => setDocType(e.target.value)}>{DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
                     <input ref={fileRef} type="file" accept="application/pdf,image/png,image/jpeg" className="sr-only" id="doc-file" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-                    <Button type="button" variant="outline" className="w-full" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? <Loader2 className="animate-spin" /> : <Upload />} Upload PDF, PNG or JPG (max 5 MB)</Button>
+                    <Button type="button" variant="outline" className="w-full" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? <Loader2 className="animate-spin" /> : <Upload />} Tải lên PDF, PNG hoặc JPG (tối đa 5 MB)</Button>
                   </div>
                 )}
-                {canSubmit && <Button className="w-full" onClick={submit} disabled={submitting || org.documents.length === 0}>{submitting && <Loader2 className="animate-spin" />} Submit for verification</Button>}
+                {canSubmit && <Button className="w-full" onClick={submit} disabled={submitting || org.documents.length === 0}>{submitting && <Loader2 className="animate-spin" />} Gửi xác minh</Button>}
               </>
             )}
           </CardContent>
@@ -138,7 +138,7 @@ export default function OrganizationProfilePage() {
   const q = useQuery("org-profile", orgApi.me);
   return (
     <>
-      <PageHeader title="Organization" description="Your profile and verification status." />
+      <PageHeader title="Tổ chức" description="Hồ sơ và trạng thái xác minh của bạn." />
       {q.error ? <ErrorState message={q.error.message} onRetry={q.reload} /> : q.data !== undefined ? <OrgForm key={q.data?.id ?? "new"} org={q.data} reload={q.reload} /> : <Skeleton className="h-96" />}
     </>
   );

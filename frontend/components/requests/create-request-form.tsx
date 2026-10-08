@@ -19,35 +19,36 @@ import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
+import { URGENCY_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { publicApi, requestApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
 import { BLOOD_TYPES } from "@/types/domain";
 
 const schema = z.object({
-  bloodType: z.string().refine((v) => (BLOOD_TYPES as readonly string[]).includes(v), "Choose a blood type"),
-  unitsRequired: z.number({ message: "Enter the number of units" }).int().min(1, "At least 1 unit").max(20, "At most 20 units"),
+  bloodType: z.string().refine((v) => (BLOOD_TYPES as readonly string[]).includes(v), "Chọn nhóm máu"),
+  unitsRequired: z.number({ message: "Nhập số đơn vị" }).int().min(1, "Tối thiểu 1 đơn vị").max(20, "Tối đa 20 đơn vị"),
   organizationId: z.string(),
-  hospitalName: z.string().trim().min(2, "Enter the hospital or location name").max(200),
-  city: z.string().trim().min(1, "Enter the city"),
+  hospitalName: z.string().trim().min(2, "Nhập tên bệnh viện hoặc địa điểm").max(200),
+  city: z.string().trim().min(1, "Nhập thành phố"),
   district: z.string().trim(),
-  latitude: z.number({ message: "Pick the location on the map" }),
-  longitude: z.number({ message: "Pick the location on the map" }),
+  latitude: z.number({ message: "Chọn vị trí trên bản đồ" }),
+  longitude: z.number({ message: "Chọn vị trí trên bản đồ" }),
   urgency: z.enum(["CRITICAL", "URGENT", "NORMAL"]),
-  deadlineLocal: z.string().min(1, "Choose a deadline").refine((v) => {
+  deadlineLocal: z.string().min(1, "Chọn hạn chót").refine((v) => {
     const t = new Date(v).getTime();
     return t >= Date.now() + 5 * 60_000;
-  }, "Deadline must be at least 5 minutes from now").refine((v) => new Date(v).getTime() <= Date.now() + 7 * 86_400_000, "Deadline cannot be more than 7 days away"),
-  contactPhone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Enter a valid Vietnamese phone number"),
-  description: z.string().max(1000, "Keep it under 1000 characters"),
+  }, "Hạn chót phải cách hiện tại ít nhất 5 phút").refine((v) => new Date(v).getTime() <= Date.now() + 7 * 86_400_000, "Hạn chót không được quá 7 ngày"),
+  contactPhone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
+  description: z.string().max(1000, "Tối đa 1000 ký tự"),
 });
 type Values = z.infer<typeof schema>;
 
-const PRESETS = [{ label: "1 hour", min: 60 }, { label: "3 hours", min: 180 }, { label: "12 hours", min: 720 }, { label: "24 hours", min: 1440 }, { label: "3 days", min: 4320 }];
+const PRESETS = [{ label: "1 giờ", min: 60 }, { label: "3 giờ", min: 180 }, { label: "12 giờ", min: 720 }, { label: "24 giờ", min: 1440 }, { label: "3 ngày", min: 4320 }];
 const URGENCIES = [
-  { v: "CRITICAL", title: "Critical", desc: "Life-threatening, needed within hours" },
-  { v: "URGENT", title: "Urgent", desc: "Needed within a day" },
-  { v: "NORMAL", title: "Normal", desc: "Planned, flexible timing" },
+  { v: "CRITICAL", title: "Nguy kịch", desc: "Nguy hiểm đến tính mạng, cần trong vài giờ" },
+  { v: "URGENT", title: "Khẩn", desc: "Cần trong ngày" },
+  { v: "NORMAL", title: "Bình thường", desc: "Có kế hoạch, thời gian linh hoạt" },
 ] as const;
 
 function toLocalInput(ms: number): string {
@@ -95,7 +96,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         deadline: new Date(v.deadlineLocal).toISOString(), contactPhone: v.contactPhone,
         description: v.description || undefined, organizationId: v.organizationId || undefined,
       });
-      toast.success(created.verified ? "Request created. We are finding donors now." : "Request submitted for verification.");
+      toast.success(created.verified ? "Đã tạo yêu cầu. Chúng tôi đang tìm người hiến máu." : "Đã gửi yêu cầu để xác minh.");
       router.push(`${basePath}/requests/${created.id}`);
     } catch (e) {
       setPreview(null);
@@ -107,26 +108,26 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
     const p = preview;
     return (
       <>
-        <PageHeader title="Review your request" description="Check the details before LIFELY contacts donors." />
+        <PageHeader title="Xem lại yêu cầu của bạn" description="Kiểm tra lại thông tin trước khi LIFELY liên hệ người hiến máu." />
         <Card className="max-w-2xl">
-          <CardHeader><CardTitle>Request summary</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Tóm tắt yêu cầu</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-3"><UrgencyBadge urgency={p.urgency} /><BloodChip type={p.bloodType} className="text-lg" /></div>
             <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-              <div><dt className="text-muted-foreground">Blood type</dt><dd className="font-medium">{p.bloodType}</dd></div>
-              <div><dt className="text-muted-foreground">Units</dt><dd className="font-medium">{p.unitsRequired}</dd></div>
-              <div><dt className="text-muted-foreground">Location</dt><dd className="font-medium">{p.hospitalName}</dd><dd className="text-muted-foreground">{[p.district, p.city].filter(Boolean).join(", ")}</dd></div>
-              <div><dt className="text-muted-foreground">Urgency</dt><dd className="font-medium">{p.urgency}</dd></div>
-              <div><dt className="text-muted-foreground">Deadline</dt><dd className="font-medium">{formatDateTime(new Date(p.deadlineLocal).toISOString())}</dd></div>
-              <div><dt className="text-muted-foreground">Contact</dt><dd className="font-medium">{p.contactPhone}</dd></div>
-              {p.description && <div className="sm:col-span-2"><dt className="text-muted-foreground">Description</dt><dd className="whitespace-pre-wrap">{p.description}</dd></div>}
+              <div><dt className="text-muted-foreground">Nhóm máu</dt><dd className="font-medium">{p.bloodType}</dd></div>
+              <div><dt className="text-muted-foreground">Số đơn vị</dt><dd className="font-medium">{p.unitsRequired}</dd></div>
+              <div><dt className="text-muted-foreground">Địa điểm</dt><dd className="font-medium">{p.hospitalName}</dd><dd className="text-muted-foreground">{[p.district, p.city].filter(Boolean).join(", ")}</dd></div>
+              <div><dt className="text-muted-foreground">Mức độ khẩn cấp</dt><dd className="font-medium">{URGENCY_LABEL[p.urgency]}</dd></div>
+              <div><dt className="text-muted-foreground">Hạn chót</dt><dd className="font-medium">{formatDateTime(new Date(p.deadlineLocal).toISOString())}</dd></div>
+              <div><dt className="text-muted-foreground">Liên hệ</dt><dd className="font-medium">{p.contactPhone}</dd></div>
+              {p.description && <div className="sm:col-span-2"><dt className="text-muted-foreground">Mô tả</dt><dd className="whitespace-pre-wrap">{p.description}</dd></div>}
             </dl>
             <div className="mt-6"><CoveragePanel bloodType={p.bloodType} latitude={p.latitude} longitude={p.longitude} /></div>
-            <p className="mt-6 flex gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0" aria-hidden />Requests are verified before donors are contacted. Do not include patient names or medical details. Your phone number is shown only to donors who accept.</p>
+            <p className="mt-6 flex gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0" aria-hidden />Yêu cầu được xác minh trước khi liên hệ người hiến máu. Không ghi tên bệnh nhân hay thông tin y tế. Số điện thoại của bạn chỉ hiển thị với người hiến máu đã nhận lời.</p>
             {formError && <p role="alert" className="mt-4 text-sm text-critical">{formError}</p>}
             <div className="mt-6 flex flex-wrap justify-between gap-3">
-              <Button variant="outline" onClick={() => setPreview(null)} disabled={submitting}><ArrowLeft /> Edit</Button>
-              <Button size="lg" onClick={() => submit(p)} disabled={submitting}>{submitting && <Loader2 className="animate-spin" />} {submitting ? "Creating request…" : "Create Emergency Request"}</Button>
+              <Button variant="outline" onClick={() => setPreview(null)} disabled={submitting}><ArrowLeft /> Chỉnh sửa</Button>
+              <Button size="lg" onClick={() => submit(p)} disabled={submitting}>{submitting && <Loader2 className="animate-spin" />} {submitting ? "Đang tạo yêu cầu…" : "Tạo yêu cầu khẩn cấp"}</Button>
             </div>
           </CardContent>
         </Card>
@@ -136,14 +137,14 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
 
   return (
     <>
-      <PageHeader title="Create a blood request" description="Tell us what is needed. We verify the request, then find suitable donors nearby." />
+      <PageHeader title="Tạo yêu cầu máu" description="Cho chúng tôi biết bạn cần gì. Chúng tôi xác minh yêu cầu rồi tìm người hiến máu phù hợp ở gần." />
       <form onSubmit={handleSubmit((v) => setPreview(v))} noValidate className="max-w-3xl space-y-6">
         {formError && <p role="alert" className="rounded-xl border border-critical/30 bg-critical/5 px-4 py-3 text-sm text-critical">{formError}</p>}
         <Card>
-          <CardHeader><CardTitle>Blood needed</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Máu cần thiết</CardTitle></CardHeader>
           <CardContent className="space-y-5">
             <fieldset>
-              <legend className="mb-2 text-sm font-medium">Blood type</legend>
+              <legend className="mb-2 text-sm font-medium">Nhóm máu</legend>
               <div role="radiogroup" className="grid grid-cols-4 gap-2 sm:gap-3">
                 {BLOOD_TYPES.map((b) => (
                   <label key={b} className={cn("grid h-14 cursor-pointer place-items-center rounded-xl border border-border bg-card text-lg font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring", bt === b && "border-primary bg-secondary text-primary")}>
@@ -153,12 +154,12 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
               </div>
               {errors.bloodType && <p role="alert" className="mt-2 text-xs font-medium text-critical">{errors.bloodType.message}</p>}
             </fieldset>
-            <Field label="Units required" htmlFor="units" error={errors.unitsRequired?.message} hint="1 to 20 units" className="max-w-40">
+            <Field label="Số đơn vị cần" htmlFor="units" error={errors.unitsRequired?.message} hint="Từ 1 đến 20 đơn vị" className="max-w-40">
               <Input id="units" type="number" inputMode="numeric" min={1} max={20} aria-invalid={!!errors.unitsRequired} {...register("unitsRequired", { valueAsNumber: true })} />
             </Field>
             <Controller control={control} name="urgency" render={({ field }) => (
               <fieldset>
-                <legend className="mb-2 text-sm font-medium">Urgency</legend>
+                <legend className="mb-2 text-sm font-medium">Mức độ khẩn cấp</legend>
                 <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
                   {URGENCIES.map((u) => (
                     <label key={u.v} className={cn("cursor-pointer rounded-xl border border-border bg-card p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring", field.value === u.v && "border-primary bg-secondary")}>
@@ -173,23 +174,23 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Hospital / location</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Bệnh viện / địa điểm</CardTitle></CardHeader>
           <CardContent className="space-y-5">
-            <Field label="Verified hospital" htmlFor="org" hint="Choosing a verified hospital sets the exact location for you and can speed up verification.">
+            <Field label="Bệnh viện đã xác minh" htmlFor="org" hint="Chọn bệnh viện đã xác minh sẽ đặt đúng vị trí cho bạn và có thể giúp xác minh nhanh hơn.">
               <Select id="org" value={orgId} onChange={(e) => pickHospital(e.target.value)}>
-                <option value="">Other location (enter manually)</option>
+                <option value="">Địa điểm khác (nhập thủ công)</option>
                 {orgs.data?.map((o) => <option key={o.id} value={o.id}>{o.name}{o.district ? ` – ${o.district}` : ""}</option>)}
               </Select>
             </Field>
-            <Field label="Hospital / location name" htmlFor="hospitalName" error={errors.hospitalName?.message}><Input id="hospitalName" readOnly={!!orgId} {...register("hospitalName")} aria-invalid={!!errors.hospitalName} /></Field>
+            <Field label="Tên bệnh viện / địa điểm" htmlFor="hospitalName" error={errors.hospitalName?.message}><Input id="hospitalName" readOnly={!!orgId} {...register("hospitalName")} aria-invalid={!!errors.hospitalName} /></Field>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="City" htmlFor="city" error={errors.city?.message}><Input id="city" readOnly={!!orgId} {...register("city")} /></Field>
-              <Field label="District" htmlFor="district"><Input id="district" readOnly={!!orgId} {...register("district")} /></Field>
+              <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" readOnly={!!orgId} {...register("city")} /></Field>
+              <Field label="Quận/Huyện" htmlFor="district"><Input id="district" readOnly={!!orgId} {...register("district")} /></Field>
             </div>
             {!orgId && (
               <>
-                <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} hospitals={orgs.data} help="Place the pin where donors should go." />
-                {(errors.latitude || errors.longitude) && <p role="alert" className="text-xs font-medium text-critical">Pick the location on the map</p>}
+                <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} hospitals={orgs.data} help="Đặt ghim ở nơi người hiến máu cần đến." />
+                {(errors.latitude || errors.longitude) && <p role="alert" className="text-xs font-medium text-critical">Chọn vị trí trên bản đồ</p>}
               </>
             )}
           </CardContent>
@@ -198,21 +199,21 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         <CoveragePanel bloodType={bt} latitude={lat ?? null} longitude={lng ?? null} />
 
         <Card>
-          <CardHeader><CardTitle>Deadline &amp; contact</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Hạn chót &amp; liên hệ</CardTitle></CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Needed within</p>
+              <p className="mb-2 text-sm font-medium">Cần trong vòng</p>
               <div className="flex flex-wrap gap-2">
                 {PRESETS.map((p) => <Button key={p.min} type="button" variant="outline" size="sm" onClick={() => setValue("deadlineLocal", toLocalInput(Date.now() + p.min * 60_000), { shouldValidate: true })}>{p.label}</Button>)}
               </div>
             </div>
-            <Field label="Deadline" htmlFor="deadline" error={errors.deadlineLocal?.message}><Input id="deadline" type="datetime-local" aria-invalid={!!errors.deadlineLocal} {...register("deadlineLocal")} /></Field>
-            <Field label="Contact phone" htmlFor="contact" error={errors.contactPhone?.message} hint="Shown only to donors who accept."><Input id="contact" type="tel" aria-invalid={!!errors.contactPhone} {...register("contactPhone")} /></Field>
-            <Field label="Description (optional)" htmlFor="desc" error={errors.description?.message} hint="Ward, room or instructions for donors. Do not include patient names."><Textarea id="desc" maxLength={1000} {...register("description")} /></Field>
+            <Field label="Hạn chót" htmlFor="deadline" error={errors.deadlineLocal?.message}><Input id="deadline" type="datetime-local" aria-invalid={!!errors.deadlineLocal} {...register("deadlineLocal")} /></Field>
+            <Field label="SĐT liên hệ" htmlFor="contact" error={errors.contactPhone?.message} hint="Chỉ hiển thị với người hiến máu đã nhận lời."><Input id="contact" type="tel" aria-invalid={!!errors.contactPhone} {...register("contactPhone")} /></Field>
+            <Field label="Mô tả (không bắt buộc)" htmlFor="desc" error={errors.description?.message} hint="Khoa, phòng hoặc hướng dẫn cho người hiến máu. Không ghi tên bệnh nhân."><Textarea id="desc" maxLength={1000} {...register("description")} /></Field>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end"><Button type="submit" size="lg">Review request</Button></div>
+        <div className="flex justify-end"><Button type="submit" size="lg">Xem lại yêu cầu</Button></div>
       </form>
     </>
   );

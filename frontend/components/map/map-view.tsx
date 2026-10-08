@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
+import { URGENCY_LABEL } from "@/lib/labels";
 import type { PublicOrg, PublicRequest } from "@/types/domain";
 
 import { DEFAULT_CENTER } from "@/components/map/constants";
@@ -71,7 +72,7 @@ export default function MapView({
   onSelectRequest, height = 420, scrollWheelZoom = true, className,
 }: MapViewProps) {
   return (
-    <div className={className} style={{ height }} role="region" aria-label="Map of emergency requests and hospitals">
+    <div className={className} style={{ height }} role="region" aria-label="Bản đồ các yêu cầu khẩn cấp và bệnh viện">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={scrollWheelZoom} style={{ height: "100%", width: "100%", borderRadius: "1.25rem", zIndex: 0 }}>
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Recenter center={center} zoom={zoom} />
@@ -86,9 +87,9 @@ export default function MapView({
         {requests.map((r) => (
           <Marker key={r.id} position={[r.latitude, r.longitude]} icon={requestIcon(r)} eventHandlers={{ click: () => onSelectRequest?.(r.id) }}>
             <Popup>
-              <strong>{r.urgency} · {r.bloodType}</strong><br />
-              {r.unitsNeeded} unit(s) needed<br />{r.hospitalName}<br />
-              <a href={`/requests/${r.id}`}>View request</a>
+              <strong>{URGENCY_LABEL[r.urgency]} · {r.bloodType}</strong><br />
+              Cần {r.unitsNeeded} đơn vị<br />{r.hospitalName}<br />
+              <a href={`/requests/${r.id}`}>Xem yêu cầu</a>
             </Popup>
           </Marker>
         ))}

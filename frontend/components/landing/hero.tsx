@@ -12,7 +12,7 @@ import { publicApi } from "@/services";
 
 function NetworkVisual() {
   return (
-    <svg viewBox="0 0 480 420" role="img" aria-label="Donors and a hospital connected through the LIFELY network" className="h-auto w-full">
+    <svg viewBox="0 0 480 420" role="img" aria-label="Người hiến máu và bệnh viện được kết nối qua mạng lưới LIFELY" className="h-auto w-full">
       <defs>
         <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" /><stop offset="100%" stopColor="var(--primary)" stopOpacity="0" /></radialGradient>
         <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="var(--border)" strokeWidth="1" /></pattern>
@@ -31,9 +31,9 @@ function NetworkVisual() {
           <circle cx={x} cy={y} r="4" fill="var(--primary)" />
         </g>
       ))}
-      <text x="60" y="76" fontSize="12" fill="var(--muted-foreground)">Donor</text>
-      <text x="88" y="360" fontSize="12" fill="var(--muted-foreground)">Donor</text>
-      <text x="372" y="102" fontSize="12" fill="var(--muted-foreground)">Donor</text>
+      <text x="60" y="76" fontSize="12" fill="var(--muted-foreground)">Người hiến</text>
+      <text x="88" y="360" fontSize="12" fill="var(--muted-foreground)">Người hiến</text>
+      <text x="372" y="102" fontSize="12" fill="var(--muted-foreground)">Người hiến</text>
       {/* LIFELY */}
       <circle cx="240" cy="210" r="22" fill="var(--primary)" opacity="0.18" className="pulse-ring" />
       <circle cx="240" cy="210" r="22" fill="var(--primary)" opacity="0.14" className="pulse-ring" style={{ animationDelay: "1.2s" }} />
@@ -43,7 +43,7 @@ function NetworkVisual() {
       {/* hospital */}
       <rect x="366" y="304" width="36" height="36" rx="10" fill="#0f172a" />
       <path d="M384 313v18M375 322h18" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
-      <text x="384" y="360" fontSize="12" textAnchor="middle" fill="var(--muted-foreground)">Hospital</text>
+      <text x="384" y="360" fontSize="12" textAnchor="middle" fill="var(--muted-foreground)">Bệnh viện</text>
     </svg>
   );
 }
@@ -59,28 +59,28 @@ export function Hero() {
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium" role="status">
             <span className="relative flex size-2"><span className={cn("absolute inline-flex size-full rounded-full opacity-60", s ? "animate-ping bg-success" : "bg-muted-foreground")} /><span className={cn("relative inline-flex size-2 rounded-full", s ? "bg-success" : "bg-muted-foreground")} /></span>
-            {s ? "LIFELY NETWORK ACTIVE" : stats.error ? "NETWORK STATUS UNAVAILABLE" : "CONNECTING TO NETWORK…"}
+            {s ? "MẠNG LƯỚI LIFELY ĐANG HOẠT ĐỘNG" : stats.error ? "KHÔNG LẤY ĐƯỢC TRẠNG THÁI MẠNG LƯỚI" : "ĐANG KẾT NỐI MẠNG LƯỚI…"}
           </p>
           <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            When every second matters, <span className="text-primary">connection</span> matters.
+            Khi từng giây đều quý giá, <span className="text-primary">sự kết nối</span> càng quan trọng.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            LIFELY helps connect people who need blood with nearby donors and coordinates responses through one trusted platform.
+            LIFELY giúp kết nối người cần máu với người hiến máu ở gần và điều phối phản hồi trên một nền tảng đáng tin cậy.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href="/requester/requests/create" className={cn(buttonVariants({ size: "lg" }), "shadow-lg shadow-primary/25")}>
-              <Droplets /> I NEED BLOOD
+              <Droplets /> TÔI CẦN MÁU
             </Link>
             <Link href="/register?role=DONOR" className={buttonVariants({ variant: "outline", size: "lg" })}>
-              <HandHeart /> I WANT TO DONATE <ArrowRight />
+              <HandHeart /> TÔI MUỐN HIẾN MÁU <ArrowRight />
             </Link>
           </div>
 
           <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">
             {[
-              { label: "Active Requests", v: s?.activeRequests },
-              { label: "Available Donors", v: s?.availableDonors },
-              { label: "Verified Organizations", v: s?.verifiedOrganizations },
+              { label: "Yêu cầu đang hoạt động", v: s?.activeRequests },
+              { label: "Người hiến máu sẵn sàng", v: s?.availableDonors },
+              { label: "Tổ chức đã xác minh", v: s?.verifiedOrganizations },
             ].map((x) => (
               <div key={x.label}>
                 <dd className="text-3xl font-semibold tabular-nums tracking-tight">
@@ -90,7 +90,7 @@ export function Hero() {
               </div>
             ))}
           </dl>
-          {s?.demoEnvironment && <p className="mt-4 text-xs text-muted-foreground">Demo environment: figures come from sample data.</p>}
+          {s?.demoEnvironment && <p className="mt-4 text-xs text-muted-foreground">Môi trường demo: số liệu lấy từ dữ liệu mẫu.</p>}
         </div>
         <div className="mx-auto w-full max-w-md lg:max-w-none"><NetworkVisual /></div>
       </div>

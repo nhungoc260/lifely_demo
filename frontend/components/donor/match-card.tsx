@@ -11,7 +11,7 @@ import type { DonorMatch } from "@/types/domain";
 export function MatchScore({ value, className }: { value: number; className?: string }) {
   return (
     <div className={cn("text-right", className)}>
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Match</p>
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Phù hợp</p>
       <p className="text-2xl font-semibold tabular-nums leading-none text-primary">{Math.round(value)}%</p>
     </div>
   );
@@ -30,11 +30,11 @@ export function MatchCard({ m }: { m: DonorMatch }) {
         <p className="font-semibold">{m.hospitalName}</p>
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div className="flex items-center gap-2"><MapPin className="size-4 text-muted-foreground" aria-hidden /><dt className="sr-only">Distance</dt><dd>{m.distanceKm.toFixed(1)} km</dd></div>
-        <div><dt className="sr-only">Units</dt><dd>{m.unitsNeeded} unit{m.unitsNeeded === 1 ? "" : "s"} needed</dd></div>
-        <div className="col-span-2 flex items-center gap-2"><Clock className="size-4 text-muted-foreground" aria-hidden /><dt className="text-muted-foreground">Remaining</dt><dd className="font-medium"><Countdown deadline={m.deadline} /></dd></div>
+        <div className="flex items-center gap-2"><MapPin className="size-4 text-muted-foreground" aria-hidden /><dt className="sr-only">Khoảng cách</dt><dd>{m.distanceKm.toFixed(1)} km</dd></div>
+        <div><dt className="sr-only">Số đơn vị</dt><dd>Cần {m.unitsNeeded} đơn vị</dd></div>
+        <div className="col-span-2 flex items-center gap-2"><Clock className="size-4 text-muted-foreground" aria-hidden /><dt className="text-muted-foreground">Còn lại</dt><dd className="font-medium"><Countdown deadline={m.deadline} /></dd></div>
       </dl>
-      <Link href={`/donor/requests/${m.matchId}`} className={cn(buttonVariants({ variant: open ? "default" : "outline" }), "mt-5 w-full")}>{open ? "View Request" : "View details"}</Link>
+      <Link href={`/donor/requests/${m.matchId}`} className={cn(buttonVariants({ variant: open ? "default" : "outline" }), "mt-5 w-full")}>{open ? "Xem yêu cầu" : "Xem chi tiết"}</Link>
     </Card>
   );
 }

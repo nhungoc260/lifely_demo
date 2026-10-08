@@ -22,23 +22,23 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Account created successfully", authService.register(request)));
+                .body(ApiResponse.ok("Tạo tài khoản thành công", authService.register(request)));
     }
 
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok("Logged in successfully", authService.login(request));
+        return ApiResponse.ok("Đăng nhập thành công", authService.login(request));
     }
 
     @PostMapping("/forgot-password")
     public ApiResponse<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
-        return ApiResponse.ok("If an account exists for this email, a reset link has been sent", null);
+        return ApiResponse.ok("Nếu email này có tài khoản, liên kết đặt lại mật khẩu đã được gửi", null);
     }
 
     @PostMapping("/reset-password")
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ApiResponse.ok("Password updated. You can now log in", null);
+        return ApiResponse.ok("Đã cập nhật mật khẩu. Bạn có thể đăng nhập ngay", null);
     }
 }

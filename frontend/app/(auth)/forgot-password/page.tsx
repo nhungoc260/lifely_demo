@@ -13,7 +13,7 @@ import { Field, Input } from "@/components/ui/input";
 import { toApiError } from "@/lib/api";
 import { authApi } from "@/services";
 
-const schema = z.object({ email: z.string().min(1, "Enter your email").email("Enter a valid email") });
+const schema = z.object({ email: z.string().min(1, "Nhập email của bạn").email("Email không hợp lệ") });
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
@@ -21,13 +21,13 @@ export default function ForgotPasswordPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
 
   return (
-    <AuthLayout title="Reset your password" subtitle="Enter your email and we will send a reset link.">
+    <AuthLayout title="Đặt lại mật khẩu" subtitle="Nhập email, chúng tôi sẽ gửi liên kết đặt lại mật khẩu cho bạn.">
       {sent ? (
         <div role="status" className="rounded-2xl border border-success/30 bg-success/5 p-5 text-sm">
           <CheckCircle2 className="mb-2 size-5 text-success" aria-hidden />
-          <p className="font-medium">Check your inbox</p>
-          <p className="mt-1 text-muted-foreground">If an account exists for this email, a reset link has been sent. The link expires in 30 minutes.</p>
-          <Link href="/login" className="mt-4 inline-block font-medium text-primary hover:underline">Back to log in</Link>
+          <p className="font-medium">Hãy kiểm tra hộp thư</p>
+          <p className="mt-1 text-muted-foreground">Nếu email này có tài khoản, liên kết đặt lại mật khẩu đã được gửi. Liên kết có hiệu lực trong 30 phút.</p>
+          <Link href="/login" className="mt-4 inline-block font-medium text-primary hover:underline">Quay lại đăng nhập</Link>
         </div>
       ) : (
         <form
@@ -43,9 +43,9 @@ export default function ForgotPasswordPage() {
             <Input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...register("email")} />
           </Field>
           <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="animate-spin" />} Send reset link
+            {isSubmitting && <Loader2 className="animate-spin" />} Gửi liên kết đặt lại
           </Button>
-          <p className="text-center text-sm"><Link href="/login" className="text-primary hover:underline">Back to log in</Link></p>
+          <p className="text-center text-sm"><Link href="/login" className="text-primary hover:underline">Quay lại đăng nhập</Link></p>
         </form>
       )}
     </AuthLayout>

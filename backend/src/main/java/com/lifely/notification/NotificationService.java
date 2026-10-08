@@ -57,7 +57,7 @@ public class NotificationService {
     public NotificationDto markRead(UUID userId, UUID id) {
         Notification n = repository.findById(id)
                 .filter(x -> x.getUserId().equals(userId))
-                .orElseThrow(() -> AppException.notFound("NOTIFICATION_NOT_FOUND", "Notification not found"));
+                .orElseThrow(() -> AppException.notFound("NOTIFICATION_NOT_FOUND", "Không tìm thấy thông báo"));
         n.setReadFlag(true);
         return NotificationDto.from(repository.save(n));
     }

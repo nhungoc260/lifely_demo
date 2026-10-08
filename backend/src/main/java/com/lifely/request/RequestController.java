@@ -39,7 +39,7 @@ public class RequestController {
     public ResponseEntity<ApiResponse<RequestResponse>> create(@AuthenticationPrincipal AuthUser user,
                                                                @Valid @RequestBody CreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Request created successfully", service.create(user, dto)));
+                .body(ApiResponse.ok("Tạo yêu cầu thành công", service.create(user, dto)));
     }
 
     @GetMapping
@@ -72,13 +72,13 @@ public class RequestController {
     @PutMapping("/{id}")
     public ApiResponse<RequestResponse> update(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
                                                @Valid @RequestBody UpdateRequestDto dto) {
-        return ApiResponse.ok("Request updated", service.update(user, id, dto));
+        return ApiResponse.ok("Đã cập nhật yêu cầu", service.update(user, id, dto));
     }
 
     @PostMapping("/{id}/cancel")
     public ApiResponse<RequestResponse> cancel(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
                                                @Valid @RequestBody(required = false) CancelRequestDto dto) {
-        return ApiResponse.ok("Request cancelled", service.cancel(user, id, dto == null ? null : dto.reason()));
+        return ApiResponse.ok("Yêu cầu đã bị hủy", service.cancel(user, id, dto == null ? null : dto.reason()));
     }
 
     @GetMapping("/{id}/history")

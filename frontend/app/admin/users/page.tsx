@@ -16,6 +16,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { ROLE_LABEL } from "@/lib/labels";
 import { adminApi } from "@/services";
 import type { AdminUser } from "@/types/domain";
 
@@ -33,37 +34,37 @@ export default function AdminUsers() {
   async function toggle() {
     if (!target) return;
     const action = target.status === "ACTIVE" ? "suspend" : "activate";
-    try { await adminApi.setUserStatus(target.id, action); toast.success(action === "suspend" ? "User suspended" : "User activated"); res.reload(); }
+    try { await adminApi.setUserStatus(target.id, action); toast.success(action === "suspend" ? "Đã khóa người dùng" : "Đã kích hoạt người dùng"); res.reload(); }
     catch (e) { toast.error(toApiError(e).message); throw e; }
   }
 
   return (
     <>
-      <PageHeader title="Users" description="Search, filter and manage accounts." />
+      <PageHeader title="Người dùng" description="Tìm kiếm, lọc và quản lý tài khoản." />
       <form onSubmit={(e) => { e.preventDefault(); setSearch(q); setPage(0); }} className="mb-5 grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]" role="search">
-        <Input aria-label="Search users" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Select aria-label="Role" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}><option value="">All roles</option><option value="DONOR">Donor</option><option value="REQUESTER">Requester</option><option value="ORGANIZATION">Organization</option><option value="ADMIN">Admin</option></Select>
-        <Select aria-label="Status" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option></Select>
-        <Select aria-label="Sort" value={sort} onChange={(e) => { setSort(e.target.value); setPage(0); }}><option value="createdAt:desc">Newest first</option><option value="createdAt:asc">Oldest first</option><option value="fullName:asc">Name A–Z</option><option value="email:asc">Email A–Z</option></Select>
-        <Button type="submit" variant="outline"><Search /> Search</Button>
+        <Input aria-label="Tìm người dùng" placeholder="Tìm theo tên hoặc email" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Select aria-label="Vai trò" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}><option value="">Tất cả vai trò</option><option value="DONOR">Người hiến máu</option><option value="REQUESTER">Người cần máu</option><option value="ORGANIZATION">Tổ chức</option><option value="ADMIN">Admin</option></Select>
+        <Select aria-label="Trạng thái" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}><option value="">Tất cả trạng thái</option><option value="ACTIVE">Hoạt động</option><option value="SUSPENDED">Tạm khóa</option></Select>
+        <Select aria-label="Sắp xếp" value={sort} onChange={(e) => { setSort(e.target.value); setPage(0); }}><option value="createdAt:desc">Mới nhất trước</option><option value="createdAt:asc">Cũ nhất trước</option><option value="fullName:asc">Tên A–Z</option><option value="email:asc">Email A–Z</option></Select>
+        <Button type="submit" variant="outline"><Search /> Tìm kiếm</Button>
       </form>
       {res.initialLoading ? <Skeleton className="h-96" />
         : res.error && !res.data ? <ErrorState message={res.error.message} onRetry={res.reload} />
-        : res.data && res.data.items.length === 0 ? <EmptyState title="No users found" description="Try a different search or filter." />
+        : res.data && res.data.items.length === 0 ? <EmptyState title="Không tìm thấy người dùng" description="Thử từ khóa hoặc bộ lọc khác." />
         : res.data && (
           <>
-            <DataTable caption="Users" rows={res.data.items} rowKey={(u) => u.id} columns={[
-              { key: "name", header: "Name", cell: (u) => <span className="font-medium">{u.fullName}</span> },
+            <DataTable caption="Người dùng" rows={res.data.items} rowKey={(u) => u.id} columns={[
+              { key: "name", header: "Tên", cell: (u) => <span className="font-medium">{u.fullName}</span> },
               { key: "email", header: "Email", cell: (u) => u.email },
-              { key: "role", header: "Role", cell: (u) => <Pill t="slate">{u.roles.join(", ")}</Pill> },
-              { key: "created", header: "Joined", cell: (u) => formatDate(u.createdAt) },
-              { key: "status", header: "Status", cell: (u) => <Pill t={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "Active" : "Suspended"}</Pill> },
-              { key: "act", header: "Action", align: "right", cell: (u) => u.roles.includes("ADMIN") ? <span className="text-xs text-muted-foreground">Protected</span> : <Button size="sm" variant="outline" onClick={() => setTarget(u)}>{u.status === "ACTIVE" ? "Suspend" : "Activate"}</Button> },
+              { key: "role", header: "Vai trò", cell: (u) => <Pill t="slate">{u.roles.map((r) => ROLE_LABEL[r]).join(", ")}</Pill> },
+              { key: "created", header: "Ngày tham gia", cell: (u) => formatDate(u.createdAt) },
+              { key: "status", header: "Trạng thái", cell: (u) => <Pill t={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}</Pill> },
+              { key: "act", header: "Hành động", align: "right", cell: (u) => u.roles.includes("ADMIN") ? <span className="text-xs text-muted-foreground">Được bảo vệ</span> : <Button size="sm" variant="outline" onClick={() => setTarget(u)}>{u.status === "ACTIVE" ? "Tạm khóa" : "Kích hoạt"}</Button> },
             ]} />
             <Pagination page={res.data} onChange={setPage} />
           </>
         )}
-      <ConfirmDialog open={!!target} onOpenChange={(o) => !o && setTarget(null)} title={target?.status === "ACTIVE" ? "Suspend this user?" : "Activate this user?"} description={target?.status === "ACTIVE" ? `${target?.fullName} will be signed out of every request and will no longer be matched or able to log in.` : `${target?.fullName} will be able to log in again.`} confirmLabel={target?.status === "ACTIVE" ? "Suspend" : "Activate"} destructive={target?.status === "ACTIVE"} onConfirm={toggle} />
+      <ConfirmDialog open={!!target} onOpenChange={(o) => !o && setTarget(null)} title={target?.status === "ACTIVE" ? "Khóa người dùng này?" : "Kích hoạt người dùng này?"} description={target?.status === "ACTIVE" ? `${target?.fullName} sẽ không còn được kết nối với yêu cầu nào và không thể đăng nhập.` : `${target?.fullName} sẽ có thể đăng nhập lại.`} confirmLabel={target?.status === "ACTIVE" ? "Tạm khóa" : "Kích hoạt"} destructive={target?.status === "ACTIVE"} onConfirm={toggle} />
     </>
   );
 }

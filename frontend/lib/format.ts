@@ -1,19 +1,19 @@
 export function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
 }
 
 export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(iso));
+  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(new Date(iso));
 }
 
 export function timeAgo(iso: string, now = Date.now()): string {
   const s = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 1000));
-  if (s < 60) return "just now";
+  if (s < 60) return "vừa xong";
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m} min ago`;
+  if (m < 60) return `${m} phút trước`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} h ago`;
-  return `${Math.floor(h / 24)} d ago`;
+  if (h < 24) return `${h} giờ trước`;
+  return `${Math.floor(h / 24)} ngày trước`;
 }
 
 /** 01:42:18 */
@@ -26,13 +26,13 @@ export function formatCountdown(msLeft: number): string {
 }
 
 export const STATUS_LABEL: Record<string, string> = {
-  CREATED: "Created",
-  PENDING_VERIFICATION: "Pending verification",
-  VERIFIED: "Verified",
-  MATCHING: "Matching",
-  DONORS_CONTACTED: "Donors contacted",
-  PARTIALLY_FULFILLED: "Partially fulfilled",
-  FULFILLED: "Fulfilled",
-  CANCELLED: "Cancelled",
-  EXPIRED: "Expired",
+  CREATED: "Đã tạo",
+  PENDING_VERIFICATION: "Chờ xác minh",
+  VERIFIED: "Đã xác minh",
+  MATCHING: "Đang tìm người hiến",
+  DONORS_CONTACTED: "Đã liên hệ người hiến",
+  PARTIALLY_FULFILLED: "Đã có một phần",
+  FULFILLED: "Đã đủ người",
+  CANCELLED: "Đã hủy",
+  EXPIRED: "Đã hết hạn",
 };

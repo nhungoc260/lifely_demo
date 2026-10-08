@@ -12,7 +12,7 @@ public record UpdateOrganizationRequest(
         @Size(max = 100) String district,
         @NotNull @DecimalMin("-90") @DecimalMax("90") Double latitude,
         @NotNull @DecimalMin("-180") @DecimalMax("180") Double longitude,
-        @NotBlank @Pattern(regexp = Patterns.PHONE, message = "Enter a valid Vietnamese phone number") String phone,
+        @NotBlank @Pattern(regexp = Patterns.PHONE, message = "Số điện thoại không hợp lệ") String phone,
         @NotBlank @Email @Size(max = 255) String email,
         @NotBlank @Size(max = 150) String contactPerson) {
 }

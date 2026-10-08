@@ -61,12 +61,12 @@ public class AdminController {
 
     @PostMapping("/users/{id}/suspend")
     public ApiResponse<AdminUserDto> suspend(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id) {
-        return ApiResponse.ok("User suspended", service.setUserStatus(admin, id, UserStatus.SUSPENDED));
+        return ApiResponse.ok("Đã khóa người dùng", service.setUserStatus(admin, id, UserStatus.SUSPENDED));
     }
 
     @PostMapping("/users/{id}/activate")
     public ApiResponse<AdminUserDto> activate(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id) {
-        return ApiResponse.ok("User activated", service.setUserStatus(admin, id, UserStatus.ACTIVE));
+        return ApiResponse.ok("Đã kích hoạt người dùng", service.setUserStatus(admin, id, UserStatus.ACTIVE));
     }
 
     // ---- requests
@@ -96,19 +96,19 @@ public class AdminController {
 
     @PostMapping("/requests/{id}/verify")
     public ApiResponse<RequestResponse> verifyRequest(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id) {
-        return ApiResponse.ok("Request verified. Matching has started", service.verifyRequest(admin, id));
+        return ApiResponse.ok("Đã xác minh yêu cầu. Hệ thống bắt đầu tìm người hiến máu", service.verifyRequest(admin, id));
     }
 
     @PostMapping("/requests/{id}/reject")
     public ApiResponse<RequestResponse> rejectRequest(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                       @Valid @RequestBody(required = false) ReviewNote body) {
-        return ApiResponse.ok("Request rejected", service.rejectRequest(admin, id, body == null ? null : body.note()));
+        return ApiResponse.ok("Đã từ chối yêu cầu", service.rejectRequest(admin, id, body == null ? null : body.note()));
     }
 
     @PostMapping("/requests/{id}/cancel")
     public ApiResponse<RequestResponse> cancelRequest(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                       @Valid @RequestBody(required = false) ReviewNote body) {
-        return ApiResponse.ok("Request cancelled", service.cancelRequest(admin, id, body == null ? null : body.note()));
+        return ApiResponse.ok("Yêu cầu đã bị hủy", service.cancelRequest(admin, id, body == null ? null : body.note()));
     }
 
     // ---- organizations
@@ -127,21 +127,21 @@ public class AdminController {
     @PostMapping("/organizations/{id}/verify")
     public ApiResponse<OrganizationDto> verifyOrg(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                   @Valid @RequestBody(required = false) ReviewNote body) {
-        return ApiResponse.ok("Organization verified",
+        return ApiResponse.ok("Đã xác minh tổ chức",
                 service.reviewOrganization(admin, id, OrgVerificationStatus.VERIFIED, body == null ? null : body.note()));
     }
 
     @PostMapping("/organizations/{id}/reject")
     public ApiResponse<OrganizationDto> rejectOrg(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                   @Valid @RequestBody(required = false) ReviewNote body) {
-        return ApiResponse.ok("Organization rejected",
+        return ApiResponse.ok("Đã từ chối tổ chức",
                 service.reviewOrganization(admin, id, OrgVerificationStatus.REJECTED, body == null ? null : body.note()));
     }
 
     @PostMapping("/organizations/{id}/suspend")
     public ApiResponse<OrganizationDto> suspendOrg(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                    @Valid @RequestBody(required = false) ReviewNote body) {
-        return ApiResponse.ok("Organization suspended",
+        return ApiResponse.ok("Đã tạm khóa tổ chức",
                 service.reviewOrganization(admin, id, OrgVerificationStatus.SUSPENDED, body == null ? null : body.note()));
     }
 
@@ -156,7 +156,7 @@ public class AdminController {
     @PutMapping("/reports/{id}")
     public ApiResponse<ReportDto> updateReport(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                @Valid @RequestBody UpdateReportRequest req) {
-        return ApiResponse.ok("Report updated", service.updateReport(admin, id, req.status()));
+        return ApiResponse.ok("Đã cập nhật báo cáo", service.updateReport(admin, id, req.status()));
     }
 
     @GetMapping("/audit-logs")

@@ -71,15 +71,15 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest req) {
         if (!req.password().equals(req.confirmPassword())) {
-            throw AppException.badRequest("PASSWORD_MISMATCH", "Passwords do not match");
+            throw AppException.badRequest("PASSWORD_MISMATCH", "Mật khẩu nhập lại không khớp");
         }
         String email = req.email().trim().toLowerCase();
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw AppException.conflict("EMAIL_TAKEN", "An account with this email already exists");
+            throw AppException.conflict("EMAIL_TAKEN", "Email này đã được đăng ký");
         }
         String roleName = "ROLE_" + req.role();
         Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> AppException.badRequest("INVALID_ROLE", "Unknown role"));
+                .orElseThrow(() -> AppException.badRequest("INVALID_ROLE", "Vai trò không hợp lệ"));
 
         User user = new User();
         user.setEmail(email);
@@ -102,19 +102,19 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(req.email().trim()).orElse(null);
         if (user == null) {
             passwordEncoder.matches(req.password(), dummyHash);
-            throw AppException.unauthorized("INVALID_CREDENTIALS", "Email or password is incorrect");
+            throw AppException.unauthorized("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
         }
         Instant now = Instant.now();
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             throw new AppException(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "ACCOUNT_LOCKED",
-                    "Too many failed attempts. Try again in a few minutes or reset your password.");
+                    "Đăng nhập sai quá nhiều lần. Hãy thử lại sau vài phút hoặc đặt lại mật khẩu.");
         }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             registerFailure(user, now);
-            throw AppException.unauthorized("INVALID_CREDENTIALS", "Email or password is incorrect");
+            throw AppException.unauthorized("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
         }
         if (user.getStatus() == UserStatus.SUSPENDED) {
-            throw AppException.forbidden("ACCOUNT_SUSPENDED", "This account has been suspended. Contact support.");
+            throw AppException.forbidden("ACCOUNT_SUSPENDED", "Tài khoản này đã bị khóa. Vui lòng liên hệ nhân viên hỗ trợ.");
         }
         return onLoginSuccess(user);
     }
@@ -152,9 +152,9 @@ public class AuthService {
             resetTokenRepository.save(entity);
             String link = frontendUrl + "/reset-password?token=" + token;
             if (mailService.isEnabled()) {
-                mailService.send(user.getEmail(), "Dat lai mat khau LIFELY",
-                        "Xin chao " + user.getFullName() + ",\n\nBam vao lien ket sau de dat lai mat khau (hieu luc 30 phut):\n"
-                                + link + "\n\nNeu ban khong yeu cau, hay bo qua email nay.");
+                mailService.send(user.getEmail(), "Đặt lại mật khẩu LIFELY",
+                        "Xin chào " + user.getFullName() + ",\n\nBấm vào liên kết sau để đặt lại mật khẩu (có hiệu lực 30 phút):\n"
+                                + link + "\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.");
             } else if (logResetLink) {
                 // Chưa cấu hình email: ở môi trường dev, link đặt lại được ghi vào log máy chủ.
                 log.info("[DEV ONLY] Password reset link for {}: {}", user.getEmail(), link);
@@ -167,9 +167,9 @@ public class AuthService {
         PasswordResetToken token = resetTokenRepository.findByTokenHash(sha256(req.token()))
                 .filter(t -> t.getUsedAt() == null && t.getExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> AppException.badRequest("INVALID_RESET_TOKEN",
-                        "This reset link is invalid or has expired"));
+                        "Liên kết đặt lại không hợp lệ hoặc đã hết hạn"));
         User user = userRepository.findById(token.getUserId())
-                .orElseThrow(() -> AppException.badRequest("INVALID_RESET_TOKEN", "This reset link is invalid or has expired"));
+                .orElseThrow(() -> AppException.badRequest("INVALID_RESET_TOKEN", "Liên kết đặt lại không hợp lệ hoặc đã hết hạn"));
         user.setPasswordHash(passwordEncoder.encode(req.password()));
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);

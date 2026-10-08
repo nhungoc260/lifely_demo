@@ -52,12 +52,12 @@ public class DonorService {
         if (req.avatarUrl() != null) user.setAvatarUrl(req.avatarUrl());
         if (req.bloodType() != null) {
             profile.setBloodType(bloodTypeRepository.findByCode(req.bloodType())
-                    .orElseThrow(() -> AppException.badRequest("INVALID_BLOOD_TYPE", "Unknown blood type")));
+                    .orElseThrow(() -> AppException.badRequest("INVALID_BLOOD_TYPE", "Nhóm máu không hợp lệ")));
         }
         if (req.city() != null) profile.setCity(req.city().trim());
         if (req.district() != null) profile.setDistrict(req.district().trim());
         if ((req.latitude() == null) != (req.longitude() == null)) {
-            throw AppException.badRequest("INVALID_COORDINATES", "Latitude and longitude must be provided together");
+            throw AppException.badRequest("INVALID_COORDINATES", "Phải cung cấp đồng thời vĩ độ và kinh độ");
         }
         if (req.latitude() != null) {
             profile.setLatitude(BigDecimal.valueOf(req.latitude()).setScale(6, RoundingMode.HALF_UP));
@@ -74,7 +74,7 @@ public class DonorService {
         DonorProfile profile = profile(userId);
         if (status == AvailabilityStatus.AVAILABLE && (profile.getBloodType() == null || !profile.hasLocation())) {
             throw AppException.badRequest("PROFILE_INCOMPLETE",
-                    "Add your blood type and location before turning availability on");
+                    "Hãy thêm nhóm máu và vị trí trước khi bật trạng thái sẵn sàng");
         }
         profile.setAvailabilityStatus(status);
         return DonorProfileResponse.from(profileRepository.save(profile), user(userId));
@@ -132,12 +132,12 @@ public class DonorService {
 
     public DonorProfile profile(UUID userId) {
         return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Donor profile not found"));
+                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
     }
 
     private User user(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "User not found"));
+                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng"));
     }
 
     private PrivacySettings privacy(UUID userId) {

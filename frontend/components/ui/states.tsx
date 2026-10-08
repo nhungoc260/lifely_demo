@@ -20,9 +20,9 @@ export function ErrorState({ message, onRetry, className }: { message: string; o
   return (
     <div role="alert" className={cn("flex flex-col items-center justify-center rounded-2xl border border-critical/25 bg-critical/5 px-6 py-10 text-center", className)}>
       <CircleAlert className="mb-2 size-6 text-critical" aria-hidden />
-      <p className="font-medium">Something went wrong</p>
+      <p className="font-medium">Đã xảy ra sự cố</p>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{message}</p>
-      {onRetry && <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}><RefreshCw /> Try again</Button>}
+      {onRetry && <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}><RefreshCw /> Thử lại</Button>}
     </div>
   );
 }

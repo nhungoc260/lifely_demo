@@ -25,7 +25,7 @@ function isActive(pathname: string, item: NavItem, all: NavItem[]) {
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
-    <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-5 text-primary-foreground" aria-label={`${n} unread`}>
+    <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-5 text-primary-foreground" aria-label={`${n} chưa đọc`}>
       {n > 99 ? "99+" : n}
     </span>
   );
@@ -33,7 +33,7 @@ function Badge({ n }: { n: number }) {
 
 function LiveDot() {
   const status = useRealtimeStatus();
-  const label = status === "live" ? "Live updates on" : status === "connecting" ? "Reconnecting…" : "Live updates off";
+  const label = status === "live" ? "Đang cập nhật trực tiếp" : status === "connecting" ? "Đang kết nối lại…" : "Chưa cập nhật trực tiếp";
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title={label}>
       <Radio className={cn("size-3.5", status === "live" ? "text-success" : "text-muted-foreground")} aria-hidden />
@@ -59,7 +59,7 @@ function Shell({ role, children }: { role: Role; children: React.ReactNode }) {
         <div className={cn("flex h-16 items-center px-4", collapsed && "justify-center px-0")}>
           {collapsed ? <LogoMark /> : <Logo href={homeFor(role)} />}
         </div>
-        <nav aria-label="Main" className="flex-1 space-y-1 px-3 py-2">
+        <nav aria-label="Chính" className="flex-1 space-y-1 px-3 py-2">
           {items.map((item) => {
             const active = isActive(pathname, item, items);
             return (
@@ -87,17 +87,17 @@ function Shell({ role, children }: { role: Role; children: React.ReactNode }) {
           <button
             onClick={() => { signOut(); router.replace("/login"); }}
             className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", collapsed && "justify-center px-0")}
-            aria-label="Log out"
+            aria-label="Đăng xuất"
           >
             <LogOut className="size-[18px]" aria-hidden />
-            {!collapsed && "Log out"}
+            {!collapsed && "Đăng xuất"}
           </button>
           <button
             onClick={() => setCollapsed((c) => !c)}
             className="hidden w-full items-center gap-3 rounded-xl px-3 py-2 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
           >
-            {collapsed ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /> Collapse</>}
+            {collapsed ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /> Thu gọn</>}
           </button>
         </div>
       </aside>
@@ -109,7 +109,7 @@ function Shell({ role, children }: { role: Role; children: React.ReactNode }) {
             <LiveDot />
             <ThemeToggle />
             {notifHref && (
-              <Link href={notifHref} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Notifications, ${unread} unread`}>
+              <Link href={notifHref} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Thông báo, ${unread} chưa đọc`}>
                 <Bell className="size-4" aria-hidden />
                 {unread > 0 && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />}
               </Link>
@@ -117,7 +117,7 @@ function Shell({ role, children }: { role: Role; children: React.ReactNode }) {
             <button
               onClick={() => { signOut(); router.replace("/login"); }}
               className="grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Log out"
+              aria-label="Đăng xuất"
             >
               <LogOut className="size-4" aria-hidden />
             </button>
@@ -127,7 +127,7 @@ function Shell({ role, children }: { role: Role; children: React.ReactNode }) {
       </div>
 
       {/* Bottom navigation: mobile */}
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${mobile.length}, minmax(0, 1fr))` }}>
           {mobile.map((item) => {
             const active = isActive(pathname, item, items);
@@ -167,7 +167,7 @@ export function RoleShell({ role, children }: { role: Role; children: React.Reac
         <div className="w-full max-w-sm space-y-3 px-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-24 w-full" />
-          <p className="text-center text-sm text-muted-foreground">Loading your workspace…</p>
+          <p className="text-center text-sm text-muted-foreground">Đang tải không gian làm việc…</p>
         </div>
       </div>
     );

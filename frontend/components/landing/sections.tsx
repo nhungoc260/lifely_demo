@@ -20,15 +20,15 @@ export function Impact() {
   const stats = useQuery("public-stats", publicApi.stats);
   const s = stats.data;
   const items = [
-    { label: "Registered Donors", v: s?.registeredDonors },
-    { label: "Active Requests", v: s?.activeRequests },
-    { label: "Successful Connections", v: s?.successfulConnections },
-    { label: "Verified Organizations", v: s?.verifiedOrganizations },
+    { label: "Người hiến máu đã đăng ký", v: s?.registeredDonors },
+    { label: "Yêu cầu đang hoạt động", v: s?.activeRequests },
+    { label: "Kết nối thành công", v: s?.successfulConnections },
+    { label: "Tổ chức đã xác minh", v: s?.verifiedOrganizations },
   ];
   return (
     <section className="border-y border-border bg-card" aria-labelledby="impact-title">
       <div className="mx-auto max-w-6xl px-5 py-20">
-        <h2 id="impact-title" className="max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">One platform. Faster coordination.</h2>
+        <h2 id="impact-title" className="max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">Một nền tảng. Điều phối nhanh hơn.</h2>
         <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
           {items.map((i) => (
             <div key={i.label} className="border-l-2 border-primary/30 pl-5">
@@ -37,23 +37,23 @@ export function Impact() {
             </div>
           ))}
         </dl>
-        {stats.error && <p className="mt-6 text-sm text-muted-foreground">Live figures are temporarily unavailable.</p>}
-        {s?.demoEnvironment && <p className="mt-6 text-xs text-muted-foreground">Demo environment: figures come from sample data.</p>}
+        {stats.error && <p className="mt-6 text-sm text-muted-foreground">Số liệu trực tiếp tạm thời chưa có.</p>}
+        {s?.demoEnvironment && <p className="mt-6 text-xs text-muted-foreground">Môi trường demo: số liệu lấy từ dữ liệu mẫu.</p>}
       </div>
     </section>
   );
 }
 
 const STEPS = [
-  { n: "01", title: "Create a request.", text: "Tell us the blood type, units, hospital and deadline. Requests are verified before anyone is contacted." },
-  { n: "02", title: "LIFELY finds suitable donors.", text: "Compatible, available donors nearby are ranked and contacted in widening circles, never all at once." },
-  { n: "03", title: "Donors respond and the request is coordinated.", text: "Responses arrive in real time. The count never exceeds what the patient needs." },
+  { n: "01", title: "Tạo yêu cầu.", text: "Cho chúng tôi biết nhóm máu, số đơn vị, bệnh viện và thời hạn. Yêu cầu được xác minh trước khi liên hệ bất kỳ ai." },
+  { n: "02", title: "LIFELY tìm người hiến máu phù hợp.", text: "Những người hiến máu tương thích, đang sẵn sàng ở gần được xếp hạng và liên hệ theo vòng mở rộng dần, không bao giờ gửi cho tất cả cùng lúc." },
+  { n: "03", title: "Người hiến máu phản hồi và yêu cầu được điều phối.", text: "Phản hồi đến theo thời gian thực. Số lượng xác nhận không bao giờ vượt quá nhu cầu của bệnh nhân." },
 ];
 
 export function HowItWorks() {
   return (
     <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24" aria-labelledby="how-title">
-      <h2 id="how-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">How LIFELY works</h2>
+      <h2 id="how-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">LIFELY hoạt động như thế nào</h2>
       <ol className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
         <div aria-hidden className="absolute left-[19px] top-2 hidden h-[calc(100%-1rem)] w-px bg-border max-md:block" />
         <div aria-hidden className="absolute left-0 right-0 top-[19px] hidden h-px bg-border md:block" />
@@ -75,10 +75,10 @@ export function EmergencyRequests() {
   const q = useQuery(key, () => publicApi.requests({ size: 6, lat: loc?.lat, lng: loc?.lng }));
 
   function locate() {
-    if (!("geolocation" in navigator)) return toast.error("Your browser does not support location.");
+    if (!("geolocation" in navigator)) return toast.error("Trình duyệt của bạn không hỗ trợ định vị.");
     navigator.geolocation.getCurrentPosition(
       (p) => setLoc({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => toast.error("We could not get your location."),
+      () => toast.error("Không lấy được vị trí của bạn."),
       { timeout: 8000 },
     );
   }
@@ -87,10 +87,10 @@ export function EmergencyRequests() {
     <section id="requests" className="scroll-mt-20 bg-surface py-24" aria-labelledby="req-title">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 id="req-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">Emergency requests near you</h2>
+          <h2 id="req-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">Yêu cầu khẩn cấp gần bạn</h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={locate}><LocateFixed /> {loc ? "Distances from your location" : "Show distance from me"}</Button>
-            <Link href="/map" className={buttonVariants({ variant: "ghost", size: "sm" })}>Open map</Link>
+            <Button variant="outline" size="sm" onClick={locate}><LocateFixed /> {loc ? "Khoảng cách từ vị trí của bạn" : "Hiện khoảng cách từ tôi"}</Button>
+            <Link href="/map" className={buttonVariants({ variant: "ghost", size: "sm" })}>Mở bản đồ</Link>
           </div>
         </div>
         <div className="mt-10">
@@ -103,7 +103,7 @@ export function EmergencyRequests() {
               {q.data.items.map((r) => <RequestCard key={r.id} r={r} href={`/requests/${r.id}`} />)}
             </div>
           ) : (
-            <EmptyState title="No emergency requests nearby." description="There are currently no verified open requests. Join as a donor to be notified when one appears." action={<Link href="/register?role=DONOR" className={buttonVariants()}>Become a donor</Link>} />
+            <EmptyState title="Chưa có yêu cầu khẩn cấp nào ở gần." description="Hiện chưa có yêu cầu nào đã xác minh đang mở. Hãy tham gia làm người hiến máu để được báo khi có yêu cầu." action={<Link href="/register?role=DONOR" className={buttonVariants()}>Trở thành người hiến máu</Link>} />
           )}
         </div>
       </div>
@@ -118,10 +118,10 @@ export function MapPreview() {
     <section className="mx-auto max-w-6xl px-5 py-24" aria-labelledby="map-title">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 id="map-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">See where help is needed</h2>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">Hospitals and open requests only. LIFELY never shows the location of any donor.</p>
+          <h2 id="map-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">Xem nơi đang cần giúp đỡ</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">Chỉ hiển thị bệnh viện và các yêu cầu đang mở. LIFELY không bao giờ hiển thị vị trí của bất kỳ người hiến máu nào.</p>
         </div>
-        <Link href="/map" className={buttonVariants({ variant: "outline" })}>Open full map</Link>
+        <Link href="/map" className={buttonVariants({ variant: "outline" })}>Mở bản đồ đầy đủ</Link>
       </div>
       <div className="mt-8 overflow-hidden rounded-[1.25rem] border border-border shadow-sm">
         <MapContainerLazy requests={reqs.data?.items ?? []} hospitals={orgs.data ?? []} height={420} scrollWheelZoom={false} />
@@ -136,15 +136,15 @@ export function Audiences() {
       <div className="mx-auto grid max-w-6xl gap-6 px-5 py-24 md:grid-cols-2">
         <Card id="donors" className="scroll-mt-24 p-8">
           <HeartPulse className="size-7 text-primary" aria-hidden />
-          <h2 className="mt-5 text-2xl font-semibold tracking-tight">For donors</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Tell us your blood type and general area, turn availability on, and get notified only when a verified request truly needs you. You always see why you were matched, and you stay in control of your privacy.</p>
-          <Link href="/register?role=DONOR" className={cn(buttonVariants(), "mt-6")}>Join as a donor</Link>
+          <h2 className="mt-5 text-2xl font-semibold tracking-tight">Dành cho người hiến máu</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Cho chúng tôi biết nhóm máu và khu vực của bạn, bật trạng thái sẵn sàng, và chỉ được báo khi một yêu cầu đã xác minh thật sự cần bạn. Bạn luôn biết vì sao mình được kết nối, và tự kiểm soát quyền riêng tư của mình.</p>
+          <Link href="/register?role=DONOR" className={cn(buttonVariants(), "mt-6")}>Tham gia làm người hiến máu</Link>
         </Card>
         <Card id="organizations" className="scroll-mt-24 p-8">
           <Building2 className="size-7 text-primary" aria-hidden />
-          <h2 className="mt-5 text-2xl font-semibold tracking-tight">For organizations</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Hospitals and blood centers register, get verified by our team, and then create requests that skip the queue, track responses in real time and confirm donations.</p>
-          <Link href="/register?role=ORGANIZATION" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>Register your organization</Link>
+          <h2 className="mt-5 text-2xl font-semibold tracking-tight">Dành cho tổ chức</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Bệnh viện và trung tâm máu đăng ký, được đội ngũ của chúng tôi xác minh, rồi tạo các yêu cầu được ưu tiên, theo dõi phản hồi theo thời gian thực và xác nhận các lần hiến máu.</p>
+          <Link href="/register?role=ORGANIZATION" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>Đăng ký tổ chức của bạn</Link>
         </Card>
       </div>
     </section>
@@ -153,14 +153,14 @@ export function Audiences() {
 
 export function Trust() {
   const items = [
-    { icon: LockKeyhole, title: "Privacy-first", text: "Exact donor locations and phone numbers are never public." },
-    { icon: UserCheck, title: "Verified organizations", text: "Every organization is reviewed by our team before it can verify requests." },
-    { icon: ShieldCheck, title: "Secure accounts", text: "Hashed passwords, short-lived sessions and complete audit trails." },
-    { icon: Radio, title: "Real-time coordination", text: "Confirmations update instantly, without refreshing the page." },
+    { icon: LockKeyhole, title: "Ưu tiên riêng tư", text: "Vị trí chính xác và số điện thoại của người hiến máu không bao giờ được công khai." },
+    { icon: UserCheck, title: "Tổ chức đã xác minh", text: "Mọi tổ chức đều được đội ngũ của chúng tôi xem xét trước khi được xác minh yêu cầu." },
+    { icon: ShieldCheck, title: "Tài khoản an toàn", text: "Mật khẩu được băm, phiên đăng nhập ngắn hạn và nhật ký hoạt động đầy đủ." },
+    { icon: Radio, title: "Điều phối thời gian thực", text: "Số xác nhận cập nhật ngay lập tức, không cần tải lại trang." },
   ];
   return (
     <section id="about" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24" aria-labelledby="trust-title">
-      <h2 id="trust-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">Built to be trusted</h2>
+      <h2 id="trust-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">Xây dựng để đáng tin cậy</h2>
       <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((i) => (
           <div key={i.title}>
@@ -171,7 +171,7 @@ export function Trust() {
         ))}
       </div>
       <p className="mt-14 rounded-2xl border border-border bg-card p-5 text-sm leading-relaxed text-muted-foreground">
-        LIFELY is a coordination platform and does not provide medical diagnosis, treatment, transfusion decisions, or final donor eligibility decisions. Final eligibility and transfusion decisions must be made by qualified healthcare professionals.
+        LIFELY là nền tảng điều phối, không đưa ra chẩn đoán, điều trị, quyết định truyền máu hay quyết định cuối cùng về điều kiện hiến máu. Các quyết định này phải do nhân viên y tế có chuyên môn đưa ra.
       </p>
     </section>
   );

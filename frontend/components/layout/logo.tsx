@@ -13,7 +13,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({ href = "/", className }: { href?: string; className?: string }) {
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", className)} aria-label="LIFELY home">
+    <Link href={href} className={cn("inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", className)} aria-label="Trang chủ LIFELY">
       <LogoMark />
       <span className="text-lg font-semibold tracking-[0.12em]">LIFELY</span>
     </Link>

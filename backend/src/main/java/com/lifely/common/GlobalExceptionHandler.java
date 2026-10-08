@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors()
                 .forEach(f -> errors.putIfAbsent(f.getField(), f.getDefaultMessage()));
         return ResponseEntity.badRequest()
-                .body(ApiResponse.validationError("Some fields are invalid", errors));
+                .body(ApiResponse.validationError("Một số thông tin chưa hợp lệ", errors));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -48,57 +48,57 @@ public class GlobalExceptionHandler {
         ex.getConstraintViolations()
                 .forEach(v -> errors.putIfAbsent(v.getPropertyPath().toString(), v.getMessage()));
         return ResponseEntity.badRequest()
-                .body(ApiResponse.validationError("Some fields are invalid", errors));
+                .body(ApiResponse.validationError("Một số thông tin chưa hợp lệ", errors));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadable(HttpMessageNotReadableException ex) {
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Request body is missing or malformed", "MALFORMED_REQUEST"));
+                .body(ApiResponse.error("Dữ liệu gửi lên bị thiếu hoặc sai định dạng", "MALFORMED_REQUEST"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("You do not have permission to do this", "FORBIDDEN"));
+                .body(ApiResponse.error("Bạn không có quyền thực hiện thao tác này", "FORBIDDEN"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Resource not found", "NOT_FOUND"));
+                .body(ApiResponse.error("Không tìm thấy nội dung yêu cầu", "NOT_FOUND"));
     }
 
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Invalid value for parameter '" + ex.getName() + "'", "INVALID_PARAMETER"));
+                .body(ApiResponse.error("Giá trị không hợp lệ cho tham số '" + ex.getName() + "'", "INVALID_PARAMETER"));
     }
 
     /** Spring 6.1+: validation của tham số @RequestParam/@PathVariable (không có @Validated ở lớp) ném lỗi này. */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodValidation(HandlerMethodValidationException ex) {
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Some request parameters are invalid", "VALIDATION_ERROR"));
+                .body(ApiResponse.error("Một số tham số không hợp lệ", "VALIDATION_ERROR"));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParam(MissingServletRequestParameterException ex) {
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Missing parameter '" + ex.getParameterName() + "'", "MISSING_PARAMETER"));
+                .body(ApiResponse.error("Thiếu tham số '" + ex.getParameterName() + "'", "MISSING_PARAMETER"));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethod(HttpRequestMethodNotSupportedException ex) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(ApiResponse.error("Method not allowed", "METHOD_NOT_ALLOWED"));
+                .body(ApiResponse.error("Phương thức không được hỗ trợ", "METHOD_NOT_ALLOWED"));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handleUploadSize(MaxUploadSizeExceededException ex) {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(ApiResponse.error("File must be 5 MB or smaller", "FILE_TOO_LARGE"));
+                .body(ApiResponse.error("Tệp phải có dung lượng tối đa 5 MB", "FILE_TOO_LARGE"));
     }
 
     /** Vi phạm ràng buộc DB (ví dụ unique, CHECK units_confirmed <= units_required) không bao giờ lộ chi tiết SQL. */
@@ -106,7 +106,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIntegrity(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation", ex);
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("This action conflicts with the current state. Please refresh and try again.",
+                .body(ApiResponse.error("Thao tác này xung đột với trạng thái hiện tại. Vui lòng tải lại trang và thử lại.",
                         "CONFLICT"));
     }
 
@@ -114,6 +114,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Something went wrong on our side. Please try again.", "INTERNAL_ERROR"));
+                .body(ApiResponse.error("Đã có sự cố ở phía chúng tôi. Vui lòng thử lại.", "INTERNAL_ERROR"));
     }
 }

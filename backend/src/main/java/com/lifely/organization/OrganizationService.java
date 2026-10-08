@@ -79,7 +79,7 @@ public class OrganizationService {
         o.setContactPerson(Sanitizer.plain(req.contactPerson()));
         if (sensitiveChange) {
             o.setVerificationStatus(OrgVerificationStatus.UNDER_REVIEW);
-            o.setVerificationNote("Details changed; re-verification required");
+            o.setVerificationNote("Thông tin đã thay đổi; cần xác minh lại");
         }
         return toDto(repository.save(o));
     }
@@ -88,7 +88,7 @@ public class OrganizationService {
     public OrganizationDto addDocument(UUID userId, String docType, MultipartFile file) {
         Organization o = mine(userId);
         if (documentRepository.countByOrganizationId(o.getId()) >= 10) {
-            throw AppException.badRequest("TOO_MANY_DOCUMENTS", "You can upload up to 10 documents");
+            throw AppException.badRequest("TOO_MANY_DOCUMENTS", "Bạn có thể tải lên tối đa 10 giấy tờ");
         }
         FileStorageService.Stored stored = storage.store(file);
         OrganizationDocument d = new OrganizationDocument();
@@ -106,10 +106,10 @@ public class OrganizationService {
         Organization o = mine(userId);
         if (o.getVerificationStatus() != OrgVerificationStatus.PENDING
                 && o.getVerificationStatus() != OrgVerificationStatus.REJECTED) {
-            throw AppException.conflict("INVALID_STATE", "This organization is already under review or verified");
+            throw AppException.conflict("INVALID_STATE", "Tổ chức này đang được xem xét hoặc đã được xác minh");
         }
         if (documentRepository.countByOrganizationId(o.getId()) == 0) {
-            throw AppException.badRequest("DOCUMENT_REQUIRED", "Upload at least one verification document first");
+            throw AppException.badRequest("DOCUMENT_REQUIRED", "Hãy tải lên ít nhất một giấy tờ xác minh trước");
         }
         o.setVerificationStatus(OrgVerificationStatus.UNDER_REVIEW);
         o.setVerificationNote(null);
@@ -123,11 +123,11 @@ public class OrganizationService {
     @Transactional(readOnly = true)
     public DocumentFile download(AuthUser user, UUID documentId) {
         OrganizationDocument d = documentRepository.findById(documentId)
-                .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Document not found"));
+                .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ"));
         Organization o = repository.findById(d.getOrganizationId())
-                .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Document not found"));
+                .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ"));
         if (!user.hasRole(com.lifely.user.Role.ADMIN) && !o.getOwnerUserId().equals(user.getId())) {
-            throw AppException.notFound("DOCUMENT_NOT_FOUND", "Document not found");
+            throw AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ");
         }
         return new DocumentFile(storage.load(d.getFileUrl()), d.getFileName(), storage.contentTypeOf(d.getFileUrl()));
     }
@@ -168,20 +168,20 @@ public class OrganizationService {
     public RequestResponse verifyLinkedRequest(UUID userId, UUID requestId) {
         Organization o = mine(userId);
         if (!o.isVerified()) {
-            throw AppException.forbidden("ORGANIZATION_NOT_VERIFIED", "Your organization must be verified first");
+            throw AppException.forbidden("ORGANIZATION_NOT_VERIFIED", "Tổ chức của bạn cần được xác minh trước");
         }
         BloodRequest r = requestRepository.findByIdForUpdate(requestId)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (!o.getId().equals(r.getOrganizationId())) {
-            throw AppException.notFound("REQUEST_NOT_FOUND", "Request not found");
+            throw AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu");
         }
         if (r.getStatus() != RequestStatus.PENDING_VERIFICATION) {
-            throw AppException.conflict("INVALID_STATE", "Only requests pending verification can be verified");
+            throw AppException.conflict("INVALID_STATE", "Chỉ yêu cầu đang chờ xác minh mới được xác minh");
         }
         if (r.getDeadline().isBefore(Instant.now())) {
-            throw AppException.conflict("REQUEST_EXPIRED", "This request has already passed its deadline");
+            throw AppException.conflict("REQUEST_EXPIRED", "Yêu cầu này đã quá hạn");
         }
-        requestService.markVerified(r, userId, "Verified by " + o.getName());
+        requestService.markVerified(r, userId, "Đã xác minh bởi " + o.getName());
         return RequestResponse.from(r);
     }
 
@@ -193,7 +193,7 @@ public class OrganizationService {
     private Organization mine(UUID userId) {
         return repository.findByOwnerUserId(userId)
                 .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND",
-                        "Complete your organization profile first"));
+                        "Hãy hoàn tất hồ sơ tổ chức trước"));
     }
 
     private OrganizationDto toDto(Organization o) {

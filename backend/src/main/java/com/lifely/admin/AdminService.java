@@ -91,18 +91,18 @@ public class AdminService {
     @Transactional(readOnly = true)
     public AdminUserDto user(UUID id) {
         return AdminUserDto.from(userRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "User not found")));
+                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng")));
     }
 
     @Transactional
     public AdminUserDto setUserStatus(AuthUser admin, UUID id, UserStatus status) {
         User u = userRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "User not found"));
+                .orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng"));
         if (u.getId().equals(admin.getId())) {
-            throw AppException.badRequest("CANNOT_MODIFY_SELF", "You cannot change your own account status");
+            throw AppException.badRequest("CANNOT_MODIFY_SELF", "Bạn không thể tự đổi trạng thái tài khoản của mình");
         }
         if (u.hasRole(Role.ADMIN)) {
-            throw AppException.forbidden("CANNOT_MODIFY_ADMIN", "Administrator accounts cannot be suspended here");
+            throw AppException.forbidden("CANNOT_MODIFY_ADMIN", "Không thể khóa tài khoản admin tại đây");
         }
         u.setStatus(status);
         userRepository.save(u);
@@ -135,7 +135,7 @@ public class AdminService {
     @Transactional(readOnly = true)
     public AdminRequestRow request(UUID id) {
         return row(requestRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found")));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu")));
     }
 
     private AdminRequestRow row(BloodRequest r) {
@@ -162,20 +162,20 @@ public class AdminService {
     @Transactional(readOnly = true)
     public OrganizationDto organization(UUID id) {
         Organization o = organizationRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Organization not found"));
+                .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Không tìm thấy tổ chức"));
         return OrganizationDto.from(o, documentRepository.findByOrganizationIdOrderByUploadedAtDesc(id));
     }
 
     @Transactional
     public OrganizationDto reviewOrganization(AuthUser admin, UUID id, OrgVerificationStatus target, String note) {
         Organization o = organizationRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Organization not found"));
+                .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Không tìm thấy tổ chức"));
         String clean = Sanitizer.plain(note);
         if (target == OrgVerificationStatus.REJECTED && clean == null) {
-            throw AppException.badRequest("NOTE_REQUIRED", "Please give a reason so the organization can fix the issue");
+            throw AppException.badRequest("NOTE_REQUIRED", "Vui lòng nêu lý do để tổ chức có thể khắc phục");
         }
         if (target == OrgVerificationStatus.VERIFIED && documentRepository.countByOrganizationId(id) == 0) {
-            throw AppException.badRequest("DOCUMENT_REQUIRED", "This organization has not uploaded any documents");
+            throw AppException.badRequest("DOCUMENT_REQUIRED", "Tổ chức này chưa tải giấy tờ nào lên");
         }
         o.setVerificationStatus(target);
         o.setVerificationNote(clean);
@@ -190,8 +190,14 @@ public class AdminService {
             default -> AuditAction.ORGANIZATION_SUSPENDED;
         };
         audit.log(admin.getId(), action, "ORGANIZATION", o.getId());
-        notifications.notify(o.getOwnerUserId(), NotificationType.SYSTEM, "Organization " + target.name().toLowerCase(),
-                clean == null ? "Your organization status is now " + target + "." : clean, "ORGANIZATION", o.getId());
+        String statusText = switch (target) {
+            case VERIFIED -> "đã được xác minh";
+            case REJECTED -> "bị từ chối";
+            case SUSPENDED -> "bị tạm khóa";
+            default -> target.name();
+        };
+        notifications.notify(o.getOwnerUserId(), NotificationType.SYSTEM, "Tổ chức " + statusText,
+                clean == null ? "Trạng thái tổ chức của bạn: " + statusText + "." : clean, "ORGANIZATION", o.getId());
         return OrganizationDto.from(o, documentRepository.findByOrganizationIdOrderByUploadedAtDesc(id));
     }
 
@@ -208,7 +214,7 @@ public class AdminService {
     @Transactional
     public ReportDto updateReport(AuthUser admin, UUID id, ReportStatus status) {
         Report r = reportRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("REPORT_NOT_FOUND", "Report not found"));
+                .orElseThrow(() -> AppException.notFound("REPORT_NOT_FOUND", "Không tìm thấy báo cáo"));
         r.setStatus(status);
         if (status == ReportStatus.RESOLVED || status == ReportStatus.REJECTED) {
             r.setResolvedBy(admin.getId());

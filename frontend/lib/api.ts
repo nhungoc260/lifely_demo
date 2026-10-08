@@ -17,7 +17,7 @@ export class ApiError extends Error {
 }
 
 export function toApiError(e: unknown): ApiError {
-  return e instanceof ApiError ? e : new ApiError("Something went wrong.", "UNKNOWN", 0);
+  return e instanceof ApiError ? e : new ApiError("Đã xảy ra sự cố.", "UNKNOWN", 0);
 }
 
 interface Options extends Omit<RequestInit, "body"> {
@@ -45,7 +45,7 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
     });
   } catch {
     throw new ApiError(
-      "Cannot reach the server. Check your connection and that the backend is running.",
+      "Không kết nối được máy chủ. Hãy kiểm tra kết nối mạng và xem backend đã chạy chưa.",
       "NETWORK_ERROR",
       0,
     );
@@ -64,7 +64,7 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
       tokenStore.set(null); // phiên hết hạn: đưa người dùng về trạng thái chưa đăng nhập
     }
     throw new ApiError(
-      failure?.message ?? "Unexpected server response.",
+      failure?.message ?? "Phản hồi từ máy chủ không như mong đợi.",
       failure?.code ?? "UNKNOWN",
       res.status,
       failure?.errors,

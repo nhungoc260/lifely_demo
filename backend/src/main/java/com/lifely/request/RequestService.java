@@ -72,18 +72,18 @@ public class RequestService {
     public RequestResponse create(AuthUser user, CreateRequestDto dto) {
         Instant now = Instant.now();
         if (dto.deadline().isBefore(now.plus(Duration.ofMinutes(5)))) {
-            throw AppException.badRequest("INVALID_DEADLINE", "Deadline must be at least 5 minutes from now");
+            throw AppException.badRequest("INVALID_DEADLINE", "Hạn chót phải cách hiện tại ít nhất 5 phút");
         }
         if (dto.deadline().isAfter(now.plus(Duration.ofDays(7)))) {
-            throw AppException.badRequest("INVALID_DEADLINE", "Deadline cannot be more than 7 days away");
+            throw AppException.badRequest("INVALID_DEADLINE", "Hạn chót không được quá 7 ngày");
         }
         if (requestRepository.countByRequesterIdAndStatusIn(user.getId(), RequestStatus.AWAITING_OR_ACTIVE)
                 >= MAX_ACTIVE_PER_USER) {
             throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_ACTIVE_REQUESTS",
-                    "You already have " + MAX_ACTIVE_PER_USER + " open requests. Cancel or complete one first.");
+                    "Bạn đang có " + MAX_ACTIVE_PER_USER + " yêu cầu mở. Hãy hủy hoặc hoàn tất một yêu cầu trước.");
         }
         BloodType bloodType = bloodTypeRepository.findByCode(dto.bloodType())
-                .orElseThrow(() -> AppException.badRequest("INVALID_BLOOD_TYPE", "Unknown blood type"));
+                .orElseThrow(() -> AppException.badRequest("INVALID_BLOOD_TYPE", "Nhóm máu không hợp lệ"));
 
         BloodRequest r = new BloodRequest();
         r.setRequesterId(user.getId());
@@ -106,7 +106,7 @@ public class RequestService {
         } else if (dto.organizationId() != null) {
             org = organizationRepository.findById(dto.organizationId()).filter(Organization::isVerified)
                     .orElseThrow(() -> AppException.badRequest("INVALID_ORGANIZATION",
-                            "Choose a verified hospital from the list"));
+                            "Hãy chọn bệnh viện đã xác minh trong danh sách"));
         }
         if (org != null) {
             r.setOrganizationId(org.getId());
@@ -122,15 +122,15 @@ public class RequestService {
         }
 
         r = requestRepository.save(r);
-        lifecycle.transition(r, RequestStatus.CREATED, "Created", user.getId());
+        lifecycle.transition(r, RequestStatus.CREATED, "Đã tạo yêu cầu", user.getId());
         audit.log(user.getId(), AuditAction.REQUEST_CREATED, "REQUEST", r.getId(),
                 Map.of("bloodType", dto.bloodType(), "units", dto.unitsRequired(), "urgency", dto.urgency().name()));
 
         // Tổ chức đã xác minh: yêu cầu được tin cậy ngay và vào điều phối luôn. Còn lại chờ admin xác minh.
         boolean autoVerified = user.hasRole(Role.ORGANIZATION) && org != null;
-        lifecycle.transition(r, RequestStatus.PENDING_VERIFICATION, "Submitted for verification", user.getId());
+        lifecycle.transition(r, RequestStatus.PENDING_VERIFICATION, "Đã gửi để xác minh", user.getId());
         if (autoVerified) {
-            markVerified(r, user.getId(), "Auto-verified: request from a verified organization");
+            markVerified(r, user.getId(), "Tự động xác minh: yêu cầu từ tổ chức đã xác minh");
         }
         return RequestResponse.from(r);
     }
@@ -141,8 +141,8 @@ public class RequestService {
         r.setVerified(true);
         r.setVerifiedBy(actorId);
         lifecycle.transition(r, RequestStatus.VERIFIED, note, actorId);
-        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_VERIFIED, "Request verified",
-                "Your " + r.getBloodType().getCode() + " request is verified and we are now finding donors.",
+        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_VERIFIED, "Yêu cầu đã được xác minh",
+                "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã được xác minh và chúng tôi đang tìm người hiến máu.",
                 "REQUEST", r.getId());
         audit.log(actorId, AuditAction.REQUEST_VERIFIED, "REQUEST", r.getId());
         matchingService.startMatching(r, actorId);
@@ -151,29 +151,29 @@ public class RequestService {
     @Transactional
     public RequestResponse verifyByAdmin(AuthUser admin, UUID id) {
         BloodRequest r = requestRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (r.getStatus() != RequestStatus.PENDING_VERIFICATION) {
-            throw AppException.conflict("INVALID_STATE", "Only requests pending verification can be verified");
+            throw AppException.conflict("INVALID_STATE", "Chỉ yêu cầu đang chờ xác minh mới được xác minh");
         }
         if (r.getDeadline().isBefore(Instant.now())) {
-            throw AppException.conflict("REQUEST_EXPIRED", "This request has already passed its deadline");
+            throw AppException.conflict("REQUEST_EXPIRED", "Yêu cầu này đã quá hạn");
         }
-        markVerified(r, admin.getId(), "Verified by administrator");
+        markVerified(r, admin.getId(), "Admin đã xác minh");
         return RequestResponse.from(r);
     }
 
     @Transactional
     public RequestResponse rejectByAdmin(AuthUser admin, UUID id, String reason) {
         BloodRequest r = requestRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (r.getStatus() != RequestStatus.PENDING_VERIFICATION) {
-            throw AppException.conflict("INVALID_STATE", "Only requests pending verification can be rejected");
+            throw AppException.conflict("INVALID_STATE", "Chỉ yêu cầu đang chờ xác minh mới được từ chối");
         }
         String clean = Sanitizer.plain(reason);
-        r.setCancelReason(clean == null ? "Rejected by administrator" : clean);
-        lifecycle.transition(r, RequestStatus.CANCELLED, "Rejected by administrator", admin.getId());
-        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_REJECTED, "Request not approved",
-                "Your request could not be verified: " + r.getCancelReason(), "REQUEST", r.getId());
+        r.setCancelReason(clean == null ? "Admin đã từ chối" : clean);
+        lifecycle.transition(r, RequestStatus.CANCELLED, "Admin đã từ chối", admin.getId());
+        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_REJECTED, "Yêu cầu không được chấp thuận",
+                "Yêu cầu của bạn chưa được xác minh: " + r.getCancelReason(), "REQUEST", r.getId());
         audit.log(admin.getId(), AuditAction.REQUEST_REJECTED, "REQUEST", r.getId());
         return RequestResponse.from(r);
     }
@@ -181,17 +181,17 @@ public class RequestService {
     @Transactional
     public RequestResponse cancel(AuthUser user, UUID id, String reason) {
         BloodRequest r = requestRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         boolean admin = user.hasRole(Role.ADMIN);
         if (!admin && !access.canView(user.getId(), r)) {
-            throw AppException.notFound("REQUEST_NOT_FOUND", "Request not found");
+            throw AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu");
         }
         if (!RequestStatus.CANCELLABLE.contains(r.getStatus())) {
-            throw AppException.conflict("REQUEST_NOT_CANCELLABLE", "This request can no longer be cancelled");
+            throw AppException.conflict("REQUEST_NOT_CANCELLABLE", "Không thể hủy yêu cầu này nữa");
         }
         String clean = Sanitizer.plain(reason);
         r.setCancelReason(clean);
-        lifecycle.transition(r, RequestStatus.CANCELLED, clean == null ? "Cancelled" : "Cancelled: " + clean, user.getId());
+        lifecycle.transition(r, RequestStatus.CANCELLED, clean == null ? "Đã hủy" : "Đã hủy: " + clean, user.getId());
         matchingService.cancelOpenMatches(r, true);
         audit.log(user.getId(), AuditAction.REQUEST_CANCELLED, "REQUEST", r.getId());
         return RequestResponse.from(r);
@@ -200,21 +200,21 @@ public class RequestService {
     @Transactional
     public RequestResponse update(AuthUser user, UUID id, UpdateRequestDto dto) {
         BloodRequest r = requestRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (!access.canView(user.getId(), r)) {
-            throw AppException.notFound("REQUEST_NOT_FOUND", "Request not found");
+            throw AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu");
         }
         if (!RequestStatus.CANCELLABLE.contains(r.getStatus())) {
-            throw AppException.conflict("REQUEST_NOT_EDITABLE", "This request can no longer be edited");
+            throw AppException.conflict("REQUEST_NOT_EDITABLE", "Không thể sửa yêu cầu này nữa");
         }
         if (dto.contactPhone() != null) r.setContactPhone(dto.contactPhone());
         if (dto.description() != null) r.setDescription(Sanitizer.plain(dto.description()));
         if (dto.deadline() != null) {
             if (dto.deadline().isBefore(r.getDeadline())) {
-                throw AppException.badRequest("INVALID_DEADLINE", "You can extend the deadline but not shorten it");
+                throw AppException.badRequest("INVALID_DEADLINE", "Bạn chỉ có thể gia hạn, không thể rút ngắn hạn chót");
             }
             if (dto.deadline().isAfter(Instant.now().plus(Duration.ofDays(7)))) {
-                throw AppException.badRequest("INVALID_DEADLINE", "Deadline cannot be more than 7 days away");
+                throw AppException.badRequest("INVALID_DEADLINE", "Hạn chót không được quá 7 ngày");
             }
             r.setDeadline(dto.deadline());
         }

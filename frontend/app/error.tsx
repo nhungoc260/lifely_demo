@@ -18,12 +18,12 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
     <div className="grid min-h-dvh place-items-center px-6">
       <div className="max-w-md text-center">
         <div className="mb-8 flex justify-center"><Logo /></div>
-        <h1 className="text-3xl font-semibold tracking-tight">Something went wrong</h1>
-        <p className="mt-3 text-muted-foreground">We could not load this page. Your data is safe. Please try again, and if it keeps happening, call {SUPPORT.name} at {SUPPORT.phoneDisplay}.</p>
-        {error.digest && <p className="mt-2 text-xs text-muted-foreground">Reference: {error.digest}</p>}
+        <h1 className="text-3xl font-semibold tracking-tight">Đã xảy ra sự cố</h1>
+        <p className="mt-3 text-muted-foreground">Chúng tôi không tải được trang này. Dữ liệu của bạn vẫn an toàn. Vui lòng thử lại, và nếu vẫn lỗi, hãy gọi {SUPPORT.name} theo số {SUPPORT.phoneDisplay}.</p>
+        {error.digest && <p className="mt-2 text-xs text-muted-foreground">Mã tham chiếu: {error.digest}</p>}
         <div className="mt-8 flex justify-center gap-3">
-          <Button onClick={reset}><RefreshCw /> Try again</Button>
-          <Link href="/" className={buttonVariants({ variant: "outline" })}>Go home</Link>
+          <Button onClick={reset}><RefreshCw /> Thử lại</Button>
+          <Link href="/" className={buttonVariants({ variant: "outline" })}>Về trang chủ</Link>
         </div>
       </div>
     </div>

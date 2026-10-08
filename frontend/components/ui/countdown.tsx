@@ -9,6 +9,6 @@ export function Countdown({ deadline, className }: { deadline: string; className
   const now = useNow();
   if (now === 0) return <span className={cn("tabular-nums", className)}>--:--:--</span>;
   const left = new Date(deadline).getTime() - now;
-  if (left <= 0) return <span className={cn("font-medium text-muted-foreground", className)}>Deadline passed</span>;
+  if (left <= 0) return <span className={cn("font-medium text-muted-foreground", className)}>Đã quá hạn</span>;
   return <time dateTime={deadline} className={cn("tabular-nums", className)}>{formatCountdown(left)}</time>;
 }

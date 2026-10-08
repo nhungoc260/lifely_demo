@@ -17,9 +17,9 @@ describe("formatCountdown", () => {
 describe("timeAgo", () => {
   const now = Date.parse("2027-01-01T12:00:00Z");
   it("handles recent, minutes, hours, days", () => {
-    expect(timeAgo("2027-01-01T11:59:50Z", now)).toBe("just now");
-    expect(timeAgo("2027-01-01T11:30:00Z", now)).toBe("30 min ago");
-    expect(timeAgo("2027-01-01T09:00:00Z", now)).toBe("3 h ago");
-    expect(timeAgo("2026-12-30T12:00:00Z", now)).toBe("2 d ago");
+    expect(timeAgo("2027-01-01T11:59:50Z", now)).toBe("vừa xong");
+    expect(timeAgo("2027-01-01T11:30:00Z", now)).toBe("30 phút trước");
+    expect(timeAgo("2027-01-01T09:00:00Z", now)).toBe("3 giờ trước");
+    expect(timeAgo("2026-12-30T12:00:00Z", now)).toBe("2 ngày trước");
   });
 });

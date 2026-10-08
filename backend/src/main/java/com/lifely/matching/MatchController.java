@@ -38,19 +38,19 @@ public class MatchController {
     @PostMapping("/api/matches/{id}/accept")
     @PreAuthorize("hasRole('DONOR')")
     public ApiResponse<DonorMatchResponse> accept(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Thank you! Your response was sent", service.accept(user, id));
+        return ApiResponse.ok("Cảm ơn bạn! Phản hồi của bạn đã được gửi", service.accept(user, id));
     }
 
     @PostMapping("/api/matches/{id}/reject")
     @PreAuthorize("hasRole('DONOR')")
     public ApiResponse<DonorMatchResponse> reject(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Response recorded", service.reject(user, id));
+        return ApiResponse.ok("Đã ghi nhận phản hồi", service.reject(user, id));
     }
 
     @PostMapping("/api/matches/{id}/complete")
     @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
     public ApiResponse<RequestMatchEntry> complete(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Donation recorded", service.complete(user, id));
+        return ApiResponse.ok("Đã ghi nhận lần hiến máu", service.complete(user, id));
     }
 
     @GetMapping("/api/requests/{id}/matches")

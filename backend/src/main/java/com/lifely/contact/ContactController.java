@@ -40,7 +40,7 @@ public class ContactController {
                                                     @AuthenticationPrincipal AuthUser user) {
         service.submit(req, user);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Thank you. Our team will get back to you soon", null));
+                .body(ApiResponse.ok("Cảm ơn bạn. Đội ngũ của chúng tôi sẽ phản hồi sớm", null));
     }
 
     @GetMapping("/api/admin/messages")
@@ -55,7 +55,7 @@ public class ContactController {
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ContactMessageDto> update(@AuthenticationPrincipal AuthUser admin, @PathVariable UUID id,
                                                  @Valid @RequestBody StatusRequest req) {
-        return ApiResponse.ok("Message updated", service.updateStatus(admin.getId(), id, req.status()));
+        return ApiResponse.ok("Đã cập nhật tin nhắn", service.updateStatus(admin.getId(), id, req.status()));
     }
 
     @PostMapping("/api/admin/summary/email")
@@ -63,9 +63,9 @@ public class ContactController {
     public ApiResponse<Void> emailSummary() {
         if (!mail.isEnabled() || !mail.hasAdminRecipient()) {
             throw AppException.conflict("MAIL_DISABLED",
-                    "Email is not configured. Set MAIL_ENABLED, MAIL_USERNAME, MAIL_PASSWORD and ADMIN_NOTIFY_EMAIL.");
+                    "Chưa cấu hình email. Hãy đặt MAIL_ENABLED, MAIL_USERNAME, MAIL_PASSWORD và ADMIN_NOTIFY_EMAIL.");
         }
         summaryReport.sendNow();
-        return ApiResponse.ok("The summary report is on its way to the admin mailbox", null);
+        return ApiResponse.ok("Báo cáo tổng hợp đang được gửi tới hộp thư admin", null);
     }
 }

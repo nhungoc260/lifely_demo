@@ -55,7 +55,7 @@ export function ConfirmDialog({
           )}
           <div className="mt-6 flex justify-end gap-2">
             <Dialog.Close asChild>
-              <Button variant="outline" disabled={busy}>Keep it</Button>
+              <Button variant="outline" disabled={busy}>Giữ lại</Button>
             </Dialog.Close>
             <Button
               onClick={handle}

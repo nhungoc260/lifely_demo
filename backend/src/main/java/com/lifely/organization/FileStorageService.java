@@ -36,10 +36,10 @@ public class FileStorageService {
 
     public Stored store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw AppException.badRequest("EMPTY_FILE", "Please choose a file to upload");
+            throw AppException.badRequest("EMPTY_FILE", "Vui lòng chọn một tệp để tải lên");
         }
         if (file.getSize() > MAX_BYTES) {
-            throw AppException.badRequest("FILE_TOO_LARGE", "File must be 5 MB or smaller");
+            throw AppException.badRequest("FILE_TOO_LARGE", "Tệp phải có dung lượng tối đa 5 MB");
         }
         try (InputStream in = file.getInputStream()) {
             byte[] head = in.readNBytes(8);
@@ -47,7 +47,7 @@ public class FileStorageService {
             String storedName = UUID.randomUUID() + "." + ext;
             Path target = root.resolve(storedName).normalize();
             if (!target.startsWith(root)) {
-                throw AppException.badRequest("INVALID_FILE", "Invalid file name");
+                throw AppException.badRequest("INVALID_FILE", "Tên tệp không hợp lệ");
             }
             try (InputStream again = file.getInputStream()) {
                 Files.copy(again, target, StandardCopyOption.REPLACE_EXISTING);
@@ -55,14 +55,14 @@ public class FileStorageService {
             return new Stored(storedName, contentTypeFor(ext));
         } catch (IOException e) {
             throw new AppException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "UPLOAD_FAILED",
-                    "Could not store the file");
+                    "Không lưu được tệp");
         }
     }
 
     public Resource load(String storedName) {
         Path p = root.resolve(storedName).normalize();
         if (!p.startsWith(root) || !Files.exists(p)) {
-            throw AppException.notFound("FILE_NOT_FOUND", "File not found");
+            throw AppException.notFound("FILE_NOT_FOUND", "Không tìm thấy tệp");
         }
         return new FileSystemResource(p);
     }
@@ -76,7 +76,7 @@ public class FileStorageService {
         if (h.length >= 4 && h[0] == '%' && h[1] == 'P' && h[2] == 'D' && h[3] == 'F') return "pdf";
         if (h.length >= 4 && (h[0] & 0xFF) == 0x89 && h[1] == 'P' && h[2] == 'N' && h[3] == 'G') return "png";
         if (h.length >= 3 && (h[0] & 0xFF) == 0xFF && (h[1] & 0xFF) == 0xD8 && (h[2] & 0xFF) == 0xFF) return "jpg";
-        throw AppException.badRequest("UNSUPPORTED_FILE", "Only PDF, PNG or JPG files are allowed");
+        throw AppException.badRequest("UNSUPPORTED_FILE", "Chỉ chấp nhận tệp PDF, PNG hoặc JPG");
     }
 
     private static String contentTypeFor(String ext) {

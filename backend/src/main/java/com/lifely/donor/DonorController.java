@@ -31,13 +31,13 @@ public class DonorController {
     @PutMapping
     public ApiResponse<DonorProfileResponse> update(@AuthenticationPrincipal AuthUser user,
                                                     @Valid @RequestBody UpdateDonorProfileRequest req) {
-        return ApiResponse.ok("Profile updated", service.updateProfile(user.getId(), req));
+        return ApiResponse.ok("Đã cập nhật hồ sơ", service.updateProfile(user.getId(), req));
     }
 
     @PutMapping("/availability")
     public ApiResponse<DonorProfileResponse> availability(@AuthenticationPrincipal AuthUser user,
                                                           @Valid @RequestBody AvailabilityRequest req) {
-        return ApiResponse.ok("Availability updated", service.setAvailability(user.getId(), req.availability()));
+        return ApiResponse.ok("Đã cập nhật trạng thái sẵn sàng", service.setAvailability(user.getId(), req.availability()));
     }
 
     @GetMapping("/privacy")
@@ -48,7 +48,7 @@ public class DonorController {
     @PutMapping("/privacy")
     public ApiResponse<PrivacyDto> updatePrivacy(@AuthenticationPrincipal AuthUser user,
                                                  @Valid @RequestBody PrivacyDto dto) {
-        return ApiResponse.ok("Privacy settings saved", service.updatePrivacy(user.getId(), dto));
+        return ApiResponse.ok("Đã lưu cài đặt riêng tư", service.updatePrivacy(user.getId(), dto));
     }
 
     @GetMapping("/history")
@@ -59,7 +59,7 @@ public class DonorController {
     @PostMapping("/history")
     public ApiResponse<DonationEntry> addDonation(@AuthenticationPrincipal AuthUser user,
                                                   @Valid @RequestBody AddDonationRequest req) {
-        return ApiResponse.ok("Donation recorded", service.addDonation(user.getId(), req));
+        return ApiResponse.ok("Đã ghi nhận lần hiến máu", service.addDonation(user.getId(), req));
     }
 
     @GetMapping("/dashboard")

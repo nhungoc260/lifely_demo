@@ -35,7 +35,7 @@ public class HealthService {
         } catch (Exception e) {
             log.error("Health check failed: database unavailable", e);
             throw new AppException(HttpStatus.SERVICE_UNAVAILABLE, "DATABASE_DOWN",
-                    "The database is currently unavailable");
+                    "Cơ sở dữ liệu hiện không khả dụng");
         }
     }
 }

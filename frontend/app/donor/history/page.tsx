@@ -27,7 +27,7 @@ export default function DonorHistory() {
     setBusy(true);
     try {
       await donorApi.addDonation({ donatedOn: date, location: location.trim() || undefined });
-      toast.success("Donation recorded");
+      toast.success("Đã ghi nhận lần hiến máu");
       setDate(""); setLocation("");
       q.reload();
     } catch (err) { toast.error(toApiError(err).message); } finally { setBusy(false); }
@@ -35,20 +35,20 @@ export default function DonorHistory() {
 
   return (
     <>
-      <PageHeader title="Donation history" description="Donations confirmed through LIFELY are added automatically. You can also record earlier ones." />
+      <PageHeader title="Lịch sử hiến máu" description="Các lần hiến được xác nhận qua LIFELY sẽ tự động thêm vào. Bạn cũng có thể ghi lại các lần hiến trước đó." />
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div>
           {q.initialLoading ? <Skeleton className="h-64" />
             : q.error && !q.data ? <ErrorState message={q.error.message} onRetry={q.reload} />
-            : q.data && q.data.length === 0 ? <EmptyState title="No donations recorded yet" description="Your donations will appear here as a timeline." />
+            : q.data && q.data.length === 0 ? <EmptyState title="Chưa ghi nhận lần hiến máu nào" description="Các lần hiến máu của bạn sẽ hiện ở đây theo dòng thời gian." />
             : (
               <ol className="relative space-y-6 border-l border-border pl-6">
                 {q.data?.map((d) => (
                   <li key={d.id} className="relative">
                     <span className="absolute -left-[31px] top-1.5 size-3 rounded-full border-2 border-card bg-primary ring-1 ring-primary/40" aria-hidden />
                     <time dateTime={d.donatedOn} className="text-sm font-semibold">{formatDate(d.donatedOn)}</time>
-                    <p className="text-sm">Donation recorded</p>
-                    <p className="text-xs text-muted-foreground">{d.location ?? "Location not provided"} · {d.source === "LIFELY_MATCH" ? "Confirmed via LIFELY" : "Self-reported"}</p>
+                    <p className="text-sm">Đã ghi nhận lần hiến máu</p>
+                    <p className="text-xs text-muted-foreground">{d.location ?? "Chưa cung cấp địa điểm"} · {d.source === "LIFELY_MATCH" ? "Xác nhận qua LIFELY" : "Tự khai báo"}</p>
                   </li>
                 ))}
               </ol>
@@ -56,11 +56,11 @@ export default function DonorHistory() {
         </div>
         <Card>
           <CardContent>
-            <h2 className="mb-4 font-semibold">Record a donation</h2>
+            <h2 className="mb-4 font-semibold">Ghi lại một lần hiến máu</h2>
             <form onSubmit={add} className="space-y-4">
-              <Field label="Date" htmlFor="d-date"><Input id="d-date" type="date" required max={new Date().toISOString().slice(0, 10)} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-              <Field label="Where (optional)" htmlFor="d-loc"><Input id="d-loc" maxLength={200} value={location} onChange={(e) => setLocation(e.target.value)} /></Field>
-              <Button type="submit" className="w-full" disabled={busy || !date}>{busy ? <Loader2 className="animate-spin" /> : <Plus />} Add donation</Button>
+              <Field label="Ngày" htmlFor="d-date"><Input id="d-date" type="date" required max={new Date().toISOString().slice(0, 10)} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+              <Field label="Nơi hiến (không bắt buộc)" htmlFor="d-loc"><Input id="d-loc" maxLength={200} value={location} onChange={(e) => setLocation(e.target.value)} /></Field>
+              <Button type="submit" className="w-full" disabled={busy || !date}>{busy ? <Loader2 className="animate-spin" /> : <Plus />} Thêm lần hiến</Button>
             </form>
           </CardContent>
         </Card>

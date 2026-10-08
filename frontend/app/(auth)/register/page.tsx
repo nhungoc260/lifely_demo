@@ -20,20 +20,20 @@ import { useAuth } from "@/providers/auth-provider";
 
 const schema = z
   .object({
-    fullName: z.string().trim().min(2, "Enter your full name").max(150),
-    email: z.string().min(1, "Enter your email").email("Enter a valid email"),
-    phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Enter a valid Vietnamese phone number"),
-    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/, "Use 8+ characters with upper case, lower case and a number"),
-    confirmPassword: z.string().min(1, "Confirm your password"),
+    fullName: z.string().trim().min(2, "Nhập họ và tên").max(150),
+    email: z.string().min(1, "Nhập email của bạn").email("Email không hợp lệ"),
+    phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
+    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/, "Dùng từ 8 ký tự, gồm chữ hoa, chữ thường và số"),
+    confirmPassword: z.string().min(1, "Nhập lại mật khẩu"),
     role: z.enum(["DONOR", "REQUESTER", "ORGANIZATION"]),
   })
-  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match" });
+  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Mật khẩu nhập lại không khớp" });
 type Values = z.infer<typeof schema>;
 
 const ROLES = [
-  { value: "DONOR", title: "Donor", desc: "Get matched with nearby requests", icon: Droplets },
-  { value: "REQUESTER", title: "Requester", desc: "I need blood for a patient", icon: HeartHandshake },
-  { value: "ORGANIZATION", title: "Organization", desc: "Hospital or blood center", icon: Building2 },
+  { value: "DONOR", title: "Người hiến máu", desc: "Được kết nối với các yêu cầu ở gần", icon: Droplets },
+  { value: "REQUESTER", title: "Người cần máu", desc: "Tôi cần máu cho bệnh nhân", icon: HeartHandshake },
+  { value: "ORGANIZATION", title: "Tổ chức", desc: "Bệnh viện hoặc trung tâm máu", icon: Building2 },
 ] as const;
 
 function RegisterForm() {
@@ -52,7 +52,7 @@ function RegisterForm() {
     try {
       const res = await authApi.register(values);
       signIn(res);
-      toast.success("Your account is ready");
+      toast.success("Tài khoản của bạn đã sẵn sàng");
       router.replace("/onboarding");
     } catch (e) {
       if (!applyServerErrors(e, setError)) setFormError(toApiError(e).message);
@@ -60,7 +60,7 @@ function RegisterForm() {
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Join the network. It takes about a minute.">
+    <AuthLayout title="Tạo tài khoản của bạn" subtitle="Tham gia mạng lưới. Chỉ mất khoảng một phút.">
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         {formError && <p role="alert" className="rounded-xl border border-critical/30 bg-critical/5 px-4 py-3 text-sm text-critical">{formError}</p>}
 
@@ -69,7 +69,7 @@ function RegisterForm() {
           name="role"
           render={({ field }) => (
             <fieldset>
-              <legend className="mb-2 text-sm font-medium">I am joining as</legend>
+              <legend className="mb-2 text-sm font-medium">Tôi tham gia với vai trò</legend>
               <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
                 {ROLES.map((r) => (
                   <label key={r.value} className={cn("cursor-pointer rounded-xl border border-border bg-card p-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring", field.value === r.value && "border-primary bg-secondary")}>
@@ -84,31 +84,31 @@ function RegisterForm() {
           )}
         />
 
-        <Field label="Full name" htmlFor="fullName" error={errors.fullName?.message}>
+        <Field label="Họ và tên" htmlFor="fullName" error={errors.fullName?.message}>
           <Input id="fullName" autoComplete="name" aria-invalid={!!errors.fullName} {...register("fullName")} />
         </Field>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Email" htmlFor="email" error={errors.email?.message}>
             <Input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...register("email")} />
           </Field>
-          <Field label="Phone" htmlFor="phone" error={errors.phone?.message}>
+          <Field label="Số điện thoại" htmlFor="phone" error={errors.phone?.message}>
             <Input id="phone" type="tel" autoComplete="tel" placeholder="09xxxxxxxx" aria-invalid={!!errors.phone} {...register("phone")} />
           </Field>
         </div>
-        <Field label="Password" htmlFor="password" error={errors.password?.message} hint="8+ characters with upper case, lower case and a number">
+        <Field label="Mật khẩu" htmlFor="password" error={errors.password?.message} hint="Từ 8 ký tự, gồm chữ hoa, chữ thường và số">
           <Input id="password" type="password" autoComplete="new-password" aria-invalid={!!errors.password} {...register("password")} />
         </Field>
-        <Field label="Confirm password" htmlFor="confirmPassword" error={errors.confirmPassword?.message}>
+        <Field label="Nhập lại mật khẩu" htmlFor="confirmPassword" error={errors.confirmPassword?.message}>
           <Input id="confirmPassword" type="password" autoComplete="new-password" aria-invalid={!!errors.confirmPassword} {...register("confirmPassword")} />
         </Field>
 
         <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Creating account…" : "Create account"}
+          {isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          By continuing you agree to the <Link href="/info/terms" className="underline">Terms</Link> and <Link href="/info/privacy" className="underline">Privacy Policy</Link>.
+          Khi tiếp tục, bạn đồng ý với <Link href="/info/terms" className="underline">Điều khoản</Link> và <Link href="/info/privacy" className="underline">Chính sách quyền riêng tư</Link>.
         </p>
-        <p className="text-center text-sm text-muted-foreground">Already have an account? <Link href="/login" className="font-medium text-primary hover:underline">Log in</Link></p>
+        <p className="text-center text-sm text-muted-foreground">Đã có tài khoản? <Link href="/login" className="font-medium text-primary hover:underline">Đăng nhập</Link></p>
       </form>
     </AuthLayout>
   );

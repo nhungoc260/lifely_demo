@@ -2,6 +2,7 @@ import { AlertOctagon, AlertTriangle, Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { STATUS_LABEL } from "@/lib/format";
+import { MATCH_LABEL, ORG_STATUS_LABEL, REPORT_STATUS_LABEL } from "@/lib/labels";
 import type { MatchStatus, OrgStatus, ReportStatus, RequestStatus, Urgency } from "@/types/domain";
 
 const tone = {
@@ -22,9 +23,9 @@ export function Pill({ t, children, className }: { t: keyof typeof tone; childre
 
 /** Mức khẩn cấp: luôn có icon + chữ, không chỉ dựa vào màu. */
 export function UrgencyBadge({ urgency }: { urgency: Urgency }) {
-  if (urgency === "CRITICAL") return <Pill t="red"><AlertOctagon className="size-3.5" aria-hidden />CRITICAL</Pill>;
-  if (urgency === "URGENT") return <Pill t="amber"><AlertTriangle className="size-3.5" aria-hidden />URGENT</Pill>;
-  return <Pill t="slate"><Info className="size-3.5" aria-hidden />NORMAL</Pill>;
+  if (urgency === "CRITICAL") return <Pill t="red"><AlertOctagon className="size-3.5" aria-hidden />NGUY KỊCH</Pill>;
+  if (urgency === "URGENT") return <Pill t="amber"><AlertTriangle className="size-3.5" aria-hidden />KHẨN</Pill>;
+  return <Pill t="slate"><Info className="size-3.5" aria-hidden />BÌNH THƯỜNG</Pill>;
 }
 
 const requestTone: Record<RequestStatus, keyof typeof tone> = {
@@ -39,20 +40,19 @@ const matchTone: Record<MatchStatus, keyof typeof tone> = {
   PENDING: "slate", CONTACTED: "blue", ACCEPTED: "green", REJECTED: "slate", CANCELLED: "slate", COMPLETED: "green", EXPIRED: "slate",
 };
 export function MatchBadge({ status }: { status: MatchStatus }) {
-  const label = status.charAt(0) + status.slice(1).toLowerCase();
-  return <Pill t={matchTone[status]}>{label}</Pill>;
+  return <Pill t={matchTone[status]}>{MATCH_LABEL[status]}</Pill>;
 }
 
 const orgTone: Record<OrgStatus, keyof typeof tone> = {
   PENDING: "slate", UNDER_REVIEW: "amber", VERIFIED: "green", REJECTED: "red", SUSPENDED: "red",
 };
 export function OrgStatusBadge({ status }: { status: OrgStatus }) {
-  return <Pill t={orgTone[status]}>{status.replace("_", " ").toLowerCase().replace(/^./, (c) => c.toUpperCase())}</Pill>;
+  return <Pill t={orgTone[status]}>{ORG_STATUS_LABEL[status]}</Pill>;
 }
 
 const reportTone: Record<ReportStatus, keyof typeof tone> = { OPEN: "red", INVESTIGATING: "amber", RESOLVED: "green", REJECTED: "slate" };
 export function ReportBadge({ status }: { status: ReportStatus }) {
-  return <Pill t={reportTone[status]}>{status.charAt(0) + status.slice(1).toLowerCase()}</Pill>;
+  return <Pill t={reportTone[status]}>{REPORT_STATUS_LABEL[status]}</Pill>;
 }
 
 export function BloodChip({ type, className }: { type: string; className?: string }) {

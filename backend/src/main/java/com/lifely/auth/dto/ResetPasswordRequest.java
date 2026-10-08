@@ -7,5 +7,5 @@ import jakarta.validation.constraints.Pattern;
 public record ResetPasswordRequest(
         @NotBlank String token,
         @NotBlank @Pattern(regexp = Patterns.PASSWORD,
-                message = "Use 8+ characters with upper case, lower case and a number") String password) {
+                message = "Dùng từ 8 ký tự, gồm chữ hoa, chữ thường và số") String password) {
 }

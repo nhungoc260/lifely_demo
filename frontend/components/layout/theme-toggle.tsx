@@ -8,16 +8,16 @@ import { cn } from "@/lib/utils";
 
 const noop = () => () => {};
 const options = [
-  { value: "light", label: "Light", Icon: Sun },
-  { value: "dark", label: "Dark", Icon: Moon },
-  { value: "system", label: "System", Icon: Monitor },
+  { value: "light", label: "Sáng", Icon: Sun },
+  { value: "dark", label: "Tối", Icon: Moon },
+  { value: "system", label: "Hệ thống", Icon: Monitor },
 ] as const;
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(noop, () => true, () => false);
   return (
-    <div role="radiogroup" aria-label="Theme" className={cn("inline-flex rounded-full border border-border bg-card p-0.5", className)}>
+    <div role="radiogroup" aria-label="Giao diện" className={cn("inline-flex rounded-full border border-border bg-card p-0.5", className)}>
       {options.map(({ value, label, Icon }) => {
         const active = mounted && theme === value;
         return (

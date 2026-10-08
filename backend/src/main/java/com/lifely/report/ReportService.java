@@ -41,11 +41,11 @@ public class ReportService {
             case ORGANIZATION -> organizationRepository.existsById(req.targetId());
         };
         if (!exists) {
-            throw AppException.notFound("TARGET_NOT_FOUND", "The item you are reporting no longer exists");
+            throw AppException.notFound("TARGET_NOT_FOUND", "Nội dung bạn báo cáo không còn tồn tại");
         }
         if (repository.existsByReporterIdAndTargetTypeAndTargetIdAndStatusIn(user.getId(), req.targetType(),
                 req.targetId(), EnumSet.of(ReportStatus.OPEN, ReportStatus.INVESTIGATING))) {
-            throw AppException.conflict("ALREADY_REPORTED", "You have already reported this item");
+            throw AppException.conflict("ALREADY_REPORTED", "Bạn đã báo cáo nội dung này rồi");
         }
         Report r = new Report();
         r.setReporterId(user.getId());

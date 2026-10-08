@@ -124,14 +124,14 @@ public class MatchingService {
     public void startMatching(BloodRequest r, UUID actorId) {
         r.setEscalationLevel(1);
         r.setLastEscalatedAt(Instant.now());
-        lifecycle.transition(r, RequestStatus.MATCHING, "Matching started", actorId);
+        lifecycle.transition(r, RequestStatus.MATCHING, "Bắt đầu tìm người hiến máu", actorId);
         int contacted = contactLevel(r, 1);
         if (contacted > 0) {
             lifecycle.transition(r, RequestStatus.DONORS_CONTACTED,
-                    contacted + (contacted == 1 ? " donor contacted" : " donors contacted"), actorId);
+                    "Đã liên hệ " + contacted + " người hiến máu", actorId);
         } else {
-            lifecycle.note(r, "No suitable donors within " + props.getLevelRadiusKm().get(0).intValue()
-                    + " km yet. The search will widen automatically.", actorId);
+            lifecycle.note(r, "Chưa có người hiến máu phù hợp trong " + props.getLevelRadiusKm().get(0).intValue()
+                    + " km. Hệ thống sẽ tự động mở rộng phạm vi tìm kiếm.", actorId);
         }
     }
 
@@ -150,18 +150,18 @@ public class MatchingService {
         r.setLastEscalatedAt(now);
         int contacted = contactLevel(r, level);
         double radius = props.getLevelRadiusKm().get(level - 1);
-        notifications.notify(r.getRequesterId(), NotificationType.EMERGENCY_ESCALATION, "Search area widened",
-                "We widened the search to " + (int) radius + " km and contacted " + contacted + " more donor(s).",
+        notifications.notify(r.getRequesterId(), NotificationType.EMERGENCY_ESCALATION, "Đã mở rộng phạm vi tìm kiếm",
+                "Chúng tôi đã mở rộng phạm vi tìm kiếm tới " + (int) radius + " km và liên hệ thêm " + contacted + " người hiến máu.",
                 "REQUEST", r.getId());
         if (r.getStatus() == RequestStatus.MATCHING || r.getStatus() == RequestStatus.VERIFIED) {
             if (contacted > 0) {
-                lifecycle.transition(r, RequestStatus.DONORS_CONTACTED, contacted + " donors contacted (level " + level + ")", null);
+                lifecycle.transition(r, RequestStatus.DONORS_CONTACTED, "Đã liên hệ " + contacted + " người hiến máu (cấp " + level + ")", null);
             } else {
-                lifecycle.note(r, "Search widened to level " + level + " (" + (int) radius + " km), no new donors found", null);
+                lifecycle.note(r, "Mở rộng tìm kiếm lên cấp " + level + " (" + (int) radius + " km), chưa có thêm người hiến máu", null);
             }
         } else {
-            lifecycle.note(r, "Search widened to level " + level + " (" + (int) radius + " km), "
-                    + contacted + " more donors contacted", null);
+            lifecycle.note(r, "Mở rộng tìm kiếm lên cấp " + level + " (" + (int) radius + " km), đã liên hệ thêm "
+                    + contacted + " người hiến máu", null);
         }
         requestRepository.save(r);
         return true;
@@ -215,9 +215,9 @@ public class MatchingService {
             if (wantsNotifications) {
                 boolean emergency = r.getUrgency() != Urgency.NORMAL;
                 notifications.notify(c.donor().getUserId(), NotificationType.NEW_MATCH,
-                        emergency ? "Emergency request near you" : "Blood request near you",
-                        r.getBloodType().getCode() + " needed at " + r.getHospitalName() + ", "
-                                + c.score().distanceKm() + " km away.",
+                        emergency ? "Yêu cầu khẩn cấp gần bạn" : "Yêu cầu hiến máu gần bạn",
+                        "Cần máu " + r.getBloodType().getCode() + " tại " + r.getHospitalName() + ", cách bạn "
+                                + c.score().distanceKm() + " km.",
                         "MATCH", m.getId());
             }
         }
@@ -235,9 +235,9 @@ public class MatchingService {
             event(m.getId(), "CANCELLED", null);
             if (notifyDonors) {
                 donorRepository.findById(m.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
-                        NotificationType.REQUEST_CANCELLED, "Request cancelled",
-                        "The " + r.getBloodType().getCode() + " request at " + r.getHospitalName()
-                                + " was cancelled. Thank you for being ready to help.", "REQUEST", r.getId()));
+                        NotificationType.REQUEST_CANCELLED, "Yêu cầu đã bị hủy",
+                        "Yêu cầu máu " + r.getBloodType().getCode() + " tại " + r.getHospitalName()
+                                + " đã bị hủy. Cảm ơn bạn đã sẵn sàng giúp đỡ.", "REQUEST", r.getId()));
             }
         }
     }
@@ -260,9 +260,9 @@ public class MatchingService {
             matchRepository.save(m);
             event(m.getId(), "EXPIRED", Map.of("reason", "REQUEST_FULFILLED"));
             donorRepository.findById(m.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
-                    NotificationType.SYSTEM, "Request fulfilled",
-                    "Enough donors have confirmed for the " + r.getBloodType().getCode() + " request at "
-                            + r.getHospitalName() + ". Thank you for responding.", "REQUEST", r.getId()));
+                    NotificationType.SYSTEM, "Yêu cầu đã đủ người",
+                    "Đã đủ người hiến máu xác nhận cho yêu cầu " + r.getBloodType().getCode() + " tại "
+                            + r.getHospitalName() + ". Cảm ơn bạn đã phản hồi.", "REQUEST", r.getId()));
         }
     }
 

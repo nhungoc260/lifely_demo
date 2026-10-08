@@ -120,19 +120,19 @@ public class UserDataService {
     public void deleteAccount(AuthUser auth, String password) {
         User u = load(auth.getId());
         if (u.hasRole(Role.ADMIN)) {
-            throw AppException.forbidden("CANNOT_DELETE_ADMIN", "Administrator accounts cannot be deleted here");
+            throw AppException.forbidden("CANNOT_DELETE_ADMIN", "Không thể xóa tài khoản admin tại đây");
         }
         if (u.hasRole(Role.ORGANIZATION)) {
             throw AppException.forbidden("ORGANIZATION_CONTACT_SUPPORT",
-                    "Organization accounts are linked to verified records. Please contact our staff to close it.");
+                    "Tài khoản tổ chức gắn với các hồ sơ đã xác minh. Vui lòng liên hệ nhân viên để đóng tài khoản.");
         }
         if (!passwordEncoder.matches(password, u.getPasswordHash())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "WRONG_PASSWORD", "Password is incorrect");
+            throw new AppException(HttpStatus.FORBIDDEN, "WRONG_PASSWORD", "Mật khẩu không đúng");
         }
 
         // 1) yêu cầu đang mở của người này được hủy (donor liên quan được thông báo)
         for (BloodRequest r : requestRepository.findByRequesterIdAndStatusIn(u.getId(), RequestStatus.CANCELLABLE)) {
-            requestService.cancel(auth, r.getId(), "Account deleted");
+            requestService.cancel(auth, r.getId(), "Tài khoản đã bị xóa");
         }
         // 2) hồ sơ donor: gỡ mọi dữ liệu nhận dạng và vị trí, thôi tham gia matching
         donorRepository.findByUserId(u.getId()).ifPresent(d -> {
@@ -159,7 +159,7 @@ public class UserDataService {
 
         // 3) ẩn danh hóa tài khoản và khóa đăng nhập vĩnh viễn
         u.setEmail("deleted-" + u.getId() + "@deleted.invalid");
-        u.setFullName("Deleted user");
+        u.setFullName("Người dùng đã xóa");
         u.setPhone("0000000000");
         u.setAvatarUrl(null);
         u.setStatus(UserStatus.SUSPENDED);
@@ -169,6 +169,6 @@ public class UserDataService {
     }
 
     private User load(UUID id) {
-        return userRepository.findById(id).orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "User not found"));
+        return userRepository.findById(id).orElseThrow(() -> AppException.notFound("USER_NOT_FOUND", "Không tìm thấy người dùng"));
     }
 }

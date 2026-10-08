@@ -32,7 +32,7 @@ public class ContactService {
         String message = Sanitizer.plain(req.message());
         String name = Sanitizer.plain(req.name());
         if (message == null || message.length() < 10 || name == null) {
-            throw AppException.badRequest("INVALID_MESSAGE", "Please write a message of at least 10 characters");
+            throw AppException.badRequest("INVALID_MESSAGE", "Vui lòng viết tin nhắn ít nhất 10 ký tự");
         }
         ContactMessage m = new ContactMessage();
         m.setUserId(userOrNull == null ? null : userOrNull.getId());
@@ -42,13 +42,13 @@ public class ContactService {
         m.setMessage(message);
         m = repository.save(m);
 
-        mail.sendToAdmin("[LIFELY] Tin nhan lien he moi tu " + name,
-                "Ban co mot tin nhan lien he moi tren LIFELY.\n\n"
-                        + "Ten: " + name + "\nEmail: " + m.getEmail()
-                        + (m.getPhone() == null ? "" : "\nSDT: " + m.getPhone())
-                        + (m.getUserId() == null ? "\nNguoi gui: khach" : "\nNguoi gui: thanh vien da dang ky")
-                        + "\n\nNoi dung:\n" + message
-                        + "\n\nXem va xu ly trong trang Admin > Messages.");
+        mail.sendToAdmin("[LIFELY] Tin nhắn liên hệ mới từ " + name,
+                "Bạn có một tin nhắn liên hệ mới trên LIFELY.\n\n"
+                        + "Tên: " + name + "\nEmail: " + m.getEmail()
+                        + (m.getPhone() == null ? "" : "\nSĐT: " + m.getPhone())
+                        + (m.getUserId() == null ? "\nNgười gửi: khách" : "\nNgười gửi: thành viên đã đăng ký")
+                        + "\n\nNội dung:\n" + message
+                        + "\n\nXem và xử lý tại trang Admin > Tin nhắn.");
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +63,7 @@ public class ContactService {
     @Transactional
     public ContactMessageDto updateStatus(UUID adminId, UUID id, ContactStatus status) {
         ContactMessage m = repository.findById(id)
-                .orElseThrow(() -> AppException.notFound("MESSAGE_NOT_FOUND", "Message not found"));
+                .orElseThrow(() -> AppException.notFound("MESSAGE_NOT_FOUND", "Không tìm thấy tin nhắn"));
         m.setStatus(status);
         if (status == ContactStatus.RESOLVED) {
             m.setHandledBy(adminId);

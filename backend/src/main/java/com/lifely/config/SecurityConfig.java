@@ -94,13 +94,13 @@ public class SecurityConfig {
     @Bean
     AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper mapper) {
         return (request, response, ex) -> writeJson(mapper, response, HttpServletResponse.SC_UNAUTHORIZED,
-                ApiResponse.error("Authentication is required", "UNAUTHORIZED"));
+                ApiResponse.error("Bạn cần đăng nhập", "UNAUTHORIZED"));
     }
 
     @Bean
     AccessDeniedHandler accessDeniedHandler(ObjectMapper mapper) {
         return (request, response, ex) -> writeJson(mapper, response, HttpServletResponse.SC_FORBIDDEN,
-                ApiResponse.error("You do not have permission to do this", "FORBIDDEN"));
+                ApiResponse.error("Bạn không có quyền thực hiện thao tác này", "FORBIDDEN"));
     }
 
     private static void writeJson(ObjectMapper mapper, HttpServletResponse response, int status,

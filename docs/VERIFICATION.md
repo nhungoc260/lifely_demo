@@ -27,10 +27,13 @@ Mỗi script đã được thử bằng cách cài lỗi cố ý. Lần thử đ
 ## 4. Database trên PostgreSQL 16 thật
 Migration V1→V6 dựng từ đầu thành công; seed đúng số lượng; CHECK `units_confirmed <= units_required` chặn 6/5; 20 phiên đồng thời giành đúng 3 slot (3/3); các câu SQL thống kê, độ phủ và ẩn danh hóa đều chạy đúng.
 
-## 5. Frontend
+## 5. Việt hóa giao diện
+Toàn bộ chữ hiển thị được trích bằng trình phân tích cú pháp TypeScript (JSX text, thuộc tính, toast, thông báo lỗi), dịch theo từ điển 760+ mục rồi thay đúng vị trí; nhãn sinh từ enum (trạng thái, vai trò, lý do báo cáo, hành động nhật ký) nằm trong `frontend/lib/labels.ts`. Thông báo lỗi, thông báo hệ thống và email của backend cũng bằng tiếng Việt; dữ liệu demo được việt hóa bằng migration `V7`. Đã quét lại 11 trang công khai sau khi build: 0 chuỗi tiếng Anh. Các trang cần đăng nhập được kiểm tra bằng cách trích lại chuỗi từ mã nguồn (còn 0 chuỗi giao diện tiếng Anh).
+
+## 6. Frontend
 `tsc`, `eslint` (0 lỗi), 19 test (vitest), `next build`; chạy bản production kiểm tra route và header bảo mật.
 
-## 6. CHƯA kiểm chứng (cần bạn chạy)
+## 7. CHƯA kiểm chứng (cần bạn chạy)
 - **Khởi động Spring Boot thật**: wiring bean, parse HQL lúc khởi động, Flyway trong ứng dụng, Spring Security filter chain.
 - WebSocket/STOMP thực tế, gửi email Gmail thật.
 - Giao diện trên trình duyệt (bản đồ, poster/QR, dark mode, 375px), luồng end-to-end frontend ↔ backend.

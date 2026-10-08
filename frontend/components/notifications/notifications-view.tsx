@@ -60,25 +60,25 @@ export function NotificationsView() {
       q.mutate((p) => p && { ...p, items: p.items.map((x) => ({ ...x, read: true })) });
       setUnread(0);
       refreshUnread();
-      toast.success("All notifications marked as read");
-    } catch { toast.error("Could not update notifications. Please try again."); }
+      toast.success("Đã đánh dấu tất cả thông báo là đã đọc");
+    } catch { toast.error("Không cập nhật được thông báo. Vui lòng thử lại."); }
   }
 
   return (
     <>
       <PageHeader
-        title="Notifications"
-        description={unread > 0 ? `${unread} unread` : "You are all caught up"}
+        title="Thông báo"
+        description={unread > 0 ? `${unread} chưa đọc` : "Bạn đã xem hết thông báo"}
         actions={
           <>
-            <Button variant={onlyUnread ? "default" : "outline"} size="sm" aria-pressed={onlyUnread} onClick={() => { setOnlyUnread((v) => !v); setPage(0); }}>Unread only</Button>
-            <Button variant="outline" size="sm" onClick={markAll} disabled={unread === 0}><CheckCheck /> Mark all read</Button>
+            <Button variant={onlyUnread ? "default" : "outline"} size="sm" aria-pressed={onlyUnread} onClick={() => { setOnlyUnread((v) => !v); setPage(0); }}>Chỉ chưa đọc</Button>
+            <Button variant="outline" size="sm" onClick={markAll} disabled={unread === 0}><CheckCheck /> Đánh dấu tất cả đã đọc</Button>
           </>
         }
       />
       {q.initialLoading ? <div className="space-y-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
         : q.error && !q.data ? <ErrorState message={q.error.message} onRetry={q.reload} />
-        : q.data && q.data.items.length === 0 ? <EmptyState title={onlyUnread ? "No unread notifications" : "No notifications yet"} description="We will let you know here when something needs your attention." />
+        : q.data && q.data.items.length === 0 ? <EmptyState title={onlyUnread ? "Không có thông báo chưa đọc" : "Chưa có thông báo nào"} description="Chúng tôi sẽ báo ở đây khi có việc cần bạn chú ý." />
         : (
           <>
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
@@ -92,7 +92,7 @@ export function NotificationsView() {
                         {n.type === "EMERGENCY_ESCALATION" ? <AlertTriangle className="size-4" aria-hidden /> : <Icon className="size-4" aria-hidden />}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2"><span className={cn("truncate text-sm", !n.read ? "font-semibold" : "font-medium")}>{n.title}</span>{!n.read && <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}</span>
+                        <span className="flex items-center gap-2"><span className={cn("truncate text-sm", !n.read ? "font-semibold" : "font-medium")}>{n.title}</span>{!n.read && <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Chưa đọc" />}</span>
                         <span className="mt-0.5 block text-sm text-muted-foreground">{n.message}</span>
                       </span>
                       <time dateTime={n.createdAt} className="shrink-0 pt-0.5 text-xs text-muted-foreground">{timeAgo(n.createdAt)}</time>

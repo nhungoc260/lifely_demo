@@ -20,6 +20,7 @@ spring:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
+    default-encoding: UTF-8       # email tiếng Việt có dấu
     password: ${MAIL_PASSWORD:}      # Gmail App Password, KHÔNG phải mật khẩu đăng nhập Gmail
     properties:
       mail.smtp.auth: true

@@ -18,8 +18,8 @@ import { authApi } from "@/services";
 import { homeFor, useAuth } from "@/providers/auth-provider";
 
 const schema = z.object({
-  email: z.string().min(1, "Enter your email").email("Enter a valid email"),
-  password: z.string().min(1, "Enter your password"),
+  email: z.string().min(1, "Nhập email của bạn").email("Email không hợp lệ"),
+  password: z.string().min(1, "Nhập mật khẩu"),
 });
 type Values = z.infer<typeof schema>;
 
@@ -35,7 +35,7 @@ function LoginForm() {
     try {
       const res = await authApi.login(values);
       signIn(res);
-      toast.success(`Welcome back, ${res.user.fullName}`);
+      toast.success(`Chào mừng trở lại, ${res.user.fullName}`);
       const role = res.user.roles[0];
       router.replace(safeNext(params.get("next")) ?? (role === "DONOR" && !res.user.onboardingCompleted ? "/onboarding" : homeFor(role)));
     } catch (e) {
@@ -44,20 +44,20 @@ function LoginForm() {
   }
 
   return (
-    <AuthLayout title="Log in" subtitle="Welcome back. Sign in to continue to LIFELY.">
+    <AuthLayout title="Đăng nhập" subtitle="Chào mừng bạn quay lại. Đăng nhập để tiếp tục dùng LIFELY.">
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         {formError && <p role="alert" className="rounded-xl border border-critical/30 bg-critical/5 px-4 py-3 text-sm text-critical">{formError}</p>}
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
           <Input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...register("email")} />
         </Field>
-        <Field label="Password" htmlFor="password" error={errors.password?.message}>
+        <Field label="Mật khẩu" htmlFor="password" error={errors.password?.message}>
           <Input id="password" type="password" autoComplete="current-password" aria-invalid={!!errors.password} {...register("password")} />
         </Field>
-        <div className="flex justify-end text-sm"><Link href="/forgot-password" className="text-primary hover:underline">Forgot password?</Link></div>
+        <div className="flex justify-end text-sm"><Link href="/forgot-password" className="text-primary hover:underline">Quên mật khẩu?</Link></div>
         <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Logging in…" : "Log in"}
+          {isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
-        <p className="text-center text-sm text-muted-foreground">New to LIFELY? <Link href="/register" className="font-medium text-primary hover:underline">Create an account</Link></p>
+        <p className="text-center text-sm text-muted-foreground">Bạn mới biết đến LIFELY? <Link href="/register" className="font-medium text-primary hover:underline">Tạo tài khoản</Link></p>
       </form>
     </AuthLayout>
   );

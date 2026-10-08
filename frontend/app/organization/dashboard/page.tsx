@@ -21,23 +21,23 @@ export default function OrganizationDashboard() {
 
   return (
     <>
-      <PageHeader title="Organization dashboard" description={me.data?.name ?? "Set up your organization to start coordinating."} actions={verified ? <Link href="/organization/requests/create" className={buttonVariants()}>New request</Link> : undefined} />
+      <PageHeader title="Tổng quan tổ chức" description={me.data?.name ?? "Thiết lập tổ chức của bạn để bắt đầu điều phối."} actions={verified ? <Link href="/organization/requests/create" className={buttonVariants()}>Yêu cầu mới</Link> : undefined} />
       {me.error && !me.data ? <ErrorState message={me.error.message} onRetry={me.reload} /> : me.data === null ? (
-        <Card className="p-8 text-center"><p className="text-lg font-semibold">Complete your organization profile</p><p className="mt-1 text-sm text-muted-foreground">Add your details and verification documents so our team can verify you.</p><Link href="/organization/profile" className={buttonVariants({ className: "mt-5" })}>Set up organization</Link></Card>
+        <Card className="p-8 text-center"><p className="text-lg font-semibold">Hoàn tất hồ sơ tổ chức</p><p className="mt-1 text-sm text-muted-foreground">Thêm thông tin và giấy tờ xác minh để đội ngũ của chúng tôi xác minh cho bạn.</p><Link href="/organization/profile" className={buttonVariants({ className: "mt-5" })}>Thiết lập tổ chức</Link></Card>
       ) : (
         <>
           {me.data && !verified && (
             <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 border-warning/40 bg-warning/5 p-5">
-              <div><p className="flex items-center gap-2 font-medium">Verification <OrgStatusBadge status={me.data.verificationStatus} /></p><p className="mt-1 text-sm text-muted-foreground">{me.data.verificationStatus === "REJECTED" ? (me.data.verificationNote ?? "Please update your details and resubmit.") : "Until you are verified, your requests are reviewed by an administrator before donors are contacted."}</p></div>
-              <Link href="/organization/profile" className={buttonVariants({ size: "sm", variant: "outline" })}>Manage verification</Link>
+              <div><p className="flex items-center gap-2 font-medium">Xác minh <OrgStatusBadge status={me.data.verificationStatus} /></p><p className="mt-1 text-sm text-muted-foreground">{me.data.verificationStatus === "REJECTED" ? (me.data.verificationNote ?? "Vui lòng cập nhật thông tin và nộp lại.") : "Khi chưa được xác minh, yêu cầu của bạn sẽ được admin xem xét trước khi liên hệ người hiến máu."}</p></div>
+              <Link href="/organization/profile" className={buttonVariants({ size: "sm", variant: "outline" })}>Quản lý xác minh</Link>
             </Card>
           )}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <StatCard label="Verification" value={me.data ? <OrgStatusBadge status={me.data.verificationStatus} /> : "–"} icon={BadgeCheck} loading={me.initialLoading} />
-            <StatCard label="Active Requests" value={dash.data?.activeRequests ?? 0} icon={Activity} accent loading={dash.initialLoading} />
-            <StatCard label="Critical Requests" value={dash.data?.criticalRequests ?? 0} icon={AlertOctagon} loading={dash.initialLoading} />
-            <StatCard label="Completed Requests" value={dash.data?.completedRequests ?? 0} icon={CheckCircle2} loading={dash.initialLoading} />
-            <StatCard label="Response Rate" value={`${dash.data?.responseRate ?? 0}%`} icon={Percent} loading={dash.initialLoading} hint="Contacted donors who replied" />
+            <StatCard label="Xác minh" value={me.data ? <OrgStatusBadge status={me.data.verificationStatus} /> : "–"} icon={BadgeCheck} loading={me.initialLoading} />
+            <StatCard label="Yêu cầu đang hoạt động" value={dash.data?.activeRequests ?? 0} icon={Activity} accent loading={dash.initialLoading} />
+            <StatCard label="Yêu cầu nguy kịch" value={dash.data?.criticalRequests ?? 0} icon={AlertOctagon} loading={dash.initialLoading} />
+            <StatCard label="Yêu cầu đã hoàn tất" value={dash.data?.completedRequests ?? 0} icon={CheckCircle2} loading={dash.initialLoading} />
+            <StatCard label="Tỷ lệ phản hồi" value={`${dash.data?.responseRate ?? 0}%`} icon={Percent} loading={dash.initialLoading} hint="Người hiến máu được liên hệ đã trả lời" />
           </div>
         </>
       )}

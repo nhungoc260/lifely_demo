@@ -72,17 +72,17 @@ public class MatchService {
     public DonorMatchResponse accept(AuthUser user, UUID matchId) {
         Match first = ownMatch(user, matchId);
         BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         entityManager.refresh(first);   // đọc lại match sau khi có khóa, tránh dữ liệu cũ
         Match m = first;
         if (!MatchStatus.AWAITING_RESPONSE.contains(m.getStatus())) {
-            throw AppException.conflict("MATCH_ALREADY_RESPONDED", "You have already responded to this request");
+            throw AppException.conflict("MATCH_ALREADY_RESPONDED", "Bạn đã phản hồi yêu cầu này rồi");
         }
         if (r.getUnitsConfirmed() >= r.getUnitsRequired() || r.getStatus() == RequestStatus.FULFILLED) {
-            throw AppException.conflict("REQUEST_FULFILLED", "Request is no longer accepting donors");
+            throw AppException.conflict("REQUEST_FULFILLED", "Yêu cầu này không còn nhận thêm người hiến máu");
         }
         if (!r.getStatus().isActive() || r.getDeadline().isBefore(Instant.now())) {
-            throw AppException.conflict("REQUEST_CLOSED", "This request is closed");
+            throw AppException.conflict("REQUEST_CLOSED", "Yêu cầu này đã đóng");
         }
 
         r.setUnitsConfirmed(r.getUnitsConfirmed() + 1);
@@ -93,7 +93,7 @@ public class MatchService {
 
         int confirmed = r.getUnitsConfirmed();
         int required = r.getUnitsRequired();
-        String progress = confirmed + " / " + required + " donors confirmed";
+        String progress = confirmed + " / " + required + " người hiến máu đã xác nhận";
         if (confirmed >= required) {
             lifecycle.transition(r, RequestStatus.FULFILLED, progress, user.getId());
             matchingService.closeRemainingAfterFulfilled(r);
@@ -105,8 +105,8 @@ public class MatchService {
             lifecycle.publish(r);
         }
         notifications.notify(r.getRequesterId(), NotificationType.REQUEST_ACCEPTED,
-                confirmed >= required ? "All donors confirmed" : "A donor accepted your request",
-                "Your " + r.getBloodType().getCode() + " request now has " + progress + ".", "REQUEST", r.getId());
+                confirmed >= required ? "Đã đủ người hiến máu" : "Có người hiến máu đã nhận lời yêu cầu của bạn",
+                "Yêu cầu " + r.getBloodType().getCode() + " của bạn hiện có " + progress + ".", "REQUEST", r.getId());
         audit.log(user.getId(), AuditAction.MATCH_ACCEPTED, "MATCH", m.getId(), Map.of("requestId", r.getId().toString()));
         return toDonorResponse(m, r, donorOf(m));
     }
@@ -115,10 +115,10 @@ public class MatchService {
     public DonorMatchResponse reject(AuthUser user, UUID matchId) {
         Match first = ownMatch(user, matchId);
         BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         entityManager.refresh(first);
         if (!MatchStatus.AWAITING_RESPONSE.contains(first.getStatus())) {
-            throw AppException.conflict("MATCH_ALREADY_RESPONDED", "You have already responded to this request");
+            throw AppException.conflict("MATCH_ALREADY_RESPONDED", "Bạn đã phản hồi yêu cầu này rồi");
         }
         first.setStatus(MatchStatus.REJECTED);
         first.setRespondedAt(Instant.now());
@@ -133,15 +133,15 @@ public class MatchService {
     @Transactional
     public RequestMatchEntry complete(AuthUser user, UUID matchId) {
         Match first = matchRepository.findById(matchId)
-                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Match not found"));
+                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối"));
         BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (!access.canView(user.getId(), r)) {
-            throw AppException.notFound("MATCH_NOT_FOUND", "Match not found");
+            throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
         }
         entityManager.refresh(first);
         if (first.getStatus() != MatchStatus.ACCEPTED) {
-            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Only accepted donors can be marked as donated");
+            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ người hiến máu đã nhận lời mới được đánh dấu là đã hiến");
         }
         first.setStatus(MatchStatus.COMPLETED);
         matchRepository.save(first);
@@ -159,8 +159,8 @@ public class MatchService {
         h.setMatchId(first.getId());
         historyRepository.save(h);
 
-        notifications.notify(donor.getUserId(), NotificationType.SYSTEM, "Thank you for donating",
-                "Your donation at " + r.getHospitalName() + " was recorded.", "MATCH", first.getId());
+        notifications.notify(donor.getUserId(), NotificationType.SYSTEM, "Cảm ơn bạn đã hiến máu",
+                "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được ghi nhận.", "MATCH", first.getId());
         audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId());
         return requesterEntry(first, 0);
     }
@@ -168,7 +168,7 @@ public class MatchService {
     @Transactional(readOnly = true)
     public List<DonorMatchResponse> listForDonor(AuthUser user, MatchStatus status) {
         DonorProfile donor = donorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Donor profile not found"));
+                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
         List<DonorMatchResponse> out = new ArrayList<>();
         for (Match m : matchRepository.findByDonorIdOrderByCreatedAtDesc(donor.getId())) {
             if (status != null && m.getStatus() != status) continue;
@@ -183,7 +183,7 @@ public class MatchService {
     public DonorMatchResponse detailForDonor(AuthUser user, UUID matchId) {
         Match m = ownMatch(user, matchId);
         BloodRequest r = requestRepository.findById(m.getRequestId())
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         return toDonorResponse(m, r, donorOf(m));
     }
 
@@ -203,18 +203,18 @@ public class MatchService {
     /** Chống IDOR: donor chỉ thao tác được trên match của chính mình; trả 404 nếu không phải của mình. */
     private Match ownMatch(AuthUser user, UUID matchId) {
         Match m = matchRepository.findById(matchId)
-                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Match not found"));
+                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối"));
         DonorProfile donor = donorRepository.findById(m.getDonorId())
-                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Match not found"));
+                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối"));
         if (!donor.getUserId().equals(user.getId())) {
-            throw AppException.notFound("MATCH_NOT_FOUND", "Match not found");
+            throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
         }
         return m;
     }
 
     private DonorProfile donorOf(Match m) {
         return donorRepository.findById(m.getDonorId())
-                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Donor profile not found"));
+                .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
     }
 
     private DonorMatchResponse toDonorResponse(Match m, BloodRequest r, DonorProfile donor) {
@@ -242,7 +242,7 @@ public class MatchService {
                 phone = u.getPhone();
             }
         }
-        return new RequestMatchEntry(m.getId(), rank > 0 ? "Donor #" + rank : "Donor", m.getDistanceKm().doubleValue(),
+        return new RequestMatchEntry(m.getId(), rank > 0 ? "Người hiến #" + rank : "Người hiến", m.getDistanceKm().doubleValue(),
                 m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone);
     }
 }

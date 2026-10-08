@@ -8,7 +8,7 @@ export function ProgressBar({ value, max, label, className }: { value: number; m
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuenow={value}
-      aria-label={label ?? "Progress"}
+      aria-label={label ?? "Tiến độ"}
       className={cn("h-2.5 w-full overflow-hidden rounded-full bg-muted", className)}
     >
       <div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", pct >= 100 ? "bg-success" : "bg-primary")} style={{ width: `${pct}%` }} />

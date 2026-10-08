@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import { homeFor, useAuth } from "@/providers/auth-provider";
 
 const LINKS = [
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#requests", label: "Emergency Requests" },
-  { href: "/#donors", label: "For Donors" },
-  { href: "/#organizations", label: "For Organizations" },
-  { href: "/#about", label: "About" },
+  { href: "/#how-it-works", label: "Cách hoạt động" },
+  { href: "/#requests", label: "Yêu cầu khẩn cấp" },
+  { href: "/#donors", label: "Dành cho người hiến máu" },
+  { href: "/#organizations", label: "Dành cho tổ chức" },
+  { href: "/#about", label: "Giới thiệu" },
 ];
 
 export function Navbar() {
@@ -27,7 +27,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Logo />
-        <nav aria-label="Primary" className="hidden items-center gap-7 lg:flex">
+        <nav aria-label="Chính" className="hidden items-center gap-7 lg:flex">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">{l.label}</Link>
           ))}
@@ -35,31 +35,31 @@ export function Navbar() {
         <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
           {authed ? (
-            <Link href={homeFor(role)} className={buttonVariants({ size: "sm" })}>Open dashboard</Link>
+            <Link href={homeFor(role)} className={buttonVariants({ size: "sm" })}>Vào trang của tôi</Link>
           ) : (
             <>
-              <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>Log in</Link>
-              <Link href="/register" className={buttonVariants({ size: "sm" })}>Get Started</Link>
+              <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>Đăng nhập</Link>
+              <Link href="/register" className={buttonVariants({ size: "sm" })}>Bắt đầu</Link>
             </>
           )}
         </div>
-        <button className="grid size-10 place-items-center rounded-xl border border-border lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
+        <button className="grid size-10 place-items-center rounded-xl border border-border lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Đóng menu" : "Mở menu"} onClick={() => setOpen((o) => !o)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
       <div id="mobile-menu" className={cn("border-t border-border bg-background px-5 pb-5 lg:hidden", open ? "block" : "hidden")}>
-        <nav aria-label="Mobile" className="flex flex-col py-2">
+        <nav aria-label="Di động" className="flex flex-col py-2">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-lg px-1 py-3 text-base">{l.label}</Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
           {authed ? (
-            <Link href={homeFor(role)} className={cn(buttonVariants(), "flex-1")}>Open dashboard</Link>
+            <Link href={homeFor(role)} className={cn(buttonVariants(), "flex-1")}>Vào trang của tôi</Link>
           ) : (
             <>
-              <Link href="/login" className={cn(buttonVariants({ variant: "outline" }), "flex-1")}>Log in</Link>
-              <Link href="/register" className={cn(buttonVariants(), "flex-1")}>Get Started</Link>
+              <Link href="/login" className={cn(buttonVariants({ variant: "outline" }), "flex-1")}>Đăng nhập</Link>
+              <Link href="/register" className={cn(buttonVariants(), "flex-1")}>Bắt đầu</Link>
             </>
           )}
           <ThemeToggle />

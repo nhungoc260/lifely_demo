@@ -13,9 +13,9 @@ import { donorApi } from "@/services";
 import { useNotifications } from "@/providers/notifications-provider";
 
 const TABS = [
-  { key: "open", label: "Needs your response" },
-  { key: "ACCEPTED", label: "Accepted" },
-  { key: "history", label: "Past" },
+  { key: "open", label: "Cần bạn phản hồi" },
+  { key: "ACCEPTED", label: "Đã nhận lời" },
+  { key: "history", label: "Đã qua" },
 ] as const;
 
 export default function DonorRequests() {
@@ -30,15 +30,15 @@ export default function DonorRequests() {
 
   return (
     <>
-      <PageHeader title="Requests" description="Requests LIFELY matched to you. Final eligibility is always confirmed by healthcare professionals." />
-      <div role="tablist" aria-label="Request filter" className="mb-6 inline-flex rounded-xl border border-border bg-card p-1">
+      <PageHeader title="Yêu cầu" description="Các yêu cầu LIFELY kết nối với bạn. Điều kiện hiến máu luôn do nhân viên y tế quyết định." />
+      <div role="tablist" aria-label="Lọc yêu cầu" className="mb-6 inline-flex rounded-xl border border-border bg-card p-1">
         {TABS.map((t) => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)} className={cn("rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", tab === t.key && "bg-secondary text-secondary-foreground")}>{t.label}</button>
         ))}
       </div>
       {q.initialLoading ? <div className="grid gap-5 md:grid-cols-2"><Skeleton className="h-60" /><Skeleton className="h-60" /></div>
         : q.error && !q.data ? <ErrorState message={q.error.message} onRetry={q.reload} />
-        : items.length === 0 ? <EmptyState title="Nothing here yet" description={tab === "open" ? "There are currently no requests matching your profile." : "Requests will appear here as you respond to them."} />
+        : items.length === 0 ? <EmptyState title="Chưa có gì ở đây" description={tab === "open" ? "Hiện chưa có yêu cầu nào phù hợp với hồ sơ của bạn." : "Các yêu cầu sẽ hiện ở đây khi bạn phản hồi."} />
         : <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{items.map((m) => <MatchCard key={m.matchId} m={m} />)}</div>}
     </>
   );

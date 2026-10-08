@@ -31,29 +31,53 @@ public class SummaryReportService {
         List<Map<String, Object>> status = (List<Map<String, Object>>) d.get("requestStatus");
         List<Map<String, Object>> response = (List<Map<String, Object>>) d.get("emergencyResponse");
         StringBuilder sb = new StringBuilder();
-        sb.append("LIFELY - Bao cao tong hop ").append(LocalDate.now()).append("\n\n");
-        sb.append("TONG QUAN\n");
-        sb.append("- Nguoi dung: ").append(k.get("users")).append(" (donor: ").append(k.get("donors")).append(")\n");
-        sb.append("- Yeu cau dang hoat dong: ").append(k.get("activeRequests"))
-                .append(" (khan cap: ").append(k.get("criticalRequests")).append(")\n");
-        sb.append("- Match da xac nhan: ").append(k.get("confirmedMatches"))
-                .append(" | da hoan tat hien mau: ").append(k.get("completedMatches")).append("\n");
-        sb.append("- To chuc da xac minh: ").append(k.get("verifiedOrganizations")).append("\n\n");
-        sb.append("CAN XU LY\n");
-        sb.append("- Yeu cau cho xac minh: ").append(k.get("pendingVerification")).append("\n");
-        sb.append("- To chuc dang cho duyet: ").append(k.get("organizationsUnderReview")).append("\n");
-        sb.append("- Bao cao vi pham dang mo: ").append(k.get("openReports")).append("\n");
-        sb.append("- Tin nhan lien he moi: ").append(k.get("newMessages")).append("\n\n");
-        sb.append("TRANG THAI YEU CAU\n");
-        status.forEach(s -> sb.append("- ").append(s.get("status")).append(": ").append(s.get("total")).append("\n"));
-        sb.append("\nTHOI GIAN PHAN HOI TRUNG BINH (phut, tu luc lien he den luc tra loi)\n");
+        sb.append("LIFELY - Báo cáo tổng hợp ").append(LocalDate.now()).append("\n\n");
+        sb.append("TỔNG QUAN\n");
+        sb.append("- Người dùng: ").append(k.get("users")).append(" (người hiến máu: ").append(k.get("donors")).append(")\n");
+        sb.append("- Yêu cầu đang hoạt động: ").append(k.get("activeRequests"))
+                .append(" (nguy kịch: ").append(k.get("criticalRequests")).append(")\n");
+        sb.append("- Lượt kết nối đã xác nhận: ").append(k.get("confirmedMatches"))
+                .append(" | đã hoàn tất hiến máu: ").append(k.get("completedMatches")).append("\n");
+        sb.append("- Tổ chức đã xác minh: ").append(k.get("verifiedOrganizations")).append("\n\n");
+        sb.append("CẦN XỬ LÝ\n");
+        sb.append("- Yêu cầu chờ xác minh: ").append(k.get("pendingVerification")).append("\n");
+        sb.append("- Tổ chức đang chờ duyệt: ").append(k.get("organizationsUnderReview")).append("\n");
+        sb.append("- Báo cáo vi phạm đang mở: ").append(k.get("openReports")).append("\n");
+        sb.append("- Tin nhắn liên hệ mới: ").append(k.get("newMessages")).append("\n\n");
+        sb.append("TRẠNG THÁI YÊU CẦU\n");
+        status.forEach(s -> sb.append("- ").append(statusLabel(String.valueOf(s.get("status")))).append(": ").append(s.get("total")).append("\n"));
+        sb.append("\nTHỜI GIAN PHẢN HỒI TRUNG BÌNH (phút, từ lúc liên hệ đến lúc trả lời)\n");
         if (response.isEmpty()) {
-            sb.append("- Chua co du lieu\n");
+            sb.append("- Chưa có dữ liệu\n");
         }
-        response.forEach(r -> sb.append("- ").append(r.get("urgency")).append(": ").append(r.get("avgMinutes"))
-                .append(" (").append(r.get("responses")).append(" phan hoi)\n"));
-        sb.append("\nLIFELY la nen tang dieu phoi, khong thay the quyet dinh y te.\n");
+        response.forEach(r -> sb.append("- ").append(urgencyLabel(String.valueOf(r.get("urgency")))).append(": ").append(r.get("avgMinutes"))
+                .append(" (").append(r.get("responses")).append(" phản hồi)\n"));
+        sb.append("\nLIFELY là nền tảng điều phối, không thay thế quyết định y tế.\n");
         return sb.toString();
+    }
+
+    private static String statusLabel(String s) {
+        return switch (s) {
+            case "CREATED" -> "Đã tạo";
+            case "PENDING_VERIFICATION" -> "Chờ xác minh";
+            case "VERIFIED" -> "Đã xác minh";
+            case "MATCHING" -> "Đang tìm người hiến";
+            case "DONORS_CONTACTED" -> "Đã liên hệ người hiến";
+            case "PARTIALLY_FULFILLED" -> "Đã có một phần";
+            case "FULFILLED" -> "Đã đủ người";
+            case "CANCELLED" -> "Đã hủy";
+            case "EXPIRED" -> "Đã hết hạn";
+            default -> s;
+        };
+    }
+
+    private static String urgencyLabel(String s) {
+        return switch (s) {
+            case "CRITICAL" -> "Nguy kịch";
+            case "URGENT" -> "Khẩn";
+            case "NORMAL" -> "Bình thường";
+            default -> s;
+        };
     }
 
     /** Trả về true nếu đã đưa email vào hàng đợi gửi. */
@@ -61,7 +85,7 @@ public class SummaryReportService {
         if (!mail.isEnabled() || !mail.hasAdminRecipient()) {
             return false;
         }
-        mail.sendToAdmin("[LIFELY] Bao cao tong hop " + LocalDate.now(), build());
+        mail.sendToAdmin("[LIFELY] Báo cáo tổng hợp " + LocalDate.now(), build());
         return true;
     }
 

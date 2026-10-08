@@ -21,6 +21,6 @@ public class HealthController {
     @GetMapping
     @Operation(summary = "Backend and database health check")
     public ApiResponse<HealthStatus> health() {
-        return ApiResponse.ok("Service is healthy", healthService.check());
+        return ApiResponse.ok("Dịch vụ hoạt động bình thường", healthService.check());
     }
 }

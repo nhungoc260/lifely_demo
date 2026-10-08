@@ -43,10 +43,10 @@ public class RequestAccess {
 
     public BloodRequest requireViewable(UUID userId, UUID requestId) {
         BloodRequest r = requestRepository.findById(requestId)
-                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Request not found"));
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         if (!canView(userId, r)) {
             // Trả 404 thay vì 403 để không tiết lộ sự tồn tại của request người khác.
-            throw AppException.notFound("REQUEST_NOT_FOUND", "Request not found");
+            throw AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu");
         }
         return r;
     }

@@ -22,16 +22,16 @@ import { authApi, donorApi } from "@/services";
 import { homeFor, useAuth } from "@/providers/auth-provider";
 import { BLOOD_TYPES, type DonorProfile, type Privacy } from "@/types/domain";
 
-const STEPS = ["Personal information", "Blood type", "Location", "Donation history", "Availability", "Privacy"];
+const STEPS = ["Thông tin cá nhân", "Nhóm máu", "Địa điểm", "Lịch sử hiến máu", "Trạng thái sẵn sàng", "Quyền riêng tư"];
 
 const schema = z.object({
-  fullName: z.string().trim().min(2, "Enter your full name"),
-  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Enter a valid Vietnamese phone number"),
-  bloodType: z.string().refine((v) => (BLOOD_TYPES as readonly string[]).includes(v), "Choose your blood type"),
-  city: z.string().trim().min(1, "Enter your city"),
-  district: z.string().trim().min(1, "Enter your district"),
-  latitude: z.number({ message: "Pick your area on the map" }),
-  longitude: z.number({ message: "Pick your area on the map" }),
+  fullName: z.string().trim().min(2, "Nhập họ và tên"),
+  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
+  bloodType: z.string().refine((v) => (BLOOD_TYPES as readonly string[]).includes(v), "Chọn nhóm máu của bạn"),
+  city: z.string().trim().min(1, "Nhập thành phố"),
+  district: z.string().trim().min(1, "Nhập quận/huyện"),
+  latitude: z.number({ message: "Chọn khu vực của bạn trên bản đồ" }),
+  longitude: z.number({ message: "Chọn khu vực của bạn trên bản đồ" }),
   neverDonated: z.boolean(),
   lastDonationDate: z.string(),
   available: z.boolean(),
@@ -94,14 +94,14 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
   const finish = handleSubmit(() =>
     guard(async () => {
       await persist(5, true);
-      toast.success("You're all set. Thank you for joining LIFELY.");
+      toast.success("Mọi thứ đã sẵn sàng. Cảm ơn bạn đã tham gia LIFELY.");
       router.replace("/donor/dashboard");
     }).then(() => undefined),
   );
 
   async function later() {
     const ok = await guard(async () => { await persist(step + 1 > 5 ? 5 : step + 1, false); return true; });
-    if (ok) { toast.success("Progress saved. You can continue any time from your profile."); router.replace("/donor/dashboard"); }
+    if (ok) { toast.success("Đã lưu tiến độ. Bạn có thể tiếp tục bất cứ lúc nào từ hồ sơ của mình."); router.replace("/donor/dashboard"); }
   }
 
   const bt = watch("bloodType");
@@ -112,7 +112,7 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <ol className="mb-8 flex items-center gap-2" aria-label="Progress">
+      <ol className="mb-8 flex items-center gap-2" aria-label="Tiến độ">
         {STEPS.map((s, i) => (
           <li key={s} className="flex flex-1 items-center gap-2" aria-current={i === step ? "step" : undefined}>
             <span className={cn("grid size-7 shrink-0 place-items-center rounded-full border text-xs font-semibold", i < step ? "border-primary bg-primary text-primary-foreground" : i === step ? "border-primary text-primary" : "border-border text-muted-foreground")}>
@@ -122,19 +122,19 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
           </li>
         ))}
       </ol>
-      <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length}</p>
+      <p className="text-sm text-muted-foreground">Bước {step + 1} trên {STEPS.length}</p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">{STEPS[step]}</h1>
 
       <form onSubmit={finish} noValidate className="mt-8 space-y-6">
         {step === 0 && (
           <>
-            <Field label="Full name" htmlFor="fullName" error={errors.fullName?.message}><Input id="fullName" aria-invalid={!!errors.fullName} {...register("fullName")} /></Field>
-            <Field label="Phone" htmlFor="phone" error={errors.phone?.message} hint="Only shared with a requester after you accept their request."><Input id="phone" type="tel" aria-invalid={!!errors.phone} {...register("phone")} /></Field>
+            <Field label="Họ và tên" htmlFor="fullName" error={errors.fullName?.message}><Input id="fullName" aria-invalid={!!errors.fullName} {...register("fullName")} /></Field>
+            <Field label="Số điện thoại" htmlFor="phone" error={errors.phone?.message} hint="Chỉ chia sẻ với người cần máu sau khi bạn nhận lời yêu cầu của họ."><Input id="phone" type="tel" aria-invalid={!!errors.phone} {...register("phone")} /></Field>
           </>
         )}
         {step === 1 && (
           <fieldset>
-            <legend className="mb-3 text-sm text-muted-foreground">Not sure? Ask the center where you last donated, or check your donor card.</legend>
+            <legend className="mb-3 text-sm text-muted-foreground">Chưa chắc? Hãy hỏi nơi bạn hiến máu gần nhất, hoặc xem thẻ người hiến máu.</legend>
             <div role="radiogroup" className="grid grid-cols-4 gap-3">
               {BLOOD_TYPES.map((b) => (
                 <label key={b} className={cn("grid h-16 cursor-pointer place-items-center rounded-2xl border border-border bg-card text-xl font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring", bt === b && "border-primary bg-secondary text-primary")}>
@@ -148,39 +148,39 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
         {step === 2 && (
           <>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="City" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} aria-invalid={!!errors.city} /></Field>
-              <Field label="District" htmlFor="district" error={errors.district?.message}><Input id="district" placeholder="e.g. Quận 1" {...register("district")} aria-invalid={!!errors.district} /></Field>
+              <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} aria-invalid={!!errors.city} /></Field>
+              <Field label="Quận/Huyện" htmlFor="district" error={errors.district?.message}><Input id="district" placeholder="VD: Quận 1" {...register("district")} aria-invalid={!!errors.district} /></Field>
             </div>
-            <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} help="Used only to rank requests near you. It is never shown publicly." />
-            {(errors.latitude || errors.longitude) && <p role="alert" className="text-sm text-critical">Pick your area on the map</p>}
+            <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} help="Chỉ dùng để xếp hạng các yêu cầu ở gần bạn. Không bao giờ hiển thị công khai." />
+            {(errors.latitude || errors.longitude) && <p role="alert" className="text-sm text-critical">Chọn khu vực của bạn trên bản đồ</p>}
           </>
         )}
         {step === 3 && (
           <>
             <Controller control={control} name="neverDonated" render={({ field }) => (
               <label className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
-                <span><span className="block font-medium">I have never donated blood</span><span className="text-sm text-muted-foreground">That is completely fine.</span></span>
+                <span><span className="block font-medium">Tôi chưa từng hiến máu</span><span className="text-sm text-muted-foreground">Không sao cả.</span></span>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
               </label>
             )} />
-            {!never && <Field label="Last donation date" htmlFor="lastDonationDate" error={errors.lastDonationDate?.message} hint="Helps us avoid contacting you too soon after a donation."><Input id="lastDonationDate" type="date" max={new Date().toISOString().slice(0, 10)} {...register("lastDonationDate")} /></Field>}
+            {!never && <Field label="Ngày hiến máu gần nhất" htmlFor="lastDonationDate" error={errors.lastDonationDate?.message} hint="Giúp chúng tôi tránh liên hệ bạn quá sớm sau khi hiến máu."><Input id="lastDonationDate" type="date" max={new Date().toISOString().slice(0, 10)} {...register("lastDonationDate")} /></Field>}
           </>
         )}
         {step === 4 && (
           <Controller control={control} name="available" render={({ field }) => (
             <label className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
-              <span><span className="block text-lg font-medium">Available to donate</span><span className="text-sm text-muted-foreground">When off, you will not be matched or notified. You can change this any time.</span></span>
-              <Switch checked={field.value} onCheckedChange={field.onChange} aria-label="Available to donate" />
+              <span><span className="block text-lg font-medium">Sẵn sàng hiến máu</span><span className="text-sm text-muted-foreground">Khi tắt, bạn sẽ không được kết nối hay nhận thông báo. Bạn có thể đổi bất cứ lúc nào.</span></span>
+              <Switch checked={field.value} onCheckedChange={field.onChange} aria-label="Sẵn sàng hiến máu" />
             </label>
           )} />
         )}
         {step === 5 && (
           <div className="space-y-3">
             {([
-              ["showApproximateLocation", "Show approximate location", "Only your district, never your exact position."],
-              ["allowEmergencyMatching", "Allow emergency matching", "Required for LIFELY to suggest you for requests."],
-              ["receiveEmergencyNotifications", "Receive emergency notifications", "Get alerted when a verified request needs you."],
-              ["showDonationCount", "Show donation count", "Display how many times you have donated."],
+              ["showApproximateLocation", "Hiển thị khu vực gần đúng", "Chỉ hiển thị quận/huyện, không bao giờ hiển thị vị trí chính xác."],
+              ["allowEmergencyMatching", "Cho phép kết nối khẩn cấp", "Cần thiết để LIFELY gợi ý bạn cho các yêu cầu."],
+              ["receiveEmergencyNotifications", "Nhận thông báo khẩn cấp", "Được báo khi có yêu cầu đã xác minh cần bạn."],
+              ["showDonationCount", "Hiển thị số lần hiến", "Hiển thị số lần bạn đã hiến máu."],
             ] as const).map(([name, title, desc]) => (
               <Controller key={name} control={control} name={name} render={({ field }) => (
                 <label className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
@@ -193,10 +193,10 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
-          <Button type="button" variant="ghost" onClick={later} disabled={busy}>Save &amp; Continue Later</Button>
+          <Button type="button" variant="ghost" onClick={later} disabled={busy}>Lưu &amp; Tiếp tục sau</Button>
           <div className="flex gap-2">
-            {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={busy}>Back</Button>}
-            {step < 5 ? <Button type="button" onClick={next} disabled={busy}>{busy && <Loader2 className="animate-spin" />} Continue</Button> : <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Finish</Button>}
+            {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={busy}>Quay lại</Button>}
+            {step < 5 ? <Button type="button" onClick={next} disabled={busy}>{busy && <Loader2 className="animate-spin" />} Tiếp tục</Button> : <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Hoàn tất</Button>}
           </div>
         </div>
       </form>

@@ -6,7 +6,7 @@ export default function Loading() {
       <Skeleton className="h-10 w-64" />
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-40 w-full" />
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">Đang tải…</span>
     </div>
   );
 }

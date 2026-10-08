@@ -24,6 +24,6 @@ public class ReportController {
     public ResponseEntity<ApiResponse<ReportDto>> create(@AuthenticationPrincipal AuthUser user,
                                                          @Valid @RequestBody CreateReportRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Thank you. Our team will review this report", service.create(user, req)));
+                .body(ApiResponse.ok("Cảm ơn bạn. Đội ngũ của chúng tôi sẽ xem xét báo cáo này", service.create(user, req)));
     }
 }

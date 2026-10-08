@@ -33,37 +33,37 @@ export default function AdminRequests() {
 
   async function run(note: string) {
     if (!action) return;
-    try { await adminApi.requestAction(action.row.request.id, action.kind, note || undefined); toast.success(action.kind === "verify" ? "Request verified. Matching has started." : action.kind === "reject" ? "Request rejected" : "Request cancelled"); res.reload(); }
+    try { await adminApi.requestAction(action.row.request.id, action.kind, note || undefined); toast.success(action.kind === "verify" ? "Đã xác minh yêu cầu. Hệ thống bắt đầu tìm người hiến máu." : action.kind === "reject" ? "Đã từ chối yêu cầu" : "Đã hủy yêu cầu"); res.reload(); }
     catch (e) { toast.error(toApiError(e).message); throw e; }
   }
   const reset = (fn: (v: string) => void) => (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => { fn(e.target.value); setPage(0); };
 
   return (
     <>
-      <PageHeader title="Requests" description="Verify new requests and monitor coordination." />
+      <PageHeader title="Yêu cầu" description="Xác minh yêu cầu mới và theo dõi việc điều phối." />
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Select aria-label="Urgency" value={urgency} onChange={reset(setUrgency)}><option value="">All urgencies</option><option>CRITICAL</option><option>URGENT</option><option>NORMAL</option></Select>
-        <Select aria-label="Blood type" value={bloodType} onChange={reset(setBloodType)}><option value="">All blood types</option>{BLOOD_TYPES.map((b) => <option key={b}>{b}</option>)}</Select>
-        <Select aria-label="Status" value={status} onChange={reset(setStatus)}><option value="">All statuses</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
-        <Input aria-label="City" placeholder="City" value={city} onChange={reset(setCity)} />
+        <Select aria-label="Mức độ khẩn cấp" value={urgency} onChange={reset(setUrgency)}><option value="">Mọi mức độ</option><option value="CRITICAL">NGUY KỊCH</option><option value="URGENT">KHẨN</option><option value="NORMAL">BÌNH THƯỜNG</option></Select>
+        <Select aria-label="Nhóm máu" value={bloodType} onChange={reset(setBloodType)}><option value="">Tất cả nhóm máu</option>{BLOOD_TYPES.map((b) => <option key={b}>{b}</option>)}</Select>
+        <Select aria-label="Trạng thái" value={status} onChange={reset(setStatus)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
+        <Input aria-label="Thành phố" placeholder="Thành phố" value={city} onChange={reset(setCity)} />
       </div>
       {res.initialLoading ? <Skeleton className="h-96" />
         : res.error && !res.data ? <ErrorState message={res.error.message} onRetry={res.reload} />
-        : res.data && res.data.items.length === 0 ? <EmptyState title="No requests match" description="Try clearing a filter." />
+        : res.data && res.data.items.length === 0 ? <EmptyState title="Không có yêu cầu phù hợp" description="Thử bỏ bớt bộ lọc." />
         : res.data && (
           <>
-            <DataTable caption="Blood requests" rows={res.data.items} rowKey={(r) => r.request.id} columns={[
-              { key: "bt", header: "Blood", cell: (r) => <BloodChip type={r.request.bloodType} /> },
-              { key: "urg", header: "Urgency", cell: (r) => <UrgencyBadge urgency={r.request.urgency} /> },
-              { key: "hos", header: "Location", cell: (r) => <div><p className="font-medium">{r.request.hospitalName}</p><p className="text-xs text-muted-foreground">by {r.requesterName ?? "–"}</p></div> },
-              { key: "units", header: "Confirmed", align: "right", cell: (r) => <span className="tabular-nums">{r.request.unitsConfirmed} / {r.request.unitsRequired}</span> },
-              { key: "left", header: "Remaining", cell: (r) => ["FULFILLED", "CANCELLED", "EXPIRED"].includes(r.request.status) ? "–" : <Countdown deadline={r.request.deadline} /> },
-              { key: "st", header: "Status", cell: (r) => <StatusBadge status={r.request.status} /> },
-              { key: "act", header: "Actions", align: "right", cell: (r) => (
+            <DataTable caption="Yêu cầu máu" rows={res.data.items} rowKey={(r) => r.request.id} columns={[
+              { key: "bt", header: "Nhóm máu", cell: (r) => <BloodChip type={r.request.bloodType} /> },
+              { key: "urg", header: "Mức độ khẩn cấp", cell: (r) => <UrgencyBadge urgency={r.request.urgency} /> },
+              { key: "hos", header: "Địa điểm", cell: (r) => <div><p className="font-medium">{r.request.hospitalName}</p><p className="text-xs text-muted-foreground">bởi {r.requesterName ?? "–"}</p></div> },
+              { key: "units", header: "Đã xác nhận", align: "right", cell: (r) => <span className="tabular-nums">{r.request.unitsConfirmed} / {r.request.unitsRequired}</span> },
+              { key: "left", header: "Còn lại", cell: (r) => ["FULFILLED", "CANCELLED", "EXPIRED"].includes(r.request.status) ? "–" : <Countdown deadline={r.request.deadline} /> },
+              { key: "st", header: "Trạng thái", cell: (r) => <StatusBadge status={r.request.status} /> },
+              { key: "act", header: "Thao tác", align: "right", cell: (r) => (
                 <div className="flex justify-end gap-2">
-                  <Link href={`/admin/requests/${r.request.id}`} className={buttonVariants({ size: "sm", variant: "ghost" })}>View</Link>
-                  {r.request.status === "PENDING_VERIFICATION" && <><Button size="sm" onClick={() => setAction({ row: r, kind: "verify" })}>Verify</Button><Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "reject" })}>Reject</Button></>}
-                  {["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"].includes(r.request.status) && <Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "cancel" })}>Cancel</Button>}
+                  <Link href={`/admin/requests/${r.request.id}`} className={buttonVariants({ size: "sm", variant: "ghost" })}>Xem</Link>
+                  {r.request.status === "PENDING_VERIFICATION" && <><Button size="sm" onClick={() => setAction({ row: r, kind: "verify" })}>Xác minh</Button><Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "reject" })}>Từ chối</Button></>}
+                  {["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"].includes(r.request.status) && <Button size="sm" variant="outline" onClick={() => setAction({ row: r, kind: "cancel" })}>Hủy</Button>}
                 </div>
               ) },
             ]} />
@@ -72,11 +72,11 @@ export default function AdminRequests() {
         )}
       <ConfirmDialog
         open={!!action} onOpenChange={(o) => !o && setAction(null)}
-        title={action?.kind === "verify" ? "Verify this request?" : action?.kind === "reject" ? "Reject this request?" : "Cancel this request?"}
-        description={action?.kind === "verify" ? "Matching starts immediately and nearby donors will be contacted." : action?.kind === "reject" ? "The requester will be told the request was not approved." : "Donors who were contacted or accepted will be notified."}
-        confirmLabel={action?.kind === "verify" ? "Verify and start matching" : action?.kind === "reject" ? "Reject" : "Cancel request"}
+        title={action?.kind === "verify" ? "Xác minh yêu cầu này?" : action?.kind === "reject" ? "Từ chối yêu cầu này?" : "Hủy yêu cầu này?"}
+        description={action?.kind === "verify" ? "Hệ thống sẽ bắt đầu tìm ngay và liên hệ những người hiến máu ở gần." : action?.kind === "reject" ? "Người tạo yêu cầu sẽ được báo là yêu cầu không được chấp thuận." : "Những người hiến máu đã được liên hệ hoặc đã nhận lời sẽ được thông báo."}
+        confirmLabel={action?.kind === "verify" ? "Xác minh và bắt đầu tìm người hiến" : action?.kind === "reject" ? "Từ chối" : "Hủy yêu cầu"}
         destructive={action?.kind !== "verify"}
-        reasonLabel={action?.kind === "verify" ? undefined : "Reason"} reasonRequired={action?.kind === "reject"}
+        reasonLabel={action?.kind === "verify" ? undefined : "Lý do"} reasonRequired={action?.kind === "reject"}
         onConfirm={run}
       />
     </>

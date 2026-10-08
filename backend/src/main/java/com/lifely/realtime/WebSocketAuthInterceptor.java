@@ -73,7 +73,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 try {
                     requestId = UUID.fromString(destination.substring(REQUEST_TOPIC.length()));
                 } catch (IllegalArgumentException e) {
-                    throw new MessagingException("Invalid destination");
+                    throw new MessagingException("Đích đến không hợp lệ");
                 }
                 if (!requestAccess.canViewById(UUID.fromString(principal.getName()), requestId)) {
                     throw new MessagingException("Forbidden");

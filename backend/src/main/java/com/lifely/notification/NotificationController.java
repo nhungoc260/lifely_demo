@@ -36,11 +36,11 @@ public class NotificationController {
 
     @PutMapping("/{id}/read")
     public ApiResponse<NotificationDto> markRead(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Marked as read", service.markRead(user.getId(), id));
+        return ApiResponse.ok("Đã đánh dấu đã đọc", service.markRead(user.getId(), id));
     }
 
     @PutMapping("/read-all")
     public ApiResponse<Map<String, Integer>> markAllRead(@AuthenticationPrincipal AuthUser user) {
-        return ApiResponse.ok("All notifications marked as read", Map.of("updated", service.markAllRead(user.getId())));
+        return ApiResponse.ok("Đã đánh dấu tất cả thông báo là đã đọc", Map.of("updated", service.markAllRead(user.getId())));
     }
 }

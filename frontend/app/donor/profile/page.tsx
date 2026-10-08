@@ -25,13 +25,13 @@ import { useAuth } from "@/providers/auth-provider";
 import { BLOOD_TYPES, type DonorProfile, type Privacy } from "@/types/domain";
 
 const schema = z.object({
-  fullName: z.string().trim().min(2, "Enter your full name"),
-  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Enter a valid Vietnamese phone number"),
-  bloodType: z.string().min(1, "Choose your blood type"),
-  city: z.string().trim().min(1, "Enter your city"),
-  district: z.string().trim().min(1, "Enter your district"),
-  latitude: z.number({ message: "Pick your area on the map" }),
-  longitude: z.number({ message: "Pick your area on the map" }),
+  fullName: z.string().trim().min(2, "Nhập họ và tên"),
+  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
+  bloodType: z.string().min(1, "Chọn nhóm máu của bạn"),
+  city: z.string().trim().min(1, "Nhập thành phố"),
+  district: z.string().trim().min(1, "Nhập quận/huyện"),
+  latitude: z.number({ message: "Chọn khu vực của bạn trên bản đồ" }),
+  longitude: z.number({ message: "Chọn khu vực của bạn trên bản đồ" }),
   lastDonationDate: z.string(),
 });
 type Values = z.infer<typeof schema>;
@@ -54,7 +54,7 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
     try {
       await donorApi.update({ ...v, lastDonationDate: v.lastDonationDate || undefined });
       refresh();
-      toast.success("Profile updated");
+      toast.success("Đã cập nhật hồ sơ");
     } catch (e) {
       if (!applyServerErrors(e, setError)) toast.error(toApiError(e).message);
     }
@@ -63,13 +63,13 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
   async function togglePriv(key: keyof Privacy, value: boolean) {
     const next = { ...priv, [key]: value };
     setPriv(next);
-    try { await donorApi.updatePrivacy(next); toast.success("Privacy setting saved"); }
+    try { await donorApi.updatePrivacy(next); toast.success("Đã lưu cài đặt riêng tư"); }
     catch (e) { setPriv(priv); toast.error(toApiError(e).message); }
   }
 
   async function toggleAvail(value: boolean) {
     setAvail(value);
-    try { await donorApi.setAvailability(value ? "AVAILABLE" : "NOT_AVAILABLE"); toast.success(value ? "You are available to donate" : "Availability turned off"); }
+    try { await donorApi.setAvailability(value ? "AVAILABLE" : "NOT_AVAILABLE"); toast.success(value ? "Bạn đang sẵn sàng hiến máu" : "Đã tắt trạng thái sẵn sàng"); }
     catch (e) { setAvail(!value); toast.error(toApiError(e).message); }
   }
 
@@ -79,50 +79,50 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
       <form onSubmit={handleSubmit(save)} noValidate className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Personal information</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Thông tin cá nhân</CardTitle></CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
-            <Field label="Full name" htmlFor="fullName" error={errors.fullName?.message}><Input id="fullName" {...register("fullName")} aria-invalid={!!errors.fullName} /></Field>
-            <Field label="Phone" htmlFor="phone" error={errors.phone?.message}><Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} /></Field>
-            <Field label="Blood type" htmlFor="bloodType" error={errors.bloodType?.message}>
-              <Select id="bloodType" {...register("bloodType")} aria-invalid={!!errors.bloodType}><option value="">Select…</option>{BLOOD_TYPES.map((b) => <option key={b}>{b}</option>)}</Select>
+            <Field label="Họ và tên" htmlFor="fullName" error={errors.fullName?.message}><Input id="fullName" {...register("fullName")} aria-invalid={!!errors.fullName} /></Field>
+            <Field label="Số điện thoại" htmlFor="phone" error={errors.phone?.message}><Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} /></Field>
+            <Field label="Nhóm máu" htmlFor="bloodType" error={errors.bloodType?.message}>
+              <Select id="bloodType" {...register("bloodType")} aria-invalid={!!errors.bloodType}><option value="">Chọn…</option>{BLOOD_TYPES.map((b) => <option key={b}>{b}</option>)}</Select>
             </Field>
-            <Field label="Last donation date" htmlFor="last" error={errors.lastDonationDate?.message}><Input id="last" type="date" max={new Date().toISOString().slice(0, 10)} {...register("lastDonationDate")} /></Field>
+            <Field label="Ngày hiến máu gần nhất" htmlFor="last" error={errors.lastDonationDate?.message}><Input id="last" type="date" max={new Date().toISOString().slice(0, 10)} {...register("lastDonationDate")} /></Field>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Địa điểm</CardTitle></CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="City" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} aria-invalid={!!errors.city} /></Field>
-              <Field label="District" htmlFor="district" error={errors.district?.message}><Input id="district" {...register("district")} aria-invalid={!!errors.district} /></Field>
+              <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" {...register("city")} aria-invalid={!!errors.city} /></Field>
+              <Field label="Quận/Huyện" htmlFor="district" error={errors.district?.message}><Input id="district" {...register("district")} aria-invalid={!!errors.district} /></Field>
             </div>
-            <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldDirty: true, shouldValidate: true }); setValue("longitude", b, { shouldDirty: true, shouldValidate: true }); }} help="Your exact position is never shown to anyone. Others only see your district." />
-            {(errors.latitude || errors.longitude) && <p role="alert" className="text-sm text-critical">Pick your area on the map</p>}
+            <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldDirty: true, shouldValidate: true }); setValue("longitude", b, { shouldDirty: true, shouldValidate: true }); }} help="Vị trí chính xác của bạn không bao giờ hiển thị cho ai. Người khác chỉ thấy quận/huyện." />
+            {(errors.latitude || errors.longitude) && <p role="alert" className="text-sm text-critical">Chọn khu vực của bạn trên bản đồ</p>}
           </CardContent>
         </Card>
-        <div className="flex justify-end"><Button type="submit" disabled={isSubmitting || !isDirty}>{isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Updating profile…" : "Save changes"}</Button></div>
+        <div className="flex justify-end"><Button type="submit" disabled={isSubmitting || !isDirty}>{isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Đang cập nhật hồ sơ…" : "Lưu thay đổi"}</Button></div>
       </form>
 
       <div className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Availability</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Trạng thái sẵn sàng</CardTitle></CardHeader>
           <CardContent>
-            <label className="flex items-center justify-between gap-4"><span className="text-sm"><span className="block font-medium">{avail ? "Available" : "Not available"}</span><span className="text-muted-foreground">When off, you are not matched.</span></span><Switch checked={avail} onCheckedChange={toggleAvail} aria-label="Available to donate" /></label>
-            <p className="mt-4 text-sm text-muted-foreground">Total donations: <span className="font-medium text-foreground">{profile.totalDonations}</span></p>
+            <label className="flex items-center justify-between gap-4"><span className="text-sm"><span className="block font-medium">{avail ? "Sẵn sàng" : "Chưa sẵn sàng"}</span><span className="text-muted-foreground">Khi tắt, bạn sẽ không được kết nối.</span></span><Switch checked={avail} onCheckedChange={toggleAvail} aria-label="Sẵn sàng hiến máu" /></label>
+            <p className="mt-4 text-sm text-muted-foreground">Tổng số lần hiến: <span className="font-medium text-foreground">{profile.totalDonations}</span></p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Privacy</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Quyền riêng tư</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {([
-              ["showApproximateLocation", "Show approximate location"],
-              ["allowEmergencyMatching", "Allow emergency matching"],
-              ["receiveEmergencyNotifications", "Receive emergency notifications"],
-              ["showDonationCount", "Show donation count"],
+              ["showApproximateLocation", "Hiển thị khu vực gần đúng"],
+              ["allowEmergencyMatching", "Cho phép kết nối khẩn cấp"],
+              ["receiveEmergencyNotifications", "Nhận thông báo khẩn cấp"],
+              ["showDonationCount", "Hiển thị số lần hiến"],
             ] as const).map(([k, label]) => (
               <label key={k} className="flex items-center justify-between gap-4 text-sm"><span>{label}</span><Switch checked={priv[k]} onCheckedChange={(v) => togglePriv(k, v)} aria-label={label} /></label>
             ))}
-            <p className="text-xs text-muted-foreground">Exact location and phone number are never public.</p>
+            <p className="text-xs text-muted-foreground">Vị trí chính xác và số điện thoại không bao giờ được công khai.</p>
           </CardContent>
         </Card>
         <AccountDataCard />
@@ -137,7 +137,7 @@ export default function DonorProfilePage() {
   const privacy = useQuery("donor-privacy", donorApi.privacy);
   return (
     <>
-      <PageHeader title="Profile" description="Keep your details current so LIFELY can match you accurately." />
+      <PageHeader title="Hồ sơ" description="Hãy giữ thông tin luôn cập nhật để LIFELY kết nối chính xác cho bạn." />
       {profile.error ? <ErrorState message={profile.error.message} onRetry={profile.reload} />
         : profile.data && privacy.data ? <ProfileForm profile={profile.data} privacy={privacy.data} />
         : <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]"><Skeleton className="h-96" /><Skeleton className="h-64" /></div>}

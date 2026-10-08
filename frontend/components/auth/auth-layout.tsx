@@ -11,14 +11,14 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-16 size-[24rem] rounded-full bg-rose-500/15 blur-3xl" />
         <div className="relative [&_a]:text-white"><Logo /></div>
         <div className="relative max-w-md">
-          <h2 className="text-4xl font-semibold leading-tight tracking-tight">When every second matters, connection matters.</h2>
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight">Khi từng giây đều quý giá, sự kết nối càng quan trọng.</h2>
           <ul className="mt-8 space-y-4 text-sm text-white/75">
-            <li className="flex gap-3"><Zap className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Real-time coordination between requests and nearby donors.</li>
-            <li className="flex gap-3"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Requests are verified before donors are contacted.</li>
-            <li className="flex gap-3"><Lock className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Privacy-first: exact donor locations are never shown.</li>
+            <li className="flex gap-3"><Zap className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Điều phối thời gian thực giữa yêu cầu và những người hiến máu ở gần.</li>
+            <li className="flex gap-3"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Yêu cầu được xác minh trước khi liên hệ người hiến máu.</li>
+            <li className="flex gap-3"><Lock className="mt-0.5 size-4 shrink-0 text-rose-300" aria-hidden />Ưu tiên riêng tư: vị trí chính xác của người hiến máu không bao giờ hiển thị.</li>
           </ul>
         </div>
-        <p className="relative text-xs text-white/50">Connect. Donate. Save a Life.</p>
+        <p className="relative text-xs text-white/50">Kết nối. Hiến máu. Cứu một sinh mạng.</p>
       </aside>
       <main id="main" className="flex flex-col px-6 py-8 sm:px-12">
         <div className="flex items-center justify-between lg:justify-end">
