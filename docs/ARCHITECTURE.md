@@ -5,66 +5,76 @@ Các sơ đồ dưới đây viết bằng Mermaid, xem được trực tiếp t
 ## 1. Kiến trúc hệ thống
 ```mermaid
 flowchart LR
-  subgraph Browser
-    FE[Next.js frontend]
+  subgraph Browser["Trình duyệt"]
+    FE["Giao diện Next.js"]
   end
-  subgraph Backend[Spring Boot backend]
-    C[Controller] --> S[Service] --> R[Repository]
-    S --> M[MatchingService]
-    S --> N[NotificationService]
-    WS[STOMP WebSocket /ws]
-    J[Jobs: expiry, escalation]
+  subgraph Backend["Máy chủ Spring Boot"]
+    C["Controller (tiếp nhận yêu cầu)"] --> S["Service (xử lý nghiệp vụ)"] --> R["Repository (truy cập dữ liệu)"]
+    S --> M["MatchingService (ghép người hiến)"]
+    S --> N["NotificationService (thông báo)"]
+    WS["WebSocket STOMP /ws"]
+    J["Tác vụ định kỳ: hết hạn, leo thang"]
   end
-  DB[(PostgreSQL)]
-  OSM[(OpenStreetMap tiles / Nominatim)]
-  FE -- REST + JWT --> C
-  FE -- WebSocket + JWT --> WS
-  FE -- tiles --> OSM
+  DB[("PostgreSQL")]
+  OSM[("Bản đồ OpenStreetMap / Nominatim")]
+  FE -- "REST + JWT" --> C
+  FE -- "WebSocket + JWT" --> WS
+  FE -- "tải bản đồ" --> OSM
   R --> DB
-  N -. sau commit .-> WS
+  N -. "sau khi commit" .-> WS
   J --> S
 ```
 
-## 2. ERD
+## 2. ERD (sơ đồ quan hệ thực thể)
 ```mermaid
 erDiagram
-  users ||--o{ user_roles : has
-  roles ||--o{ user_roles : grants
-  users ||--|| privacy_settings : owns
-  users ||--o| donor_profiles : "is donor"
-  users ||--o| organizations : "owns"
-  blood_types ||--o{ donor_profiles : "type of"
-  blood_types ||--o{ blood_requests : "needs"
-  blood_types ||--o{ blood_compatibility : "donor/recipient"
-  users ||--o{ blood_requests : creates
-  organizations ||--o{ blood_requests : "linked to"
-  organizations ||--o{ organization_documents : uploads
-  blood_requests ||--o{ request_status_history : logs
-  blood_requests ||--o{ matches : "contacts"
-  donor_profiles ||--o{ matches : "receives"
-  matches ||--o{ match_events : logs
-  donor_profiles ||--o{ donation_history : records
-  users ||--o{ notifications : receives
-  users ||--o{ reports : files
-  users ||--o{ audit_logs : "acts in"
-  users ||--o{ password_reset_tokens : requests
+  users ||--o{ user_roles : "có"
+  roles ||--o{ user_roles : "cấp cho"
+  users ||--|| privacy_settings : "sở hữu"
+  users ||--o| donor_profiles : "là người hiến"
+  users ||--o| organizations : "sở hữu"
+  blood_types ||--o{ donor_profiles : "nhóm máu của"
+  blood_types ||--o{ blood_requests : "cần"
+  blood_types ||--o{ blood_compatibility : "người hiến / người nhận"
+  users ||--o{ blood_requests : "tạo"
+  organizations ||--o{ blood_requests : "liên kết với"
+  organizations ||--o{ organization_documents : "tải lên"
+  blood_requests ||--o{ request_status_history : "ghi lịch sử"
+  blood_requests ||--o{ matches : "liên hệ"
+  donor_profiles ||--o{ matches : "nhận"
+  matches ||--o{ match_events : "ghi sự kiện"
+  donor_profiles ||--o{ donation_history : "ghi nhận"
+  users ||--o{ notifications : "nhận"
+  users ||--o{ reports : "gửi"
+  users ||--o{ audit_logs : "thực hiện"
+  users ||--o{ password_reset_tokens : "yêu cầu"
 ```
 
-## 3. Vòng đời request
+## 3. Vòng đời yêu cầu máu
 ```mermaid
 stateDiagram-v2
+  state "Đã tạo" as CREATED
+  state "Chờ xác minh" as PENDING_VERIFICATION
+  state "Đã xác minh" as VERIFIED
+  state "Đang ghép người hiến" as MATCHING
+  state "Đã liên hệ người hiến" as DONORS_CONTACTED
+  state "Đủ một phần" as PARTIALLY_FULFILLED
+  state "Đã đủ" as FULFILLED
+  state "Hết hạn" as EXPIRED
+  state "Đã hủy" as CANCELLED
+
   [*] --> CREATED
   CREATED --> PENDING_VERIFICATION
-  PENDING_VERIFICATION --> VERIFIED: admin / verified org
-  PENDING_VERIFICATION --> CANCELLED: rejected
+  PENDING_VERIFICATION --> VERIFIED: quản trị viên / tổ chức đã xác minh
+  PENDING_VERIFICATION --> CANCELLED: bị từ chối
   VERIFIED --> MATCHING
   MATCHING --> DONORS_CONTACTED
-  DONORS_CONTACTED --> PARTIALLY_FULFILLED: donor accepts
-  PARTIALLY_FULFILLED --> FULFILLED: confirmed = required
+  DONORS_CONTACTED --> PARTIALLY_FULFILLED: có người hiến chấp nhận
+  PARTIALLY_FULFILLED --> FULFILLED: số đã xác nhận = số cần
   DONORS_CONTACTED --> FULFILLED
-  MATCHING --> EXPIRED: deadline
-  DONORS_CONTACTED --> EXPIRED: deadline
-  PARTIALLY_FULFILLED --> EXPIRED: deadline
+  MATCHING --> EXPIRED: quá hạn
+  DONORS_CONTACTED --> EXPIRED: quá hạn
+  PARTIALLY_FULFILLED --> EXPIRED: quá hạn
   CREATED --> CANCELLED
   VERIFIED --> CANCELLED
   MATCHING --> CANCELLED
@@ -72,82 +82,82 @@ stateDiagram-v2
   PARTIALLY_FULFILLED --> CANCELLED
 ```
 
-## 4. Sequence: donor chấp nhận (xử lý đồng thời)
+## 4. Sequence: người hiến chấp nhận (xử lý đồng thời)
 ```mermaid
 sequenceDiagram
-  actor D as Donor
+  actor D as Người hiến máu
   participant API as MatchController
   participant MS as MatchService
   participant DB as PostgreSQL
   participant WS as RealtimePublisher
-  actor R as Requester UI
+  actor R as Giao diện người cần máu
   D->>API: POST /api/matches/{id}/accept (JWT)
   API->>MS: accept(user, matchId)
-  MS->>DB: BEGIN; đọc match, kiểm tra thuộc donor (chống IDOR)
+  MS->>DB: BEGIN, đọc match, kiểm tra thuộc về người hiến (chống IDOR)
   MS->>DB: SELECT ... FROM blood_requests FOR UPDATE
-  MS->>DB: refresh match
+  MS->>DB: làm mới match
   alt đã đủ người / hết hạn / đã phản hồi
     MS-->>API: AppException (REQUEST_FULFILLED...)
     API-->>D: 409
   else còn chỗ
-    MS->>DB: units_confirmed + 1, match=ACCEPTED, history, notification, audit
+    MS->>DB: units_confirmed + 1, match = ACCEPTED, lịch sử, thông báo, audit
     MS->>DB: COMMIT (CHECK units_confirmed <= units_required)
-    DB-->>WS: sau commit
+    DB-->>WS: sau khi commit
     WS-->>R: /topic/requests/{id} {3 / 5}
     API-->>D: 200
   end
 ```
 
-## 5. Sequence: tạo request → điều phối
+## 5. Sequence: tạo yêu cầu → điều phối
 ```mermaid
 sequenceDiagram
-  actor Q as Requester
+  actor Q as Người cần máu
   participant RS as RequestService
   participant MT as MatchingService
   participant DB as PostgreSQL
   Q->>RS: POST /api/requests
-  RS->>DB: lưu request + lịch sử (CREATED, PENDING_VERIFICATION)
+  RS->>DB: lưu yêu cầu + lịch sử (CREATED, PENDING_VERIFICATION)
   alt tổ chức đã xác minh
     RS->>RS: markVerified
   else cần xác minh
-    Note over RS: admin hoặc bệnh viện liên kết xác minh sau
+    Note over RS: quản trị viên hoặc bệnh viện liên kết sẽ xác minh sau
   end
   RS->>MT: startMatching
-  MT->>DB: lọc donor (nhóm máu, sẵn sàng, bounding box, chưa match)
-  MT->>MT: Haversine + điểm 40/25/15/10/10, sắp xếp, lấy top N
-  MT->>DB: tạo matches (CONTACTED) + notifications
+  MT->>DB: lọc người hiến (nhóm máu, sẵn sàng, khung tọa độ, chưa được ghép)
+  MT->>MT: Haversine + chấm điểm 40/25/15/10/10, sắp xếp, lấy top N
+  MT->>DB: tạo matches (CONTACTED) + thông báo
   loop mỗi 30 giây
-    MT->>MT: nếu chưa đủ người và quá hạn chờ → leo thang cấp 2, 3, 4
+    MT->>MT: nếu chưa đủ người và quá thời gian chờ thì leo thang cấp 2, 3, 4
   end
 ```
 
 ## 6. Use case
 ```mermaid
 flowchart TB
-  Donor((Donor)) --> U1[Khai báo hồ sơ & quyền riêng tư]
-  Donor --> U2[Bật/tắt sẵn sàng]
-  Donor --> U3[Xem lý do match, chấp nhận / từ chối]
-  Requester((Requester)) --> U4[Tạo & theo dõi request realtime]
-  Requester --> U5[Xác nhận donor đã hiến]
-  Org((Organization)) --> U6[Đăng ký, tải tài liệu xác minh]
-  Org --> U7[Xác nhận request của bệnh viện mình]
-  Admin((Admin)) --> U8[Xác minh request / tổ chức]
-  Admin --> U9[Quản lý user, report, audit, thống kê]
+  Donor(("Người hiến máu")) --> U1["Khai báo hồ sơ và quyền riêng tư"]
+  Donor --> U2["Bật/tắt trạng thái sẵn sàng"]
+  Donor --> U3["Xem lý do được ghép, chấp nhận / từ chối"]
+  Requester(("Người cần máu")) --> U4["Tạo và theo dõi yêu cầu realtime"]
+  Requester --> U5["Xác nhận người hiến đã hiến máu"]
+  Org(("Tổ chức y tế")) --> U6["Đăng ký, tải tài liệu xác minh"]
+  Org --> U7["Xác nhận yêu cầu của bệnh viện mình"]
+  Admin(("Quản trị viên")) --> U8["Xác minh yêu cầu / tổ chức"]
+  Admin --> U9["Quản lý người dùng, báo cáo, nhật ký, thống kê"]
 ```
 
 ## 7. Bảo mật theo lớp
 | Mối đe dọa | Biện pháp |
 |---|---|
-| Truy cập trái phép | JWT stateless; mặc định mọi endpoint cần đăng nhập; `@PreAuthorize` theo role |
+| Truy cập trái phép | JWT stateless; mặc định mọi endpoint cần đăng nhập; `@PreAuthorize` theo vai trò |
 | IDOR | Service kiểm tra quyền sở hữu; trả 404 thay vì 403 để không lộ sự tồn tại |
 | Brute-force | Khóa tài khoản 15 phút sau 5 lần sai + giới hạn tần suất theo IP |
-| SQL injection | JPA/parameterized query, không nối chuỗi từ input |
+| SQL injection | JPA/truy vấn tham số hóa, không nối chuỗi từ dữ liệu người dùng |
 | XSS | React tự escape; backend loại bỏ thẻ HTML; header `nosniff` |
-| Fake organization / request | Tài liệu xác minh, admin duyệt; request cần xác minh; giới hạn 5 request mở / người; report |
-| Spam | Rate limit đăng ký/đăng nhập/report; chống report trùng |
-| Race condition | `SELECT ... FOR UPDATE` + kiểm tra sau khóa + CHECK constraint ở DB |
-| Rò rỉ riêng tư | Không trả tọa độ donor ra API công khai; SĐT chỉ hiện sau khi donor chấp nhận |
-| Upload độc hại | Kiểm tra magic bytes, giới hạn 5 MB, tên file ngẫu nhiên, tải qua endpoint có phân quyền |
+| Tổ chức / yêu cầu giả | Tài liệu xác minh, quản trị viên duyệt; yêu cầu cần xác minh; giới hạn 5 yêu cầu mở mỗi người; có báo cáo vi phạm |
+| Spam | Giới hạn tần suất đăng ký/đăng nhập/báo cáo; chống báo cáo trùng |
+| Race condition | `SELECT ... FOR UPDATE` + kiểm tra sau khi khóa + CHECK constraint ở DB |
+| Rò rỉ riêng tư | Không trả tọa độ người hiến ra API công khai; số điện thoại chỉ hiện sau khi người hiến chấp nhận |
+| Tải lên độc hại | Kiểm tra magic bytes, giới hạn 5 MB, tên file ngẫu nhiên, tải xuống qua endpoint có phân quyền |
 
 ## 8. Class diagram (các lớp chính)
 ```mermaid
@@ -168,7 +178,7 @@ classDiagram
   class UserDataService { export() deleteAccount() }
   User "1" --> "0..1" DonorProfile
   User "1" --> "0..1" Organization
-  User "1" --> "*" BloodRequest : creates
+  User "1" --> "*" BloodRequest : tạo
   BloodRequest "1" --> "*" Match
   DonorProfile "1" --> "*" Match
   User "1" --> "*" Notification
@@ -177,39 +187,39 @@ classDiagram
   MatchService --> RequestLifecycle
   MatchService --> MatchingService
   MatchingService --> NotificationService
-  NotificationService ..> RealtimePublisher : event sau commit
-  RequestLifecycle ..> RealtimePublisher : event sau commit
+  NotificationService ..> RealtimePublisher : sự kiện sau commit
+  RequestLifecycle ..> RealtimePublisher : sự kiện sau commit
 ```
 
-## 9. Activity diagram: donor phản hồi một request
+## 9. Activity diagram: người hiến phản hồi một yêu cầu
 ```mermaid
 flowchart TD
-  A([Nhận thông báo NEW_MATCH]) --> B[Mở chi tiết request + lý do được ghép]
-  B --> C{Quyết định}
-  C -- Từ chối --> D[Xác nhận 'Decline'] --> E[match = REJECTED] --> Z([Kết thúc])
-  C -- Chấp nhận --> F[POST /matches/id/accept]
-  F --> G[Khóa dòng request FOR UPDATE]
-  G --> H{Còn chỗ và còn hạn?}
-  H -- Không --> I[409 REQUEST_FULFILLED / REQUEST_CLOSED] --> Z
-  H -- Có --> J[units_confirmed + 1, match = ACCEPTED]
-  J --> K{Đã đủ số lượng?}
-  K -- Có --> L[request = FULFILLED, báo các donor còn chờ]
-  K -- Chưa --> M[request = PARTIALLY_FULFILLED]
-  L --> N[Thông báo + WebSocket cho requester]
+  A(["Nhận thông báo NEW_MATCH"]) --> B["Mở chi tiết yêu cầu + lý do được ghép"]
+  B --> C{"Quyết định"}
+  C -- "Từ chối" --> D["Xác nhận từ chối"] --> E["match = REJECTED"] --> Z(["Kết thúc"])
+  C -- "Chấp nhận" --> F["POST /matches/id/accept"]
+  F --> G["Khóa dòng yêu cầu bằng FOR UPDATE"]
+  G --> H{"Còn chỗ và còn hạn?"}
+  H -- "Không" --> I["409 REQUEST_FULFILLED / REQUEST_CLOSED"] --> Z
+  H -- "Có" --> J["units_confirmed + 1, match = ACCEPTED"]
+  J --> K{"Đã đủ số lượng?"}
+  K -- "Có" --> L["request = FULFILLED, báo cho các người hiến còn chờ"]
+  K -- "Chưa" --> M["request = PARTIALLY_FULFILLED"]
+  L --> N["Thông báo + WebSocket cho người cần máu"]
   M --> N
-  N --> O[Donor thấy SĐT liên hệ] --> Z
+  N --> O["Người hiến thấy số điện thoại liên hệ"] --> Z
 ```
 
 ## 10. Activity diagram: leo thang khi chưa đủ người
 ```mermaid
 flowchart TD
-  S([Job mỗi 30 giây]) --> R[Lấy request ACTIVE, đã xác minh, chưa đủ, còn hạn]
-  R --> D{Quá thời gian chờ theo mức khẩn cấp?}
-  D -- Chưa --> S
-  D -- Rồi --> L{Đã ở cấp 4?}
-  L -- Có --> S
-  L -- Chưa --> U[Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 km]
-  U --> M[Lọc → Haversine → chấm điểm → sắp xếp → top N]
-  M --> C[Tạo match + thông báo, không gửi cho tất cả cùng lúc]
-  C --> T[Thông báo requester: Search area widened] --> S
+  S(["Tác vụ chạy mỗi 30 giây"]) --> R["Lấy yêu cầu đang hoạt động, đã xác minh, chưa đủ, còn hạn"]
+  R --> D{"Quá thời gian chờ theo mức khẩn cấp?"}
+  D -- "Chưa" --> S
+  D -- "Rồi" --> L{"Đã ở cấp 4?"}
+  L -- "Có" --> S
+  L -- "Chưa" --> U["Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 km"]
+  U --> M["Lọc → Haversine → chấm điểm → sắp xếp → top N"]
+  M --> C["Tạo match + thông báo, không gửi cho tất cả cùng lúc"]
+  C --> T["Thông báo cho người cần máu: đã mở rộng vùng tìm kiếm"] --> S
 ```
