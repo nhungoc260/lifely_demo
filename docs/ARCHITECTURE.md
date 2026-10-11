@@ -258,5 +258,5 @@ sequenceDiagram
     API-->>FE: 201 JWT + cookie refresh
   end
 =======
->>>>>>> 2d7349796eb3a10c80928b6d467d04aa2e04840e
+>>>>>>>
 ```
