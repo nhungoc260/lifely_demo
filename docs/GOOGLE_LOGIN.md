@@ -36,6 +36,13 @@ Tắt (`Ctrl + C`) rồi chạy lại backend (`mvn spring-boot:run`) và fronte
 - **Đổi Client ID** (project Google khác): điền cùng một giá trị vào hai nơi. Trong `.env` ở thư mục gốc: `GOOGLE_CLIENT_ID=...`. Trong `frontend/.env.local`: `NEXT_PUBLIC_GOOGLE_CLIENT_ID=...`. Biến môi trường luôn được ưu tiên hơn giá trị điền sẵn.
 - **Tắt đăng nhập Google**: đặt hai biến trên thành rỗng (`GOOGLE_CLIENT_ID=` và `NEXT_PUBLIC_GOOGLE_CLIENT_ID=`), nút Google sẽ ẩn.
 
+## Tài khoản tạo bằng Google và mật khẩu
+
+Tài khoản tạo từ Google không có mật khẩu dùng được. Hai việc liên quan:
+
+- **Xóa tài khoản**: hộp thoại xóa có thêm nút Google. Bấm vào và chọn đúng tài khoản Google đã đăng nhập (email phải trùng với email của tài khoản LIFELY) để xác nhận, không cần mật khẩu.
+- **Đặt mật khẩu** (nếu muốn đăng nhập bằng email và mật khẩu): dùng "Quên mật khẩu". Khi chưa cấu hình gửi email (`MAIL_ENABLED=false`, mặc định), liên kết đặt lại **không được gửi qua email** mà được in trong cửa sổ terminal đang chạy backend, ở dòng có chữ `[DEV ONLY] Password reset link for <email>:`. Copy liên kết đó dán vào trình duyệt (có hiệu lực 30 phút). Muốn gửi email thật cho người dùng, làm theo `docs/EMAIL_SETUP.md`.
+
 ## Xử lý lỗi thường gặp
 
 | Hiện tượng | Nguyên nhân và cách sửa |

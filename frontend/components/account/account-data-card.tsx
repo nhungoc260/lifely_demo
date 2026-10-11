@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
 import { toApiError, authFetch } from "@/lib/api";
+import { googleEnabled } from "@/lib/google";
 import { accountApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -39,11 +41,11 @@ export function AccountDataCard() {
     } catch { toast.error("Không tải được dữ liệu của bạn. Vui lòng thử lại."); } finally { setBusy(false); }
   }
 
-  async function remove() {
+  async function remove(googleCredential?: string) {
     setBusy(true);
     setError(null);
     try {
-      await accountApi.delete(password);
+      await accountApi.delete(googleCredential ? { googleCredential } : { password });
       toast.success("Tài khoản của bạn đã được xóa. Cảm ơn bạn đã đồng hành cùng LIFELY.");
       signOut();
       router.replace("/");
@@ -69,12 +71,18 @@ export function AccountDataCard() {
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />
                 <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-xl focus:outline-none">
                   <Dialog.Title className="text-lg font-semibold">Xóa tài khoản của bạn?</Dialog.Title>
-                  <Dialog.Description className="mt-2 text-sm text-muted-foreground">Thao tác này xóa vĩnh viễn dữ liệu cá nhân của bạn. Nhập mật khẩu để xác nhận.</Dialog.Description>
+                  <Dialog.Description className="mt-2 text-sm text-muted-foreground">Thao tác này xóa vĩnh viễn dữ liệu cá nhân của bạn. Nhập mật khẩu để xác nhận{googleEnabled ? ", hoặc xác nhận lại bằng Google nếu bạn đăng nhập bằng Google và chưa đặt mật khẩu" : ""}.</Dialog.Description>
                   <div className="mt-4"><Field label="Mật khẩu" htmlFor="del-pass" error={error ?? undefined}><Input id="del-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!error} /></Field></div>
                   <div className="mt-6 flex justify-end gap-2">
                     <Dialog.Close asChild><Button variant="outline" disabled={busy}>Giữ tài khoản</Button></Dialog.Close>
-                    <Button className="bg-critical text-white hover:bg-critical/90" disabled={busy || password.length === 0} onClick={remove}>{busy && <Loader2 className="animate-spin" />} Xóa vĩnh viễn</Button>
+                    <Button className="bg-critical text-white hover:bg-critical/90" disabled={busy || password.length === 0} onClick={() => remove()}>{busy && <Loader2 className="animate-spin" />} Xóa vĩnh viễn</Button>
                   </div>
+                  {googleEnabled && (
+                    <div className="mt-5 space-y-3 border-t border-border pt-4">
+                      <p className="text-center text-xs text-muted-foreground">Đăng nhập bằng Google, chưa có mật khẩu? Dùng đúng tài khoản Google đã đăng nhập để xác nhận xóa.</p>
+                      <div className={busy ? "pointer-events-none opacity-40" : undefined}><GoogleButton text="continue_with" onCredential={(c) => void remove(c)} /></div>
+                    </div>
+                  )}
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>

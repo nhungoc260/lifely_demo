@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,8 @@ public class UserController {
     public record OnboardingRequest(@Min(1) @Max(6) int step, boolean completed) {
     }
 
-    public record DeleteRequest(@NotBlank String password) {
+    /** Xác nhận xóa tài khoản bằng mật khẩu, hoặc bằng ID token Google (cho tài khoản tạo qua Google, không có mật khẩu). */
+    public record DeleteRequest(@Size(max = 200) String password, @Size(max = 4096) String googleCredential) {
     }
 
     private final UserRepository userRepository;
@@ -57,7 +59,7 @@ public class UserController {
     /** Xóa (ẩn danh hóa) tài khoản. Bắt buộc nhập lại mật khẩu. */
     @PostMapping("/delete")
     public ApiResponse<Void> delete(@AuthenticationPrincipal AuthUser auth, @Valid @RequestBody DeleteRequest req) {
-        dataService.deleteAccount(auth, req.password());
+        dataService.deleteAccount(auth, req.password(), req.googleCredential());
         return ApiResponse.ok("Tài khoản của bạn đã được xóa", null);
     }
 

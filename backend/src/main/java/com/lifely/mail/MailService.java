@@ -1,5 +1,6 @@
 package com.lifely.mail;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,6 +33,18 @@ public class MailService {
         this.enabled = enabled;
         this.from = from;
         this.adminRecipient = adminRecipient;
+    }
+
+    /** Ghi một dòng khi khởi động để biết ngay email đang bật hay tắt (tránh chờ mail mãi mà không biết vì sao). */
+    @PostConstruct
+    void logStatus() {
+        if (isEnabled()) {
+            log.info("Email: ĐÃ BẬT, gửi từ {}", mask(from));
+        } else {
+            log.warn("Email: ĐANG TẮT (MAIL_ENABLED={}, MAIL_USERNAME {}). Email đặt lại mật khẩu sẽ KHÔNG được gửi, "
+                            + "link chỉ được in ra log. Xem docs/EMAIL_SETUP.md để bật.",
+                    enabled, from.isBlank() ? "chưa điền" : "đã điền");
+        }
     }
 
     public boolean isEnabled() {

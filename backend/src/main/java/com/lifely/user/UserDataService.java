@@ -3,6 +3,7 @@ package com.lifely.user;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
+import com.lifely.auth.GoogleIdTokenVerifier;
 import com.lifely.auth.PasswordResetTokenRepository;
 import com.lifely.common.AppException;
 import com.lifely.donor.DonationHistory;
@@ -44,13 +45,15 @@ public class UserDataService {
     private final BloodRequestRepository requestRepository;
     private final RequestService requestService;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleIdTokenVerifier googleVerifier;
     private final AuditService audit;
 
     public UserDataService(UserRepository userRepository, PrivacySettingsRepository privacyRepository,
                            DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
                            MatchRepository matchRepository, NotificationRepository notificationRepository,
                            PasswordResetTokenRepository resetTokenRepository, BloodRequestRepository requestRepository,
-                           RequestService requestService, PasswordEncoder passwordEncoder, AuditService audit) {
+                           RequestService requestService, PasswordEncoder passwordEncoder,
+                           GoogleIdTokenVerifier googleVerifier, AuditService audit) {
         this.userRepository = userRepository;
         this.privacyRepository = privacyRepository;
         this.donorRepository = donorRepository;
@@ -61,6 +64,7 @@ public class UserDataService {
         this.requestRepository = requestRepository;
         this.requestService = requestService;
         this.passwordEncoder = passwordEncoder;
+        this.googleVerifier = googleVerifier;
         this.audit = audit;
     }
 
@@ -117,7 +121,7 @@ public class UserDataService {
     }
 
     @Transactional
-    public void deleteAccount(AuthUser auth, String password) {
+    public void deleteAccount(AuthUser auth, String password, String googleCredential) {
         User u = load(auth.getId());
         if (u.hasRole(Role.ADMIN)) {
             throw AppException.forbidden("CANNOT_DELETE_ADMIN", "Không thể xóa tài khoản admin tại đây");
@@ -126,7 +130,15 @@ public class UserDataService {
             throw AppException.forbidden("ORGANIZATION_CONTACT_SUPPORT",
                     "Tài khoản tổ chức gắn với các hồ sơ đã xác minh. Vui lòng liên hệ nhân viên để đóng tài khoản.");
         }
-        if (!passwordEncoder.matches(password, u.getPasswordHash())) {
+        if (googleCredential != null && !googleCredential.isBlank()) {
+            // Tài khoản tạo bằng Google không có mật khẩu dùng được: xác nhận bằng cách đăng nhập lại Google,
+            // và email Google phải trùng với email của tài khoản.
+            GoogleIdTokenVerifier.GoogleProfile profile = googleVerifier.verify(googleCredential);
+            if (!profile.email().equalsIgnoreCase(u.getEmail())) {
+                throw new AppException(HttpStatus.FORBIDDEN, "WRONG_GOOGLE_ACCOUNT",
+                        "Tài khoản Google này không trùng với email của tài khoản LIFELY");
+            }
+        } else if (password == null || password.isBlank() || !passwordEncoder.matches(password, u.getPasswordHash())) {
             throw new AppException(HttpStatus.FORBIDDEN, "WRONG_PASSWORD", "Mật khẩu không đúng");
         }
 

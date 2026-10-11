@@ -235,6 +235,12 @@ public class AuthService {
         resetTokenRepository.save(token);
         refreshTokens.revokeAll(user.getId());   // đổi mật khẩu thì mọi thiết bị phải đăng nhập lại
         auditService.log(user.getId(), AuditAction.PASSWORD_RESET, "USER", user.getId());
+        if (mailService.isEnabled()) {
+            mailService.send(user.getEmail(), "Mật khẩu LIFELY đã được đổi",
+                    "Xin chào " + user.getFullName() + ",\n\nMật khẩu tài khoản LIFELY của bạn vừa được đổi thành công. "
+                            + "Mọi thiết bị đã được đăng xuất, bạn hãy đăng nhập lại bằng mật khẩu mới.\n\n"
+                            + "Nếu không phải bạn thực hiện, hãy bấm \"Quên mật khẩu\" để đặt lại ngay và liên hệ hỗ trợ.");
+        }
     }
 
     /** Kết quả gia hạn phiên: access token mới cùng refresh token mới (để controller ghi vào cookie). */

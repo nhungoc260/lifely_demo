@@ -77,7 +77,7 @@ export const notificationApi = {
 };
 
 export const accountApi = {
-  delete: (password: string) => post<null>("/api/users/me/delete", { password }),
+  delete: (b: { password?: string; googleCredential?: string }) => post<null>("/api/users/me/delete", b),
 };
 
 export const reportApi = {

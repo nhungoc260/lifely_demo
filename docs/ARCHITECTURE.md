@@ -222,7 +222,6 @@ flowchart TD
   U --> M["Lọc → Haversine → chấm điểm → sắp xếp → top N"]
   M --> C["Tạo match + thông báo, không gửi cho tất cả cùng lúc"]
   C --> T["Thông báo cho người cần máu: đã mở rộng vùng tìm kiếm"] --> S
-<<<<<<< HEAD
 ```
 
 ## 11. Sequence: đăng nhập bằng Google
@@ -257,6 +256,4 @@ sequenceDiagram
     AS->>DB: tạo người dùng, quyền riêng tư, hồ sơ người hiến
     API-->>FE: 201 JWT + cookie refresh
   end
-=======
->>>>>>>
 ```
