@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 import { URGENCY_LABEL } from "@/lib/labels";
@@ -54,6 +54,38 @@ const pickIcon = L.divIcon({
   html: `<div style="width:22px;height:22px;border-radius:50%;background:#9f1239;border:4px solid #fff;box-shadow:0 0 0 2px #9f1239,0 2px 8px rgba(0,0,0,.35)"></div>`,
 });
 
+const OSM_TILES = {
+  url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+};
+// Nguồn dự phòng khi máy chủ tile của OpenStreetMap bị chặn hoặc không truy cập được (mạng, tường lửa, tiện ích chặn quảng cáo).
+const FALLBACK_TILES = {
+  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+};
+
+/** Lớp nền bản đồ: dùng OpenStreetMap, tự chuyển sang nguồn dự phòng nếu nhiều ô bản đồ liên tiếp tải lỗi. */
+function BaseTiles() {
+  const [fallback, setFallback] = useState(false);
+  const errors = useRef(0);
+  const t = fallback ? FALLBACK_TILES : OSM_TILES;
+  return (
+    <TileLayer
+      key={fallback ? "fallback" : "osm"}
+      url={t.url}
+      attribution={t.attribution}
+      maxZoom={19}
+      subdomains="abcd"
+      eventHandlers={{
+        tileerror: () => {
+          errors.current += 1;
+          if (errors.current >= 3) setFallback(true);
+        },
+      }}
+    />
+  );
+}
+
 function Recenter({ center, zoom }: { center: [number, number]; zoom?: number }) {
   const map = useMap();
   useEffect(() => {
@@ -74,7 +106,7 @@ export default function MapView({
   return (
     <div className={className} style={{ height }} role="region" aria-label="Bản đồ các yêu cầu khẩn cấp và bệnh viện">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={scrollWheelZoom} style={{ height: "100%", width: "100%", borderRadius: "1.25rem", zIndex: 0 }}>
-        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <BaseTiles />
         <Recenter center={center} zoom={zoom} />
         <Clicks onPick={onPick} />
         {radius && <Circle center={radius.center} radius={radius.km * 1000} pathOptions={{ color: "#9f1239", weight: 1.5, fillOpacity: 0.05, dashArray: "6 6" }} />}
