@@ -24,6 +24,7 @@ LIFELY không thay thế bệnh viện và không quyết định ai đủ đi�
 - Bản đồ bệnh viện và yêu cầu gần bạn, không bao giờ hiển thị vị trí người hiến
 - Chia sẻ yêu cầu và poster A4 có mã QR để gia đình dán tại bệnh viện
 - Thông báo trong ứng dụng và qua email
+- Đăng ký / đăng nhập nhanh bằng tài khoản Google (tùy chọn)
 - Dark mode, giao diện responsive cho cả máy tính và điện thoại
 
 ## Công nghệ sử dụng
@@ -31,7 +32,7 @@ LIFELY không thay thế bệnh viện và không quyết định ai đủ đi�
 | Lớp | Công nghệ |
 |---|---|
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui (Radix UI), Lucide, React Hook Form, Zod, Leaflet (OpenStreetMap), Recharts, STOMP.js |
-| Backend | Java 21, Spring Boot 3.5, Spring Security (JWT, BCrypt), Spring Data JPA / Hibernate, Jakarta Validation, Spring WebSocket (STOMP), Spring Mail, Springdoc OpenAPI (Swagger) |
+| Backend | Java 21, Spring Boot 3.5, Spring Security (JWT, BCrypt), Spring Data JPA / Hibernate, Jakarta Validation, Spring WebSocket (STOMP), Spring Mail, Springdoc OpenAPI (Swagger), Google Identity Services (xác thực ID token) |
 | Cơ sở dữ liệu | PostgreSQL 16, Flyway (quản lý migration) |
 | Kiểm thử | JUnit, Spring Boot Test, Vitest |
 | Công cụ | VS Code, Maven, npm, pgAdmin / DBeaver, Postman, Git |

@@ -1,6 +1,6 @@
 import { get, post, put, qs, apiFetch } from "@/lib/api";
 import type {
-  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
+  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, HistoryEntry, MatchStatus, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
@@ -11,6 +11,9 @@ export const authApi = {
   register: (b: { fullName: string; email: string; phone: string; password: string; confirmPassword: string; role: string }) =>
     post<AuthResponse>("/api/auth/register", b, false),
   login: (b: { email: string; password: string }) => post<AuthResponse>("/api/auth/login", b, false),
+  google: (credential: string) => post<GoogleAuthResult>("/api/auth/google", { credential }, false),
+  googleRegister: (b: { credential: string; fullName: string; phone: string; role: string }) =>
+    post<AuthResponse>("/api/auth/google/register", b, false),
   forgot: (email: string) => post<null>("/api/auth/forgot-password", { email }, false),
   reset: (token: string, password: string) => post<null>("/api/auth/reset-password", { token, password }, false),
   saveOnboarding: (step: number, completed: boolean) =>

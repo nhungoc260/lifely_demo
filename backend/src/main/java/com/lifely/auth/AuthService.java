@@ -46,6 +46,7 @@ public class AuthService {
     private final AuditService auditService;
     private final MailService mailService;
     private final RefreshTokenService refreshTokens;
+    private final GoogleIdTokenVerifier googleVerifier;
     private final boolean logResetLink;
     private final String frontendUrl;
     private final SecureRandom random = new SecureRandom();
@@ -54,7 +55,7 @@ public class AuthService {
                        PrivacySettingsRepository privacyRepository, DonorProfileRepository donorProfileRepository,
                        PasswordResetTokenRepository resetTokenRepository, PasswordEncoder passwordEncoder,
                        JwtService jwtService, AuditService auditService, MailService mailService,
-                       RefreshTokenService refreshTokens,
+                       RefreshTokenService refreshTokens, GoogleIdTokenVerifier googleVerifier,
                        @Value("${lifely.auth.log-reset-link:false}") boolean logResetLink,
                        @Value("${lifely.frontend-url:http://localhost:3000}") String frontendUrl) {
         this.userRepository = userRepository;
@@ -67,6 +68,7 @@ public class AuthService {
         this.auditService = auditService;
         this.mailService = mailService;
         this.refreshTokens = refreshTokens;
+        this.googleVerifier = googleVerifier;
         this.logResetLink = logResetLink;
         this.frontendUrl = frontendUrl;
         this.dummyHash = passwordEncoder.encode("not-a-real-password");
@@ -81,15 +83,59 @@ public class AuthService {
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw AppException.conflict("EMAIL_TAKEN", "Email này đã được đăng ký");
         }
-        String roleName = "ROLE_" + req.role();
+        User user = createUser(email, req.fullName().trim(), req.phone().trim(),
+                passwordEncoder.encode(req.password()), req.role(), "password");
+        return buildAuthResponse(user);
+    }
+
+    /** Kết quả bước đăng nhập Google: đã có tài khoản thì có auth, chưa có thì cần người dùng bổ sung hồ sơ. */
+    public record GoogleOutcome(AuthResponse auth, String email, String fullName) {
+    }
+
+    /**
+     * Đăng nhập bằng Google. Email đã có tài khoản thì đăng nhập luôn (vai trò giữ nguyên);
+     * email mới thì chưa tạo gì, chỉ báo cần chọn vai trò và nhập số điện thoại.
+     */
+    @Transactional
+    public GoogleOutcome googleLogin(String credential) {
+        GoogleIdTokenVerifier.GoogleProfile profile = googleVerifier.verify(credential);
+        User user = userRepository.findByEmailIgnoreCase(profile.email()).orElse(null);
+        if (user == null) {
+            return new GoogleOutcome(null, profile.email(), profile.name());
+        }
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            throw AppException.forbidden("ACCOUNT_SUSPENDED", "Tài khoản này đã bị khóa. Vui lòng liên hệ nhân viên hỗ trợ.");
+        }
+        return new GoogleOutcome(onLoginSuccess(user), profile.email(), profile.name());
+    }
+
+    /** Tạo tài khoản từ Google sau khi người dùng chọn vai trò. Tài khoản không có mật khẩu dùng được (hash ngẫu nhiên). */
+    @Transactional
+    public AuthResponse googleRegister(GoogleRegisterRequest req) {
+        GoogleIdTokenVerifier.GoogleProfile profile = googleVerifier.verify(req.credential());
+        if (userRepository.existsByEmailIgnoreCase(profile.email())) {
+            throw AppException.conflict("EMAIL_TAKEN", "Email này đã được đăng ký. Hãy đăng nhập bằng Google.");
+        }
+        String fullName = req.fullName() != null && !req.fullName().isBlank() ? req.fullName().trim() : profile.name();
+        if (fullName.length() < 2) {
+            throw AppException.badRequest("FULL_NAME_REQUIRED", "Vui lòng nhập họ và tên");
+        }
+        User user = createUser(profile.email(), fullName, req.phone().trim(),
+                passwordEncoder.encode(randomSecret()), req.role(), "google");
+        return buildAuthResponse(user);
+    }
+
+    private User createUser(String email, String fullName, String phone, String passwordHash,
+                            String roleKey, String provider) {
+        String roleName = "ROLE_" + roleKey;
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> AppException.badRequest("INVALID_ROLE", "Vai trò không hợp lệ"));
 
         User user = new User();
         user.setEmail(email);
-        user.setFullName(req.fullName().trim());
-        user.setPhone(req.phone().trim());
-        user.setPasswordHash(passwordEncoder.encode(req.password()));
+        user.setFullName(fullName);
+        user.setPhone(phone);
+        user.setPasswordHash(passwordHash);
         user.setRoles(new HashSet<>(java.util.List.of(role)));
         user = userRepository.save(user);
 
@@ -97,8 +143,15 @@ public class AuthService {
         if (Role.DONOR.equals(roleName)) {
             donorProfileRepository.save(new DonorProfile(user.getId()));
         }
-        auditService.log(user.getId(), AuditAction.USER_REGISTERED, "USER", user.getId(), Map.of("role", req.role()));
-        return buildAuthResponse(user);
+        auditService.log(user.getId(), AuditAction.USER_REGISTERED, "USER", user.getId(),
+                Map.of("role", roleKey, "provider", provider));
+        return user;
+    }
+
+    private String randomSecret() {
+        byte[] raw = new byte[32];
+        random.nextBytes(raw);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
     }
 
     /** Không @Transactional ở mức method để bộ đếm đăng nhập sai vẫn được lưu khi ném lỗi. */

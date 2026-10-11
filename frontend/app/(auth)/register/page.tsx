@@ -1,20 +1,21 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, HeartHandshake, Loader2, Droplets } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { GoogleAuthSection } from "@/components/auth/google-auth-section";
+import { RolePicker } from "@/components/auth/role-picker";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
-import { cn } from "@/lib/utils";
 import { authApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -30,12 +31,6 @@ const schema = z
   .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Mật khẩu nhập lại không khớp" });
 type Values = z.infer<typeof schema>;
 
-const ROLES = [
-  { value: "DONOR", title: "Người hiến máu", desc: "Được kết nối với các yêu cầu ở gần", icon: Droplets },
-  { value: "REQUESTER", title: "Người cần máu", desc: "Tôi cần máu cho bệnh nhân", icon: HeartHandshake },
-  { value: "ORGANIZATION", title: "Tổ chức", desc: "Bệnh viện hoặc trung tâm máu", icon: Building2 },
-] as const;
-
 function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -46,6 +41,8 @@ function RegisterForm() {
     resolver: zodResolver(schema),
     defaultValues: { role: initial },
   });
+
+  const selectedRole = useWatch({ control, name: "role" });
 
   async function onSubmit(values: Values) {
     setFormError(null);
@@ -64,25 +61,7 @@ function RegisterForm() {
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         {formError && <p role="alert" className="rounded-xl border border-critical/30 bg-critical/5 px-4 py-3 text-sm text-critical">{formError}</p>}
 
-        <Controller
-          control={control}
-          name="role"
-          render={({ field }) => (
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium">Tôi tham gia với vai trò</legend>
-              <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
-                {ROLES.map((r) => (
-                  <label key={r.value} className={cn("cursor-pointer rounded-xl border border-border bg-card p-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring", field.value === r.value && "border-primary bg-secondary")}>
-                    <input type="radio" className="sr-only" name={field.name} value={r.value} checked={field.value === r.value} onChange={() => field.onChange(r.value)} />
-                    <r.icon className={cn("mb-2 size-5", field.value === r.value ? "text-primary" : "text-muted-foreground")} aria-hidden />
-                    <span className="block font-medium">{r.title}</span>
-                    <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{r.desc}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          )}
-        />
+        <Controller control={control} name="role" render={({ field }) => <RolePicker name={field.name} value={field.value} onChange={field.onChange} />} />
 
         <Field label="Họ và tên" htmlFor="fullName" error={errors.fullName?.message}>
           <Input id="fullName" autoComplete="name" aria-invalid={!!errors.fullName} {...register("fullName")} />
@@ -108,6 +87,7 @@ function RegisterForm() {
         <p className="text-center text-xs text-muted-foreground">
           Khi tiếp tục, bạn đồng ý với <Link href="/info/terms" className="underline">Điều khoản</Link> và <Link href="/info/privacy" className="underline">Chính sách quyền riêng tư</Link>.
         </p>
+        <GoogleAuthSection role={selectedRole} text="signup_with" />
         <p className="text-center text-sm text-muted-foreground">Đã có tài khoản? <Link href="/login" className="font-medium text-primary hover:underline">Đăng nhập</Link></p>
       </form>
     </AuthLayout>

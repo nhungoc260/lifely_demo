@@ -41,6 +41,27 @@ public class AuthController {
         return ApiResponse.ok("Đăng nhập thành công", auth);
     }
 
+    /** Đăng nhập bằng Google: email đã có tài khoản thì vào luôn, email mới thì trả needsProfile để chọn vai trò. */
+    @PostMapping("/google")
+    public ApiResponse<GoogleAuthResult> google(@Valid @RequestBody GoogleLoginRequest request,
+                                                HttpServletResponse response) {
+        AuthService.GoogleOutcome outcome = authService.googleLogin(request.credential());
+        if (outcome.auth() == null) {
+            return ApiResponse.ok("Cần bổ sung vai trò và số điện thoại để hoàn tất",
+                    GoogleAuthResult.pendingProfile(outcome.email(), outcome.fullName()));
+        }
+        refreshCookie.write(response, authService.startSession(outcome.auth().user().id()), authService.refreshTtl());
+        return ApiResponse.ok("Đăng nhập thành công", GoogleAuthResult.loggedIn(outcome.auth()));
+    }
+
+    @PostMapping("/google/register")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleRegister(@Valid @RequestBody GoogleRegisterRequest request,
+                                                                    HttpServletResponse response) {
+        AuthResponse auth = authService.googleRegister(request);
+        refreshCookie.write(response, authService.startSession(auth.user().id()), authService.refreshTtl());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Tạo tài khoản thành công", auth));
+    }
+
     @PostMapping("/refresh")
     public ApiResponse<AuthResponse> refresh(
             @CookieValue(name = RefreshCookie.NAME, required = false) String refreshToken,

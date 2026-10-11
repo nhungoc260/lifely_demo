@@ -65,7 +65,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/health", "/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login",
                                 "/api/auth/forgot-password", "/api/auth/reset-password",
-                                "/api/auth/refresh", "/api/auth/logout").permitAll()
+                                "/api/auth/refresh", "/api/auth/logout",
+                                "/api/auth/google", "/api/auth/google/register").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()   // handshake; kênh STOMP được xác thực bằng JWT ở CONNECT
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { GoogleAuthSection } from "@/components/auth/google-auth-section";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toApiError } from "@/lib/api";
@@ -57,6 +58,7 @@ function LoginForm() {
         <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="animate-spin" />} {isSubmitting ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
+        <GoogleAuthSection next={params.get("next")} text="signin_with" />
         <p className="text-center text-sm text-muted-foreground">Bạn mới biết đến LIFELY? <Link href="/register" className="font-medium text-primary hover:underline">Tạo tài khoản</Link></p>
       </form>
     </AuthLayout>

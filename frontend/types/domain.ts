@@ -40,6 +40,14 @@ export interface AuthResponse {
   user: UserSummary;
 }
 
+/** Kết quả đăng nhập Google: có tài khoản thì có auth, chưa có thì cần hoàn tất hồ sơ (needsProfile). */
+export interface GoogleAuthResult {
+  needsProfile: boolean;
+  auth?: AuthResponse | null;
+  email?: string | null;
+  fullName?: string | null;
+}
+
 export interface DonorProfile {
   id: string;
   fullName: string;

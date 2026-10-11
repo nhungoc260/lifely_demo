@@ -63,6 +63,10 @@ lifely:
     refresh-days: ${REFRESH_DAYS:14}
     cookie-secure: ${COOKIE_SECURE:false}
     cookie-same-site: ${COOKIE_SAME_SITE:Lax}
+  google:
+    # OAuth Client ID (loại Web application) từ Google Cloud Console. Client ID là thông tin công khai, không phải bí mật.
+    # Đặt GOOGLE_CLIENT_ID= (để trống) để tắt đăng nhập bằng Google, hoặc điền Client ID khác để đổi project Google.
+    client-id: ${GOOGLE_CLIENT_ID:1097555342952-i6h01m6bt4k5j06s4kts2t24tuavk9g0.apps.googleusercontent.com}
   rate-limit:
     per-minute: 30
   storage:
