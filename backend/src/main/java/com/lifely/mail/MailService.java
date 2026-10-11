@@ -67,8 +67,11 @@ public class MailService {
             m.setSubject(subject);
             m.setText(body);
             senderProvider.getObject().send(m);
+            log.info("Email: đã gửi '{}' tới {}", subject, mask(to));
         } catch (Exception e) {
-            log.warn("Email to {} could not be sent: {}", mask(to), e.getMessage());
+            Throwable root = e;
+            while (root.getCause() != null) root = root.getCause();
+            log.error("Email to {} could not be sent: {} | nguyên nhân gốc: {}", mask(to), e.getMessage(), root.getMessage());
         }
     }
 

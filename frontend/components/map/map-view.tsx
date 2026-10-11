@@ -54,32 +54,35 @@ const pickIcon = L.divIcon({
   html: `<div style="width:22px;height:22px;border-radius:50%;background:#9f1239;border:4px solid #fff;box-shadow:0 0 0 2px #9f1239,0 2px 8px rgba(0,0,0,.35)"></div>`,
 });
 
-const OSM_TILES = {
-  url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-};
-// Nguồn dự phòng khi máy chủ tile của OpenStreetMap bị chặn hoặc không truy cập được (mạng, tường lửa, tiện ích chặn quảng cáo).
-const FALLBACK_TILES = {
-  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-};
+const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-/** Lớp nền bản đồ: dùng OpenStreetMap, tự chuyển sang nguồn dự phòng nếu nhiều ô bản đồ liên tiếp tải lỗi. */
+// Chuỗi nguồn bản đồ, thử lần lượt từ trên xuống. Tất cả đều KHÔNG cần API key.
+// (CARTO đã bỏ vì hiện yêu cầu API key: sẽ vẽ chữ "API KEY REQUIRED" lên bản đồ.)
+const TILE_SOURCES = [
+  { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: OSM_ATTR, subdomains: "abc" },
+  { url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", attribution: OSM_ATTR + ' &copy; <a href="https://www.hotosm.org/">HOT</a>', subdomains: "abc" },
+  { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", attribution: "Tiles &copy; Esri", subdomains: "abc" },
+];
+
+/** Lớp nền bản đồ: dùng OpenStreetMap, tự chuyển sang nguồn kế tiếp nếu nhiều ô bản đồ liên tiếp tải lỗi. */
 function BaseTiles() {
-  const [fallback, setFallback] = useState(false);
+  const [idx, setIdx] = useState(0);
   const errors = useRef(0);
-  const t = fallback ? FALLBACK_TILES : OSM_TILES;
+  const t = TILE_SOURCES[idx];
   return (
     <TileLayer
-      key={fallback ? "fallback" : "osm"}
+      key={idx}
       url={t.url}
       attribution={t.attribution}
       maxZoom={19}
-      subdomains="abcd"
+      subdomains={t.subdomains}
       eventHandlers={{
         tileerror: () => {
           errors.current += 1;
-          if (errors.current >= 3) setFallback(true);
+          if (errors.current >= 3 && idx < TILE_SOURCES.length - 1) {
+            errors.current = 0;
+            setIdx(idx + 1);
+          }
         },
       }}
     />
