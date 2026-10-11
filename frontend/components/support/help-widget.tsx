@@ -29,7 +29,7 @@ export function HelpWidget() {
         <button
           className={cn(
             "fixed right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            inApp ? "bottom-24 md:bottom-6" : "bottom-5",
+            inApp ? "bottom-24 lg:bottom-6" : "bottom-5",
           )}
           aria-label="Cần hỗ trợ? Liên hệ nhân viên"
         >

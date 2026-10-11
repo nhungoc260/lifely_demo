@@ -26,8 +26,14 @@ export const REPORT_STATUS_LABEL: Record<ReportStatus, string> = {
 
 export const CONTACT_STATUS_LABEL: Record<ContactStatus, string> = { NEW: "Mới", READ: "Đã đọc", RESOLVED: "Đã xử lý" };
 
+export const VERIFICATION_LABEL: Record<"SELF_REPORTED" | "REQUESTER_CONFIRMED" | "ORG_VERIFIED", string> = {
+  SELF_REPORTED: "Tự khai báo",
+  REQUESTER_CONFIRMED: "Người nhà xác nhận",
+  ORG_VERIFIED: "Cơ sở y tế xác nhận",
+};
+
 export const ROLE_LABEL: Record<Role, string> = {
-  DONOR: "Người hiến máu", REQUESTER: "Người cần máu", ORGANIZATION: "Tổ chức", ADMIN: "Admin",
+  DONOR: "Người hiến máu", REQUESTER: "Người cần máu", ORGANIZATION: "Tổ chức", ADMIN: "Quản trị viên",
 };
 
 export const TARGET_LABEL: Record<"REQUEST" | "USER" | "ORGANIZATION", string> = {

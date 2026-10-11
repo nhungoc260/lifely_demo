@@ -23,11 +23,13 @@ public class DonorService {
     private final PrivacySettingsRepository privacyRepository;
     private final MatchRepository matchRepository;
     private final NotificationRepository notificationRepository;
+    private final DonorVerificationService verificationService;
 
     public DonorService(DonorProfileRepository profileRepository, BloodTypeRepository bloodTypeRepository,
                         DonationHistoryRepository historyRepository, UserRepository userRepository,
                         PrivacySettingsRepository privacyRepository, MatchRepository matchRepository,
-                        NotificationRepository notificationRepository) {
+                        NotificationRepository notificationRepository,
+                        DonorVerificationService verificationService) {
         this.profileRepository = profileRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.historyRepository = historyRepository;
@@ -35,6 +37,13 @@ public class DonorService {
         this.privacyRepository = privacyRepository;
         this.matchRepository = matchRepository;
         this.notificationRepository = notificationRepository;
+        this.verificationService = verificationService;
+    }
+
+    /** Huy hiệu/tóm tắt xác nhận của chính donor (số lần hiến do cơ sở y tế xác nhận, do người nhà xác nhận). */
+    @Transactional(readOnly = true)
+    public DonorVerificationService.Summary verification(UUID userId) {
+        return verificationService.summary(profile(userId).getId());
     }
 
     @Transactional(readOnly = true)

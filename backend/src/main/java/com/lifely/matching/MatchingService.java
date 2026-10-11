@@ -1,7 +1,6 @@
 package com.lifely.matching;
 
 import com.lifely.common.BloodCompat;
-import com.lifely.common.GeoUtils;
 import com.lifely.donor.AvailabilityStatus;
 import com.lifely.donor.BloodType;
 import com.lifely.donor.BloodTypeRepository;
@@ -24,7 +23,6 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -65,30 +63,12 @@ public class MatchingService {
 
     // ------------------------------------------------------------------ scoring
 
-    /** Trọng số: tương thích 40, khoảng cách 25, sẵn sàng 15, kịp deadline 10, độ gần lần hiến trước 10. */
+    /** Công thức nằm ở {@link ScoreCalculator} (thuần tính toán, có unit test riêng). */
     public ScoreBreakdown score(DonorProfile donor, BloodRequest request, Instant now) {
-        double distKm = GeoUtils.haversineKm(donor.getLatitude().doubleValue(), donor.getLongitude().doubleValue(),
-                request.getLatitude().doubleValue(), request.getLongitude().doubleValue());
-        boolean exact = donor.getBloodType().getCode().equals(request.getBloodType().getCode());
-        double compat = exact ? 100 : 85;
-        double dist = Math.max(0, 1 - distKm / props.getDistanceScoreRangeKm()) * 100;
-        double avail = donor.getAvailabilityStatus() == AvailabilityStatus.AVAILABLE ? 100 : 0;
-
-        double minutesLeft = Duration.between(now, request.getDeadline()).toSeconds() / 60.0;
-        double minutesNeeded = distKm / props.getAverageSpeedKmh() * 60 + props.getPrepMinutes();
-        boolean feasible = minutesLeft >= minutesNeeded;
-        double deadline = feasible ? Math.min(1, (minutesLeft - minutesNeeded) / minutesNeeded) * 100 : 0;
-
-        double recency = 100;
-        if (donor.getLastDonationDate() != null) {
-            long days = ChronoUnit.DAYS.between(donor.getLastDonationDate(), LocalDate.now());
-            int min = props.getMinDaysBetweenDonations();
-            recency = days >= 2L * min ? 100 : 60 + 40.0 * Math.max(0, days - min) / min;
-        }
-        double total = 0.40 * compat + 0.25 * dist + 0.15 * avail + 0.10 * deadline + 0.10 * recency;
-        return new ScoreBreakdown(GeoUtils.round2(total), GeoUtils.round2(compat), GeoUtils.round2(dist),
-                GeoUtils.round2(avail), GeoUtils.round2(deadline), GeoUtils.round2(recency), exact,
-                GeoUtils.round2(distKm), feasible);
+        return ScoreCalculator.score(donor.getBloodType().getCode(), donor.getLatitude().doubleValue(),
+                donor.getLongitude().doubleValue(), donor.getAvailabilityStatus() == AvailabilityStatus.AVAILABLE,
+                donor.getLastDonationDate(), request.getBloodType().getCode(), request.getLatitude().doubleValue(),
+                request.getLongitude().doubleValue(), request.getDeadline(), now, LocalDate.now(), props);
     }
 
     // ------------------------------------------------------------------ ranking
@@ -112,7 +92,7 @@ public class MatchingService {
                 .map(d -> new Candidate(d, score(d, r, now)))
                 .filter(c -> c.score().distanceKm() >= minKm && c.score().distanceKm() < maxKm)
                 .filter(c -> c.score().deadlineFeasible())
-                .sorted(Comparator.comparingDouble((Candidate c) -> c.score().total()).reversed())
+                .sorted(Comparator.comparing(Candidate::score, ScoreCalculator.RANKING))
                 .limit(limit)
                 .toList();
     }

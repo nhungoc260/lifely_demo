@@ -57,3 +57,41 @@
 
 
 > Giao diện đã được việt hóa toàn bộ: các tên nút/nhãn ở trên là bản tiếng Việt. Một số từ phổ biến (Admin, email, QR) được giữ nguyên.
+
+## Phiên đăng nhập (refresh token)
+- [ ] Đăng nhập `donor@lifely.demo`, F5 trang dashboard: vẫn đăng nhập (không bị đẩy về /login).
+- [ ] DevTools > Application > Cookies: có `lifely_refresh`, cột **HttpOnly** được tích, Path `/api/auth`. localStorage **không** chứa JWT (chỉ có `lifely.session = 1`).
+- [ ] Đặt `JWT_EXPIRATION_MINUTES=1`, đợi hơn 1 phút rồi thao tác: ứng dụng tự gia hạn, không bị đăng xuất; tab Network thấy `POST /api/auth/refresh`.
+- [ ] Bấm Đăng xuất, F5: về trang đăng nhập; cookie `lifely_refresh` đã bị xóa.
+- [ ] Mở 2 tab, đăng xuất ở tab A: tab B gia hạn thất bại và quay về đăng nhập.
+- [ ] Admin khóa tài khoản donor đang đăng nhập: sau tối đa 15 phút (hoặc lần gia hạn kế) donor bị đăng xuất.
+- [ ] Đổi/đặt lại mật khẩu: các thiết bị khác phải đăng nhập lại.
+
+## Email khẩn cấp
+- [ ] Cấu hình `MAIL_*`, tạo donor bằng email thật, tạo request khớp: donor nhận email "[LIFELY] Yêu cầu khẩn cấp gần bạn".
+- [ ] Donor tắt "nhận thông báo khẩn cấp": không nhận email nữa, thông báo trong ứng dụng vẫn có.
+
+## Xác nhận hiến máu theo cấp độ tin cậy
+- [ ] Đăng nhập donor: trang **Lịch sử hiến máu** có thẻ tóm tắt và mỗi lần hiến có nhãn (Tự khai báo / Người nhà xác nhận / Cơ sở y tế xác nhận).
+- [ ] Requester (người nhà) mở yêu cầu của mình, bấm "Đánh dấu đã hiến" cho một donor đã nhận lời: lần hiến ghi ở mức **Người nhà xác nhận**, donor KHÔNG có huy hiệu cơ sở y tế.
+- [ ] Đăng nhập `hospital@lifely.demo` (Bệnh viện Chợ Rẫy, đã xác minh), mở yêu cầu của tổ chức, bấm "Xác nhận đã hiến (cơ sở y tế)": lần hiến ở mức **Cơ sở y tế xác nhận**, donor nhận thông báo, huy hiệu xuất hiện bên cạnh donor trong danh sách của người cần máu.
+- [ ] Với lần hiến người nhà đã ghi nhận trước, tổ chức bấm "Xác nhận với tư cách cơ sở y tế": mức được nâng, **số lần hiến không tăng thêm**; bấm lần nữa không đổi gì.
+- [ ] Tổ chức chưa xác minh (PENDING) hoặc tổ chức khác không nâng được mức; admin bấm xác nhận chỉ ra mức Người nhà xác nhận.
+- [ ] Audit log có bản ghi MATCH_COMPLETED kèm `verificationLevel`.
+
+## Giao diện theo vai trò
+- [ ] `donor@lifely.demo` và `requester@lifely.demo`: có thanh menu **ngang** phía trên (không có thanh bên), mục đầu tiên là **Trang chủ** (dashboard của vai trò, không còn mục "Tổng quan" trùng), menu **không bị rớt dòng** ở độ rộng 1024px, 1280px, 1440px; chuông có số thông báo chưa đọc; avatar mở menu tài khoản (có nhãn vai trò, Hồ sơ/Dữ liệu, Trang giới thiệu LIFELY, Đăng xuất); có chân trang với tuyên bố y tế.
+- [ ] Người cần máu có nút **Tạo yêu cầu máu** nổi bật trên thanh menu; người hiến máu thì không.
+- [ ] `hospital@lifely.demo` (xanh lam) và `admin@lifely.demo` (xám than): có thanh bên, thẻ vai trò, và nút **Trang chủ LIFELY**; admin có dòng "Khu vực quản trị".
+- [ ] Bốn vai trò nhìn khác nhau ngay từ cái nhìn đầu tiên; chữ trên thẻ KPI của người hiến máu là "Sẵn sàng" (không còn "Available").
+- [ ] Rộng 375px: thanh điều hướng dưới có nút Trang chủ; không tràn ngang. Chế độ tối: màu nhãn và đường viền vẫn đọc rõ.
+- [ ] Menu tài khoản đóng khi bấm ra ngoài hoặc nhấn Esc; điều hướng bằng bàn phím được.
+
+## Trang chủ người hiến máu và người cần máu: dễ hiểu
+- [ ] **Người hiến máu:** chỉ có MỘT khối trạng thái ở đầu trang. Với `donor@lifely.demo` (đang trong thời gian nghỉ) khối này nói "đang trong thời gian nghỉ", KHÔNG đồng thời hiện "sẵn sàng hiến máu". Tắt công tắc "Nhận yêu cầu hiến máu" thì khối đổi thành "đang tắt nhận yêu cầu"; bật lại thì đổi lại, không cần tải lại trang.
+- [ ] Phần "Yêu cầu đang chờ bạn trả lời" nằm ngay dưới khối trạng thái (không phải cuộn xuống mới thấy), có câu giải thích "Mức phù hợp". Khi đang nghỉ/tắt mà vẫn còn yêu cầu cũ, có dòng nhắc "đã được gửi cho bạn trước đó".
+- [ ] Ba thẻ số liệu bên dưới có nhãn dễ hiểu; thẻ "Mốc tiếp theo" không lặp lại trạng thái sẵn sàng.
+- [ ] **Người cần máu:** chỉ có một nút tạo yêu cầu ở thanh menu (không còn nút thứ hai trong trang). Mỗi yêu cầu có một câu nói rõ đang ở bước nào (ví dụ "Đang chờ quản trị viên xác minh…", "Chưa có ai nhận lời…") và dòng "x/y người đã nhận lời".
+- [ ] Yêu cầu đã hủy/hết hạn/đủ người nằm trong mục thu gọn "Yêu cầu đã đóng", không lẫn với yêu cầu đang mở.
+- [ ] Tài khoản chưa có yêu cầu nào: hiện khối 3 bước hướng dẫn và nút "Tạo yêu cầu máu".
+- [ ] Nhờ một người chưa từng dùng LIFELY mở thử hai trang này và hỏi: "Bạn nghĩ mình cần làm gì tiếp theo?". Nếu họ trả lời sai hoặc do dự thì ghi lại câu chữ gây khó hiểu.

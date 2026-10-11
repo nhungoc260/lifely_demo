@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Phone, Radio } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Phone, Radio, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -20,6 +20,7 @@ import { useRealtime, useRealtimeStatus } from "@/hooks/use-realtime";
 import { toApiError } from "@/lib/api";
 import { formatDateTime, STATUS_LABEL, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 import { orgApi, requestApi } from "@/services";
 import type { RequestChangedEvent, RequestStatus } from "@/types/domain";
 
@@ -54,6 +55,8 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
   const matches = useQuery(`req-matches:${id}`, () => requestApi.matches(id));
   const [cancelOpen, setCancelOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const { user } = useAuth();
+  const isOrg = user?.roles.includes("ORGANIZATION") ?? false;
   const r = req.data;
 
   // Cập nhật realtime: số xác nhận đổi ngay, không cần reload trang.
@@ -119,6 +122,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
               <Card>
                 <CardHeader><CardTitle>Người hiến máu được kết nối</CardTitle></CardHeader>
                 <CardContent>
+                  <p className="mb-3 text-xs text-muted-foreground">Người nhà đánh dấu đã hiến sẽ được ghi nhận ở mức “Người nhà xác nhận”. Mức “Cơ sở y tế xác nhận” chỉ dành cho tổ chức y tế đã được quản trị viên xác minh.</p>
                   {matches.initialLoading ? <Skeleton className="h-32" />
                     : matches.data && matches.data.length > 0 ? (
                       <ul className="divide-y divide-border">
@@ -127,11 +131,17 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                             <div>
                               <p className="font-medium">{m.donorName ?? m.label}</p>
                               <p className="text-xs text-muted-foreground">{m.distanceKm.toFixed(1)} km · {Math.round(m.matchingScore)}%{m.respondedAt ? ` · ${timeAgo(m.respondedAt)}` : ""}</p>
+                              {m.facilityVerified && (
+                                <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                  <ShieldCheck className="size-3" aria-hidden />Đã được {m.verifiedByName ?? "cơ sở y tế"} xác nhận hiến máu
+                                </p>
+                              )}
                               {m.donorPhone && <a href={`tel:${m.donorPhone}`} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"><Phone className="size-3" aria-hidden />{m.donorPhone}</a>}
                             </div>
                             <div className="flex items-center gap-2">
                               <MatchBadge status={m.status} />
-                              {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} Đánh dấu đã hiến</Button>}
+                              {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} {isOrg ? "Xác nhận đã hiến (cơ sở y tế)" : "Đánh dấu đã hiến"}</Button>}
+                              {m.status === "COMPLETED" && isOrg && <Button size="sm" variant="ghost" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Xác nhận với tư cách cơ sở y tế</Button>}
                             </div>
                           </li>
                         ))}

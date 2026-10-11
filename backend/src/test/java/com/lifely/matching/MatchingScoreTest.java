@@ -69,8 +69,8 @@ class MatchingScoreTest {
         ScoreBreakdown exact = service.score(donor("O+", 10.7769, 106.7009, null), request("O+", 24), now);
         ScoreBreakdown other = service.score(donor("O-", 10.7769, 106.7009, null), request("O+", 24), now);
         assertFalse(other.exactType());
-        assertEquals(85.0, other.compatibility());
-        assertEquals(6.0, exact.total() - other.total(), 0.01);   // 40% * 15 điểm
+        assertEquals(65.0, other.compatibility());                // O- hiến được 8 nhóm nên bị trừ nhiều nhất
+        assertEquals(14.0, exact.total() - other.total(), 0.01);  // 40% * 35 điểm
     }
 
     @Test

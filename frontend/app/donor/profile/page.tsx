@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -40,15 +40,15 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
   const { refresh } = useAuth();
   const [priv, setPriv] = useState(privacy);
   const [avail, setAvail] = useState(profile.availability === "AVAILABLE");
-  const { register, handleSubmit, setValue, setError, watch, formState: { errors, isSubmitting, isDirty } } = useForm<Values>({
+  const { register, handleSubmit, setValue, setError, control, formState: { errors, isSubmitting, isDirty } } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: profile.fullName, phone: profile.phone, bloodType: profile.bloodType ?? "", city: profile.city ?? "", district: profile.district ?? "",
       latitude: profile.latitude ?? undefined, longitude: profile.longitude ?? undefined, lastDonationDate: profile.lastDonationDate ?? "",
     },
   });
-  const lat = watch("latitude");
-  const lng = watch("longitude");
+  const lat = useWatch({ control, name: "latitude" });
+  const lng = useWatch({ control, name: "longitude" });
 
   async function save(v: Values) {
     try {

@@ -64,11 +64,23 @@ export interface Privacy {
   showDonationCount: boolean;
 }
 
+/** Mức xác nhận một lần hiến máu: càng về sau càng đáng tin (chỉ cơ sở y tế đã xác minh mới đạt mức cuối). */
+export type VerificationLevel = "SELF_REPORTED" | "REQUESTER_CONFIRMED" | "ORG_VERIFIED";
+
 export interface DonationEntry {
   id: string;
   donatedOn: string;
   location: string | null;
   source: "SELF_REPORTED" | "LIFELY_MATCH";
+  verificationLevel: VerificationLevel;
+  confirmedByOrganization: string | null;
+}
+
+export interface DonorVerification {
+  facilityVerified: boolean;
+  facilityVerifiedDonations: number;
+  requesterConfirmedDonations: number;
+  verifiedByName: string | null;
 }
 
 export interface DonorDashboard {
@@ -192,6 +204,8 @@ export interface RequestMatchEntry {
   respondedAt: string | null;
   donorName: string | null;
   donorPhone: string | null;
+  facilityVerified: boolean;
+  verifiedByName: string | null;
 }
 
 export interface RequesterDashboard {

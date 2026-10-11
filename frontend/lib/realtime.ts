@@ -1,6 +1,7 @@
 import { Client, type IMessage, type StompSubscription } from "@stomp/stompjs";
 
-import { API_URL } from "@/lib/api";
+import { API_URL, ensureFreshToken } from "@/lib/api";
+import { tokenStore } from "@/lib/auth-store";
 
 type Handler = (body: unknown) => void;
 export type RealtimeStatus = "offline" | "connecting" | "live";
@@ -32,7 +33,10 @@ class RealtimeManager {
 
   setToken(token: string | null) {
     if (token === this.token) return;
+    const authChanged = (token === null) !== (this.token === null);
     this.token = token;
+    // Chỉ gia hạn token (vẫn đang đăng nhập) thì giữ nguyên kết nối: STOMP đã xác thực ở CONNECT.
+    if (!authChanged) return;
     this.disconnect();
     if (token && this.handlers.size > 0) this.connect();
   }
@@ -65,7 +69,11 @@ class RealtimeManager {
     this.setStatus("connecting");
     const client = new Client({
       brokerURL: API_URL.replace(/^http/, "ws") + "/ws",
-      connectHeaders: { Authorization: `Bearer ${this.token}` },
+      // Mỗi lần (kết nối lại) lấy token mới nhất, gia hạn trước nếu sắp hết hạn.
+      beforeConnect: async (c) => {
+        await ensureFreshToken();
+        c.connectHeaders = { Authorization: `Bearer ${tokenStore.get() ?? ""}` };
+      },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -65,14 +65,14 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { register, control, handleSubmit, setValue, setError, watch, formState: { errors } } = useForm<Values>({
+  const { register, control, handleSubmit, setValue, setError, formState: { errors } } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { bloodType: "", unitsRequired: 1, organizationId: "", hospitalName: "", city: "TP. Hồ Chí Minh", district: "", urgency: "URGENT", deadlineLocal: "", contactPhone: user?.phone ?? "", description: "" },
   });
-  const orgId = watch("organizationId");
-  const lat = watch("latitude");
-  const lng = watch("longitude");
-  const bt = watch("bloodType");
+  const orgId = useWatch({ control, name: "organizationId" });
+  const lat = useWatch({ control, name: "latitude" });
+  const lng = useWatch({ control, name: "longitude" });
+  const bt = useWatch({ control, name: "bloodType" });
 
   function pickHospital(id: string) {
     setValue("organizationId", id);

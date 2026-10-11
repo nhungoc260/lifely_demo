@@ -34,7 +34,7 @@ public class DemoDataRefresher implements ApplicationRunner {
         }
         int scenario = jdbc.update("""
                 UPDATE blood_requests SET deadline = now() + interval '1 hour 42 minutes 18 seconds'
-                WHERE hospital_name = 'LIFELY General Hospital' AND units_required = 5 AND urgency = 'CRITICAL'
+                WHERE hospital_name = 'Bệnh viện Chợ Rẫy' AND units_required = 5 AND urgency = 'CRITICAL'
                   AND status = 'PARTIALLY_FULFILLED'
                 """);
         int others = jdbc.update("""

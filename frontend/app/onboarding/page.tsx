@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -49,7 +49,7 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
   const { refresh, user } = useAuth();
   const [step, setStep] = useState(Math.min(Math.max(startStep, 1), 6) - 1);
   const [busy, setBusy] = useState(false);
-  const { register, control, handleSubmit, trigger, getValues, watch, setValue, formState: { errors } } = useForm<Values>({
+  const { register, control, handleSubmit, trigger, getValues, setValue, formState: { errors } } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: profile.fullName, phone: profile.phone, bloodType: profile.bloodType ?? "",
@@ -104,10 +104,10 @@ function Wizard({ profile, privacy, startStep }: { profile: DonorProfile; privac
     if (ok) { toast.success("Đã lưu tiến độ. Bạn có thể tiếp tục bất cứ lúc nào từ hồ sơ của mình."); router.replace("/donor/dashboard"); }
   }
 
-  const bt = watch("bloodType");
-  const lat = watch("latitude");
-  const lng = watch("longitude");
-  const never = watch("neverDonated");
+  const bt = useWatch({ control, name: "bloodType" });
+  const lat = useWatch({ control, name: "latitude" });
+  const lng = useWatch({ control, name: "longitude" });
+  const never = useWatch({ control, name: "neverDonated" });
   void user;
 
   return (

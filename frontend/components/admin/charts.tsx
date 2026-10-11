@@ -19,7 +19,7 @@ export function RequestsOverTime({ data }: { data: { day: string; total: number;
         <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TIP} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Line type="monotone" dataKey="total" name="Tất cả yêu cầu" stroke="#9f1239" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="total" name="Tất cả yêu cầu" stroke="#64748b" strokeWidth={2} dot={false} />
         <Line type="monotone" dataKey="critical" name="Nguy kịch" stroke="#dc2626" strokeWidth={2} strokeDasharray="5 4" dot={false} />
       </LineChart>
     </ResponsiveContainer>

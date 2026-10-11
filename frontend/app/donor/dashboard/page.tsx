@@ -1,22 +1,21 @@
 "use client";
 
-import { Bell, Droplets, HeartPulse, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Droplets, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { MatchCard } from "@/components/donor/match-card";
-import { ReadinessCard } from "@/components/donor/readiness-card";
+import { DonorStatusBanner } from "@/components/donor/status-banner";
+import { JourneyCard } from "@/components/donor/journey-card";
 import { buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
-import { Switch } from "@/components/ui/switch";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useNow } from "@/hooks/use-now";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { donorStatus } from "@/lib/donor-status";
 import { donorApi } from "@/services";
 import { useNotifications } from "@/providers/notifications-provider";
 import { useAuth } from "@/providers/auth-provider";
@@ -58,49 +57,41 @@ export default function DonorDashboard() {
     } finally { setSaving(false); }
   }
 
+  const today = now ? new Date(now).toISOString().slice(0, 10) : null;
+  const status = dash.data && today
+    ? donorStatus({ profileComplete: dash.data.profileComplete, available: isAvailable, lastDonationDate: profile.data?.lastDonationDate ?? null, todayIso: today })
+    : null;
+
   const open = (matches.data ?? []).filter((m) => (m.status === "CONTACTED" || m.status === "PENDING")
     && new Date(m.deadline).getTime() > now && ACTIVE.includes(m.requestStatus));
 
   return (
     <>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{greet}, {user?.fullName}</h1>
-          <p className={cn("mt-2 inline-flex items-center gap-2 text-sm font-medium", isAvailable ? "text-success" : "text-muted-foreground")}>
-            <span className={cn("size-2 rounded-full", isAvailable ? "bg-success" : "bg-muted-foreground")} aria-hidden />
-            {isAvailable ? "Sẵn sàng hiến máu" : "Chưa sẵn sàng"}
-          </p>
-        </div>
-        <label className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium">
-          Sẵn sàng
-          <Switch checked={isAvailable} disabled={saving || dash.initialLoading} onCheckedChange={toggle} aria-label="Sẵn sàng hiến máu" />
-        </label>
-      </div>
+      <h1 className="mb-5 text-2xl font-semibold tracking-tight md:text-3xl">{greet}, {user?.fullName}</h1>
 
-      {dash.data && !dash.data.profileComplete && (
-        <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 border-warning/40 bg-warning/5 p-5">
-          <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 size-5 text-warning" aria-hidden /><div><p className="font-medium">Hoàn tất hồ sơ để được kết nối</p><p className="text-sm text-muted-foreground">Chúng tôi cần nhóm máu và khu vực của bạn để tìm các yêu cầu ở gần.</p></div></div>
-          <Link href="/donor/profile" className={buttonVariants({ size: "sm" })}>Hoàn tất hồ sơ</Link>
-        </Card>
-      )}
-
-      {dash.error && !dash.data ? <ErrorState message={dash.error.message} onRetry={dash.reload} /> : (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Nhóm máu" value={dash.data?.bloodType ?? "–"} icon={Droplets} accent loading={dash.initialLoading} />
-          <StatCard label="Trạng thái sẵn sàng" value={isAvailable ? "Available" : "Off"} icon={ShieldCheck} loading={dash.initialLoading} />
-          <StatCard label="Yêu cầu ở gần" value={dash.data?.nearbyRequests ?? 0} icon={HeartPulse} loading={dash.initialLoading} />
-          <StatCard label="Lần hiến đã xác nhận" value={dash.data?.confirmedDonations ?? 0} icon={Bell} loading={dash.initialLoading} />
-        </div>
-      )}
-
-      {profile.data && <div className="mt-6"><ReadinessCard lastDonationDate={profile.data.lastDonationDate} totalDonations={profile.data.totalDonations} /></div>}
+      {profile.error && !profile.data
+        ? <ErrorState message={profile.error.message} onRetry={profile.reload} />
+        : <DonorStatusBanner status={profile.initialLoading ? null : status} available={isAvailable} saving={saving || dash.initialLoading} onToggle={toggle} />}
 
       <section className="mt-10" aria-labelledby="needs-you">
-        <div className="mb-4 flex items-end justify-between"><h2 id="needs-you" className="text-xl font-semibold tracking-tight">Những yêu cầu có thể cần bạn</h2><Link href="/donor/requests" className="text-sm font-medium text-primary hover:underline">Xem tất cả</Link></div>
+        <div className="mb-1 flex items-end justify-between"><h2 id="needs-you" className="text-xl font-semibold tracking-tight">Yêu cầu đang chờ bạn trả lời</h2><Link href="/donor/requests" className="text-sm font-medium text-primary hover:underline">Xem tất cả</Link></div>
+        <p className="mb-4 text-sm text-muted-foreground">“Mức phù hợp” cho biết yêu cầu khớp với bạn đến đâu (nhóm máu, khoảng cách, thời gian còn lại). Chỉ dùng để sắp xếp ưu tiên, không phải đánh giá y tế.</p>
+        {open.length > 0 && status && status.kind !== "READY" && <p className="mb-4 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">Các yêu cầu dưới đây đã được gửi cho bạn trước đó.</p>}
         {matches.initialLoading ? <div className="grid gap-5 md:grid-cols-2"><Skeleton className="h-60" /><Skeleton className="h-60" /></div>
           : matches.error && !matches.data ? <ErrorState message={matches.error.message} onRetry={matches.reload} />
-          : open.length === 0 ? <EmptyState title="Chưa có yêu cầu khẩn cấp nào ở gần." description={isAvailable ? "Hiện chưa có yêu cầu nào phù hợp với hồ sơ của bạn. Chúng tôi sẽ báo ngay khi có." : "Hãy bật trạng thái sẵn sàng để LIFELY kết nối bạn với các yêu cầu."} action={!isAvailable ? <button onClick={() => toggle(true)} className={buttonVariants({ size: "sm" })}>Bật sẵn sàng</button> : undefined} />
+          : open.length === 0 ? <EmptyState title="Chưa có yêu cầu nào đang chờ bạn." description={!isAvailable ? "Bạn đang tắt nhận yêu cầu. Hãy bật lại để LIFELY có thể kết nối bạn với các yêu cầu phù hợp." : "LIFELY sẽ thông báo ngay khi có yêu cầu phù hợp với bạn. Bạn không cần làm gì thêm."} action={!isAvailable ? <button onClick={() => toggle(true)} className={buttonVariants({ size: "sm" })}>Bật nhận yêu cầu</button> : undefined} />
           : <div className="grid gap-5 md:grid-cols-2">{open.slice(0, 4).map((m) => <MatchCard key={m.matchId} m={m} />)}</div>}
+      </section>
+
+      <section className="mt-10" aria-label="Tóm tắt của bạn">
+        {dash.error && !dash.data ? <ErrorState message={dash.error.message} onRetry={dash.reload} /> : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard label="Nhóm máu của bạn" value={dash.data?.bloodType ?? "–"} icon={Droplets} accent loading={dash.initialLoading} />
+            <StatCard label="Yêu cầu ở gần bạn" value={dash.data?.nearbyRequests ?? 0} icon={HeartPulse} loading={dash.initialLoading} hint="Đang mở trong khu vực của bạn" />
+            <StatCard label="Lần hiến đã ghi nhận" value={dash.data?.confirmedDonations ?? 0} icon={CheckCircle2} loading={dash.initialLoading} />
+          </div>
+        )}
+        {profile.data && <div className="mt-4"><JourneyCard totalDonations={profile.data.totalDonations} /></div>}
       </section>
     </>
   );

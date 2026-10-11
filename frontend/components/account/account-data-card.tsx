@@ -9,8 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
-import { API_URL, toApiError } from "@/lib/api";
-import { tokenStore } from "@/lib/auth-store";
+import { toApiError, authFetch } from "@/lib/api";
 import { accountApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -26,7 +25,7 @@ export function AccountDataCard() {
   async function download() {
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/api/users/me/export`, { headers: { Authorization: `Bearer ${tokenStore.get()}` } });
+      const res = await authFetch(`/api/users/me/export`);
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message ?? "failed");
       const blob = new Blob([JSON.stringify(json.data, null, 2)], { type: "application/json" });

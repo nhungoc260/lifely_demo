@@ -48,7 +48,7 @@ public class SecurityConfig {
                                             ObjectMapper mapper,
                                             @Value("${lifely.rate-limit.per-minute:30}") int rateLimitPerMinute) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)   // API stateless dùng Bearer token, không dùng cookie session
+                .csrf(AbstractHttpConfigurer::disable)   // API dùng Bearer token; cookie refresh chỉ dùng cho /api/auth/refresh|logout và được bảo vệ bằng SameSite + header X-Lifely-Client
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -64,7 +64,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health", "/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login",
-                                "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
+                                "/api/auth/forgot-password", "/api/auth/reset-password",
+                                "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()   // handshake; kênh STOMP được xác thực bằng JWT ở CONNECT
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -84,7 +85,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(props.allowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Lifely-Client"));
+        config.setAllowCredentials(true);   // cần để trình duyệt gửi/nhận cookie refresh; origin phải liệt kê cụ thể, không dùng *
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

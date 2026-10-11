@@ -51,6 +51,11 @@ public class DonorController {
         return ApiResponse.ok("Đã lưu cài đặt riêng tư", service.updatePrivacy(user.getId(), dto));
     }
 
+    @GetMapping("/verification")
+    public ApiResponse<DonorVerificationService.Summary> verification(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.ok("OK", service.verification(user.getId()));
+    }
+
     @GetMapping("/history")
     public ApiResponse<List<DonationEntry>> history(@AuthenticationPrincipal AuthUser user) {
         return ApiResponse.ok("OK", service.history(user.getId()));

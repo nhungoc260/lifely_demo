@@ -28,7 +28,7 @@ const DOCS: Record<string, Doc> = {
     sections: [
       { h: "Xác minh", p: "Tổ chức tải giấy tờ lên để đội ngũ của chúng tôi xem xét. Yêu cầu được xác minh trước khi liên hệ người hiến máu." },
       { h: "Quyền riêng tư của người hiến máu", p: "Chúng tôi chỉ hiển thị khu vực gần đúng, không bao giờ hiển thị vị trí chính xác, và không bao giờ công khai số điện thoại của người hiến máu." },
-      { h: "Báo cáo vấn đề", p: "Dùng nút Báo cáo trên mỗi yêu cầu để báo thông tin giả, spam hoặc sai sự thật. Admin xem xét mọi báo cáo." },
+      { h: "Báo cáo vấn đề", p: "Dùng nút Báo cáo trên mỗi yêu cầu để báo thông tin giả, spam hoặc sai sự thật. Quản trị viên xem xét mọi báo cáo." },
       { h: "Trong trường hợp khẩn cấp", p: "Hãy liên hệ trực tiếp bệnh viện hoặc dịch vụ cấp cứu. LIFELY là công cụ hỗ trợ điều phối, không phải dịch vụ cấp cứu." },
     ],
   },

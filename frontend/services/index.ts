@@ -3,7 +3,7 @@ import type {
   AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, HistoryEntry, MatchStatus, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
-  RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
+  DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
 } from "@/types/domain";
 
 // ---- auth
@@ -38,6 +38,7 @@ export const donorApi = {
   privacy: () => get<Privacy>("/api/donors/me/privacy"),
   updatePrivacy: (b: Privacy) => put<Privacy>("/api/donors/me/privacy", b),
   history: () => get<DonationEntry[]>("/api/donors/me/history"),
+  verification: () => get<DonorVerification>("/api/donors/me/verification"),
   addDonation: (b: { donatedOn: string; location?: string }) => post<DonationEntry>("/api/donors/me/history", b),
   dashboard: () => get<DonorDashboard>("/api/donors/me/dashboard"),
   matches: (status?: MatchStatus) => get<DonorMatch[]>(`/api/donors/me/matches${qs({ status })}`),

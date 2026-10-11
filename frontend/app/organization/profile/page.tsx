@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -16,8 +16,7 @@ import { Field, Input, Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
-import { API_URL, toApiError } from "@/lib/api";
-import { tokenStore } from "@/lib/auth-store";
+import { toApiError, authFetch } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDate } from "@/lib/format";
 import { orgApi } from "@/services";
@@ -44,12 +43,12 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
   const [docType, setDocType] = useState("OPERATING_LICENSE");
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { register, handleSubmit, setValue, setError, watch, formState: { errors, isSubmitting } } = useForm<Values>({
+  const { register, handleSubmit, setValue, setError, control, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { name: org?.name ?? "", type: org?.type ?? "HOSPITAL", address: org?.address ?? "", city: org?.city ?? "TP. Hồ Chí Minh", district: org?.district ?? "", latitude: org?.latitude ?? undefined, longitude: org?.longitude ?? undefined, phone: org?.phone ?? "", email: org?.email ?? "", contactPerson: org?.contactPerson ?? "" },
   });
-  const lat = watch("latitude");
-  const lng = watch("longitude");
+  const lat = useWatch({ control, name: "latitude" });
+  const lng = useWatch({ control, name: "longitude" });
 
   async function save(v: Values) {
     try { await orgApi.save({ ...v, district: v.district || null }); toast.success("Đã lưu hồ sơ tổ chức"); reload(); }
@@ -70,7 +69,7 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
 
   async function download(id: string, name: string) {
     try {
-      const res = await fetch(`${API_URL}/api/organizations/documents/${id}/download`, { headers: { Authorization: `Bearer ${tokenStore.get()}` } });
+      const res = await authFetch(`/api/organizations/documents/${id}/download`);
       if (!res.ok) throw new Error();
       const url = URL.createObjectURL(await res.blob());
       const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);

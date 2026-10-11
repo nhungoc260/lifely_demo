@@ -14,8 +14,7 @@ import { Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
-import { API_URL, toApiError } from "@/lib/api";
-import { tokenStore } from "@/lib/auth-store";
+import { toApiError, authFetch } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { ORG_TYPE_LABEL } from "@/lib/labels";
 import { adminApi } from "@/services";
@@ -37,7 +36,7 @@ export default function AdminOrganizations() {
 
   async function download(id: string, name: string) {
     try {
-      const r = await fetch(`${API_URL}/api/organizations/documents/${id}/download`, { headers: { Authorization: `Bearer ${tokenStore.get()}` } });
+      const r = await authFetch(`/api/organizations/documents/${id}/download`);
       if (!r.ok) throw new Error();
       const url = URL.createObjectURL(await r.blob());
       const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);

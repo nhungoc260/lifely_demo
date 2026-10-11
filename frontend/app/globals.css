@@ -80,3 +80,13 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Nhận diện theo vai trò: đổi tông phụ + vạch màu trên cùng, giữ nguyên màu chủ đạo (CTA đỏ đậm). */
+[data-role="DONOR"] { --role-line: #be123c; }
+[data-role="REQUESTER"] { --secondary: #fdeee3; --secondary-foreground: #7c2d12; --role-line: #c2410c; }
+[data-role="ORGANIZATION"] { --secondary: #e3edf8; --secondary-foreground: #1e3a5f; --role-line: #1d4ed8; }
+[data-role="ADMIN"] { --secondary: #e6e8ec; --secondary-foreground: #111827; --role-line: #475569; }
+.dark [data-role="DONOR"] { --role-line: #fb7185; }
+.dark [data-role="REQUESTER"] { --secondary: #3a2418; --secondary-foreground: #fed7aa; --role-line: #fb923c; }
+.dark [data-role="ORGANIZATION"] { --secondary: #172a44; --secondary-foreground: #bfdbfe; --role-line: #60a5fa; }
+.dark [data-role="ADMIN"] { --secondary: #2a2f38; --secondary-foreground: #e5e7eb; --role-line: #94a3b8; }

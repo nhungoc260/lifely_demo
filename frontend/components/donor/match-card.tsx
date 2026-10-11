@@ -11,7 +11,7 @@ import type { DonorMatch } from "@/types/domain";
 export function MatchScore({ value, className }: { value: number; className?: string }) {
   return (
     <div className={cn("text-right", className)}>
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Phù hợp</p>
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground" title="Mức khớp giữa yêu cầu và hồ sơ của bạn. Chỉ dùng để sắp xếp ưu tiên, không phải đánh giá y tế.">Mức phù hợp</p>
       <p className="text-2xl font-semibold tabular-nums leading-none text-primary">{Math.round(value)}%</p>
     </div>
   );

@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -44,6 +45,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuditService auditService;
     private final MailService mailService;
+    private final RefreshTokenService refreshTokens;
     private final boolean logResetLink;
     private final String frontendUrl;
     private final SecureRandom random = new SecureRandom();
@@ -52,6 +54,7 @@ public class AuthService {
                        PrivacySettingsRepository privacyRepository, DonorProfileRepository donorProfileRepository,
                        PasswordResetTokenRepository resetTokenRepository, PasswordEncoder passwordEncoder,
                        JwtService jwtService, AuditService auditService, MailService mailService,
+                       RefreshTokenService refreshTokens,
                        @Value("${lifely.auth.log-reset-link:false}") boolean logResetLink,
                        @Value("${lifely.frontend-url:http://localhost:3000}") String frontendUrl) {
         this.userRepository = userRepository;
@@ -63,6 +66,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.auditService = auditService;
         this.mailService = mailService;
+        this.refreshTokens = refreshTokens;
         this.logResetLink = logResetLink;
         this.frontendUrl = frontendUrl;
         this.dummyHash = passwordEncoder.encode("not-a-real-password");
@@ -176,7 +180,40 @@ public class AuthService {
         token.setUsedAt(Instant.now());
         userRepository.save(user);
         resetTokenRepository.save(token);
+        refreshTokens.revokeAll(user.getId());   // đổi mật khẩu thì mọi thiết bị phải đăng nhập lại
         auditService.log(user.getId(), AuditAction.PASSWORD_RESET, "USER", user.getId());
+    }
+
+    /** Kết quả gia hạn phiên: access token mới cùng refresh token mới (để controller ghi vào cookie). */
+    public record RefreshedSession(AuthResponse auth, String refreshToken) {
+    }
+
+    /** Cấp refresh token cho phiên đăng nhập vừa tạo (login/register). */
+    public String startSession(UUID userId) {
+        return refreshTokens.issue(userId);
+    }
+
+    public Duration refreshTtl() {
+        return refreshTokens.getTtl();
+    }
+
+    /** Đổi refresh token lấy access token mới. Tài khoản bị khóa thì thu hồi toàn bộ phiên. */
+    @Transactional(noRollbackFor = AppException.class)
+    public RefreshedSession refresh(String rawRefreshToken) {
+        RefreshTokenService.Rotation rotation = refreshTokens.rotate(rawRefreshToken);
+        User user = userRepository.findById(rotation.userId())
+                .orElseThrow(() -> AppException.unauthorized("INVALID_REFRESH_TOKEN",
+                        "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"));
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            refreshTokens.revokeAll(user.getId());
+            throw AppException.unauthorized("INVALID_REFRESH_TOKEN",
+                    "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        }
+        return new RefreshedSession(buildAuthResponse(user), rotation.rawToken());
+    }
+
+    public void logout(String rawRefreshToken) {
+        refreshTokens.revoke(rawRefreshToken);
     }
 
     private AuthResponse buildAuthResponse(User user) {

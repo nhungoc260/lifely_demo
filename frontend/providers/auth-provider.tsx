@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { useQuery } from "@/hooks/use-query";
-import { get } from "@/lib/api";
+import { get, logoutRequest, refreshSession } from "@/lib/api";
 import { tokenStore } from "@/lib/auth-store";
 import { realtime } from "@/lib/realtime";
 import type { AuthResponse, Role, UserSummary } from "@/types/domain";
@@ -37,7 +37,16 @@ export function homeFor(role: Role | null): string {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const token = useSyncExternalStore(tokenStore.subscribe, tokenStore.get, () => null);
-  const me = useQuery<UserSummary>(token ? `me:${token.slice(-12)}` : null, () => get<UserSummary>("/api/users/me"));
+  // Khóa theo "phiên" (đổi khi đăng nhập/đăng xuất) chứ không theo token, để gia hạn token không làm tải lại hồ sơ.
+  const session = useSyncExternalStore(tokenStore.subscribe, tokenStore.getSession, () => 0);
+  const restoring = useSyncExternalStore(tokenStore.subscribe, tokenStore.isRestoring, () => false);
+  const me = useQuery<UserSummary>(token ? `me:${session}` : null, () => get<UserSummary>("/api/users/me"));
+
+  // Tải lại trang: access token (chỉ nằm trong bộ nhớ) đã mất, khôi phục từ refresh token trong cookie httpOnly.
+  useEffect(() => {
+    if (!tokenStore.isRestoring()) return;
+    void refreshSession().finally(() => tokenStore.finishRestore());
+  }, []);
 
   useEffect(() => {
     realtime.setToken(token);
@@ -49,13 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [me.error]);
 
   const signIn = useCallback((res: AuthResponse) => tokenStore.set(res.token), []);
-  const signOut = useCallback(() => tokenStore.set(null), []);
+  const signOut = useCallback(() => {
+    void logoutRequest(); // thu hồi refresh token ở server (không chặn giao diện)
+    tokenStore.set(null);
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => {
     const user = token ? (me.data ?? null) : null;
-    const status: Status = !hydrated ? "loading" : !token ? "anonymous" : user ? "authenticated" : me.error ? "anonymous" : "loading";
+    const status: Status = !hydrated || restoring ? "loading" : !token ? "anonymous" : user ? "authenticated" : me.error ? "anonymous" : "loading";
     return { status, user, token, role: user?.roles[0] ?? null, signIn, signOut, refresh: me.reload };
-  }, [hydrated, token, me.data, me.error, me.reload, signIn, signOut]);
+  }, [hydrated, restoring, token, me.data, me.error, me.reload, signIn, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

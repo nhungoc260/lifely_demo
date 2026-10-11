@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration test: cần PostgreSQL local đã chạy migration V1-V5 (dữ liệu demo) và biến môi trường DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET.
+ * Integration test: cần PostgreSQL local đã chạy migration V1-V8 (dữ liệu demo) và biến môi trường DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET.
  * Chạy:  mvn test -Dtest=ApiSecurityIT
  */
 @SpringBootTest

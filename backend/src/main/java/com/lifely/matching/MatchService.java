@@ -6,6 +6,8 @@ import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
 import com.lifely.donor.DonationHistory;
 import com.lifely.donor.DonationHistoryRepository;
+import com.lifely.donor.DonorVerificationService;
+import com.lifely.donor.VerificationLevel;
 import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
 import com.lifely.matching.dto.DonorMatchResponse;
@@ -42,12 +44,14 @@ public class MatchService {
     private final UserRepository userRepository;
     private final AuditService audit;
     private final EntityManager entityManager;
+    private final DonorVerificationService verification;
 
     public MatchService(MatchRepository matchRepository, MatchEventRepository eventRepository,
                         DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
                         BloodRequestRepository requestRepository, RequestLifecycle lifecycle, RequestAccess access,
                         MatchingService matchingService, NotificationService notifications,
-                        UserRepository userRepository, AuditService audit, EntityManager entityManager) {
+                        UserRepository userRepository, AuditService audit, EntityManager entityManager,
+                        DonorVerificationService verification) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.donorRepository = donorRepository;
@@ -60,6 +64,7 @@ public class MatchService {
         this.userRepository = userRepository;
         this.audit = audit;
         this.entityManager = entityManager;
+        this.verification = verification;
     }
 
     /**
@@ -140,6 +145,12 @@ public class MatchService {
             throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
         }
         entityManager.refresh(first);
+        DonorVerificationService.Confirmation confirmation = verification.confirmation(user.getId(), r);
+        if (first.getStatus() == MatchStatus.COMPLETED && confirmation.level() == VerificationLevel.ORG_VERIFIED) {
+            // Người nhà đã ghi nhận trước: cơ sở y tế của yêu cầu được nâng mức xác nhận, không cộng thêm lần hiến.
+            upgradeToFacilityVerified(first, r, user, confirmation);
+            return requesterEntry(first, 0);
+        }
         if (first.getStatus() != MatchStatus.ACCEPTED) {
             throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ người hiến máu đã nhận lời mới được đánh dấu là đã hiến");
         }
@@ -157,12 +168,42 @@ public class MatchService {
         h.setLocation(r.getHospitalName());
         h.setSource("LIFELY_MATCH");
         h.setMatchId(first.getId());
+        applyConfirmation(h, user.getId(), confirmation);
         historyRepository.save(h);
 
+        String by = confirmation.level() == VerificationLevel.ORG_VERIFIED
+                ? " và được " + confirmation.organizationName() + " xác nhận" : "";
         notifications.notify(donor.getUserId(), NotificationType.SYSTEM, "Cảm ơn bạn đã hiến máu",
-                "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được ghi nhận.", "MATCH", first.getId());
-        audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId());
+                "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được ghi nhận" + by + ".", "MATCH", first.getId());
+        audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId(),
+                Map.of("verificationLevel", confirmation.level().name()));
         return requesterEntry(first, 0);
+    }
+
+    /** Ghi ai xác nhận và ở mức nào lên bản ghi lịch sử hiến máu. */
+    private static void applyConfirmation(DonationHistory h, UUID confirmerUserId,
+                                          DonorVerificationService.Confirmation confirmation) {
+        h.setVerificationLevel(confirmation.level().name());
+        h.setConfirmedByUserId(confirmerUserId);
+        h.setConfirmedAt(Instant.now());
+        h.setConfirmedByOrgId(confirmation.organizationId());
+        h.setConfirmedByOrgName(confirmation.organizationName());
+    }
+
+    private void upgradeToFacilityVerified(Match match, BloodRequest r, AuthUser user,
+                                           DonorVerificationService.Confirmation confirmation) {
+        historyRepository.findFirstByMatchId(match.getId()).ifPresent(h -> {
+            if (VerificationLevel.parse(h.getVerificationLevel()) == VerificationLevel.ORG_VERIFIED) {
+                return;   // đã được cơ sở y tế xác nhận trước đó: không làm gì (idempotent)
+            }
+            applyConfirmation(h, user.getId(), confirmation);
+            historyRepository.save(h);
+            notifications.notify(donorOf(match).getUserId(), NotificationType.SYSTEM, "Lần hiến máu đã được xác nhận",
+                    "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được " + confirmation.organizationName()
+                            + " xác nhận.", "MATCH", match.getId());
+            audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", match.getId(),
+                    Map.of("verificationLevel", VerificationLevel.ORG_VERIFIED.name(), "upgraded", true));
+        });
     }
 
     @Transactional(readOnly = true)
@@ -242,7 +283,9 @@ public class MatchService {
                 phone = u.getPhone();
             }
         }
+        DonorVerificationService.Badge badge = verification.badge(m.getDonorId());
         return new RequestMatchEntry(m.getId(), rank > 0 ? "Người hiến #" + rank : "Người hiến", m.getDistanceKm().doubleValue(),
-                m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone);
+                m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone,
+                badge.facilityVerified(), badge.verifiedByName());
     }
 }

@@ -43,7 +43,7 @@ export default function AdminUsers() {
       <PageHeader title="Người dùng" description="Tìm kiếm, lọc và quản lý tài khoản." />
       <form onSubmit={(e) => { e.preventDefault(); setSearch(q); setPage(0); }} className="mb-5 grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]" role="search">
         <Input aria-label="Tìm người dùng" placeholder="Tìm theo tên hoặc email" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Select aria-label="Vai trò" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}><option value="">Tất cả vai trò</option><option value="DONOR">Người hiến máu</option><option value="REQUESTER">Người cần máu</option><option value="ORGANIZATION">Tổ chức</option><option value="ADMIN">Admin</option></Select>
+        <Select aria-label="Vai trò" value={role} onChange={(e) => { setRole(e.target.value); setPage(0); }}><option value="">Tất cả vai trò</option><option value="DONOR">Người hiến máu</option><option value="REQUESTER">Người cần máu</option><option value="ORGANIZATION">Tổ chức</option><option value="ADMIN">Quản trị viên</option></Select>
         <Select aria-label="Trạng thái" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}><option value="">Tất cả trạng thái</option><option value="ACTIVE">Hoạt động</option><option value="SUSPENDED">Tạm khóa</option></Select>
         <Select aria-label="Sắp xếp" value={sort} onChange={(e) => { setSort(e.target.value); setPage(0); }}><option value="createdAt:desc">Mới nhất trước</option><option value="createdAt:asc">Cũ nhất trước</option><option value="fullName:asc">Tên A–Z</option><option value="email:asc">Email A–Z</option></Select>
         <Button type="submit" variant="outline"><Search /> Tìm kiếm</Button>
