@@ -8,7 +8,7 @@
 | 3 | `curl localhost:8080/api/health` | `database.status = UP`, `migrationVersion = 6` |
 | 4 | `cd frontend && npm install && npm run dev` | http://localhost:3000 hiện landing, "LIFELY NETWORK ACTIVE", số liệu thật |
 | 5 | `mvn test` | các unit test đạt |
-| 6 | `mvn test -Dtest=ApiSecurityIT` và `-Dtest=ConcurrentNhận lờiIT` | đạt |
+| 6 | `mvn test -Dtest=ApiSecurityIT` và `-Dtest=ConcurrentAcceptIT` | đạt |
 | 7 | Import Postman collection, chạy theo thứ tự | các test đạt |
 
 ## B. Luồng nghiệp vụ trên giao diện

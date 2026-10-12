@@ -28,7 +28,7 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-border">
-        <p className="mx-auto max-w-6xl px-5 py-5 text-xs text-muted-foreground">© 2027 LIFELY. Quyết định cuối cùng về điều kiện hiến máu và truyền máu thuộc về nhân viên y tế có chuyên môn.</p>
+        <p className="mx-auto max-w-6xl px-5 py-5 text-xs text-muted-foreground">© 2026 LIFELY. Quyết định cuối cùng về điều kiện hiến máu và truyền máu thuộc về nhân viên y tế có chuyên môn.</p>
       </div>
     </footer>
   );

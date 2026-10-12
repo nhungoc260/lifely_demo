@@ -56,15 +56,33 @@ const pickIcon = L.divIcon({
 
 const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-// Chuỗi nguồn bản đồ, thử lần lượt từ trên xuống. Tất cả đều KHÔNG cần API key.
+interface TileSource {
+  url: string;
+  attribution: string;
+  subdomains?: string;
+  /** Ô 512px (MapTiler) cần tileSize 512 + zoomOffset -1 để chữ và nét vẽ sắc nét trên màn hình retina. */
+  hiDpi?: boolean;
+}
+
+// Khoá MapTiler miễn phí (cloud.maptiler.com, không cần thẻ). Có khoá thì bản đồ sắc nét, nhiều địa danh như Google Maps.
+const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+
+// Chuỗi nguồn bản đồ, thử lần lượt từ trên xuống. Chỉ MapTiler cần khoá (tuỳ chọn); các nguồn còn lại không cần.
 // (CARTO đã bỏ vì hiện yêu cầu API key: sẽ vẽ chữ "API KEY REQUIRED" lên bản đồ.)
-const TILE_SOURCES = [
+const TILE_SOURCES: TileSource[] = [
+  ...(MAPTILER_KEY
+    ? [{
+        url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
+        attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' + OSM_ATTR,
+        hiDpi: true,
+      }]
+    : []),
   { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: OSM_ATTR, subdomains: "abc" },
+  { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", attribution: "Tiles &copy; Esri" },
   { url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", attribution: OSM_ATTR + ' &copy; <a href="https://www.hotosm.org/">HOT</a>', subdomains: "abc" },
-  { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", attribution: "Tiles &copy; Esri", subdomains: "abc" },
 ];
 
-/** Lớp nền bản đồ: dùng OpenStreetMap, tự chuyển sang nguồn kế tiếp nếu nhiều ô bản đồ liên tiếp tải lỗi. */
+/** Lớp nền bản đồ: tự chuyển sang nguồn kế tiếp nếu nhiều ô bản đồ liên tiếp tải lỗi. */
 function BaseTiles() {
   const [idx, setIdx] = useState(0);
   const errors = useRef(0);
@@ -75,7 +93,9 @@ function BaseTiles() {
       url={t.url}
       attribution={t.attribution}
       maxZoom={19}
-      subdomains={t.subdomains}
+      subdomains={t.subdomains ?? "abc"}
+      tileSize={t.hiDpi ? 512 : 256}
+      zoomOffset={t.hiDpi ? -1 : 0}
       eventHandlers={{
         tileerror: () => {
           errors.current += 1;
