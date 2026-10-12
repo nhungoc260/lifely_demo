@@ -5,6 +5,13 @@ import type { ApiResponse } from "@/types/api";
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
 
+/**
+ * Khi NEXT_PUBLIC_USE_PROXY=true, trình duyệt gọi cùng domain (/api/...) và Next.js chuyển tiếp sang backend
+ * (xem next.config.ts). Nhờ vậy cookie refresh là cookie "bên thứ nhất", chạy được cả trên Safari/iPhone.
+ * WebSocket vẫn kết nối thẳng tới API_URL (xác thực bằng JWT, không cần cookie).
+ */
+const HTTP_BASE = process.env.NEXT_PUBLIC_USE_PROXY === "true" ? "" : API_URL;
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -36,7 +43,7 @@ function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
 
 async function doRefresh(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+    const res = await fetch(`${HTTP_BASE}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: CLIENT_HEADER,
@@ -80,7 +87,7 @@ export async function ensureFreshToken(): Promise<void> {
 /** Thu hồi refresh token ở server và xóa cookie. Không bao giờ ném lỗi: đăng xuất phía client luôn thành công. */
 export async function logoutRequest(): Promise<void> {
   try {
-    await fetch(`${API_URL}/api/auth/logout`, {
+    await fetch(`${HTTP_BASE}/api/auth/logout`, {
       method: "POST",
       credentials: "include",
       headers: CLIENT_HEADER,
@@ -96,7 +103,7 @@ export async function authFetch(path: string, init: RequestInit = {}): Promise<R
   await ensureFreshToken();
   const send = () => {
     const t = tokenStore.get();
-    return fetch(`${API_URL}${path}`, {
+    return fetch(`${HTTP_BASE}${path}`, {
       ...init,
       credentials: "include",
       headers: { ...(init.headers as Record<string, string> | undefined), ...(t ? { Authorization: `Bearer ${t}` } : {}) },
@@ -121,7 +128,7 @@ export async function apiFetch<T>(path: string, options: Options = {}, retried =
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(`${HTTP_BASE}${path}`, {
       ...rest,
       credentials: "include", // gửi/nhận cookie refresh token
       headers: {

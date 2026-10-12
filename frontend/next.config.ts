@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Chuyển tiếp /api/* sang backend khi đặt BACKEND_URL (dùng cho deploy Vercel + Render).
+  async rewrites() {
+    const backend = process.env.BACKEND_URL?.replace(/\/$/, "");
+    return backend ? [{ source: "/api/:path*", destination: `${backend}/api/:path*` }] : [];
+  },
   async headers() {
     return [
       {
