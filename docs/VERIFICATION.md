@@ -55,7 +55,7 @@ Cách chạy: xem `docs/TEST_CHECKLIST.md`. Nếu có lỗi khi khởi động, 
 - `mvn test`, đặc biệt `RefreshTokenIT`, `ApiSecurityIT`, `ConcurrentAcceptIT`: viết và biên dịch được nhưng chưa thực thi.
 - Khởi động Spring Boot thật: wiring bean, Flyway trong ứng dụng, security filter chain với cookie/CORS credentials.
 - Luồng trình duyệt thật: cookie `lifely_refresh` được trình duyệt lưu/gửi giữa `localhost:3000` và `localhost:8080`, tải lại trang vẫn đăng nhập, gia hạn tự động sau 15 phút.
-- Gửi email Gmail thật cho donor khi có yêu cầu (cần `MAIL_ENABLED=true` + App Password).
+- Gửi email Gmail thật cho donor khi có yêu cầu (cần `MAIL_ENABLED=true` + BREVO_API_KEY).
 - Chưa có test end-to-end trên trình duyệt (Playwright/Cypress).
 
 ## 9. Cập nhật quy tắc matching (dành nhóm máu đa năng + thời gian di chuyển theo giờ)

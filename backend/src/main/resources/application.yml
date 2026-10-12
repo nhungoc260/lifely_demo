@@ -53,7 +53,14 @@ lifely:
     refresh-deadlines-on-startup: ${DEMO_REFRESH_DEADLINES:true}
   mail:
     enabled: ${MAIL_ENABLED:false}
+    # Cách 1 (Brevo API, HTTPS): điền BREVO_API_KEY + MAIL_FROM (email đã xác minh làm Sender trong Brevo).
+    # Cách 2 (Gmail SMTP): để trống BREVO_API_KEY, điền MAIL_USERNAME + MAIL_PASSWORD (App Password). Không dùng được trên Render gói miễn phí.
+    # Cách 0 (khuyên dùng khi deploy, không cần số điện thoại/tên miền): Gmail qua Google Apps Script, xem tools/apps-script-mail.gs
+    apps-script-url: ${MAIL_APPS_SCRIPT_URL:}
+    apps-script-secret: ${MAIL_APPS_SCRIPT_SECRET:}
+    brevo-api-key: ${BREVO_API_KEY:}
     from: ${MAIL_FROM:${MAIL_USERNAME:}}
+    from-name: ${MAIL_FROM_NAME:LIFELY}
     admin-recipient: ${ADMIN_NOTIFY_EMAIL:}
     weekly-report-cron: "0 0 8 * * MON"
   auth:

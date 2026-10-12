@@ -63,7 +63,7 @@ public class ContactController {
     public ApiResponse<Void> emailSummary() {
         if (!mail.isEnabled() || !mail.hasAdminRecipient()) {
             throw AppException.conflict("MAIL_DISABLED",
-                    "Chưa cấu hình email. Hãy đặt MAIL_ENABLED, MAIL_USERNAME, MAIL_PASSWORD và ADMIN_NOTIFY_EMAIL.");
+                    "Chưa cấu hình email. Hãy đặt MAIL_ENABLED, BREVO_API_KEY, MAIL_FROM và ADMIN_NOTIFY_EMAIL.");
         }
         summaryReport.sendNow();
         return ApiResponse.ok("Báo cáo tổng hợp đang được gửi tới hộp thư admin", null);

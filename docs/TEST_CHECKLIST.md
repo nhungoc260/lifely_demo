@@ -35,7 +35,7 @@
 |---|---|---|
 | 1 | Vào `/info/contact`, gửi tin nhắn (đăng nhập hoặc không) | thông báo "Đã gửi tin nhắn" |
 | 2 | Admin → Tin nhắn | thấy tin ở trạng thái New, dashboard hiện "1 new message(s)" |
-| 3 | Bật `MAIL_ENABLED=true` + App Password, gửi tin mới | Gmail admin nhận email "[LIFELY] Tin nhan lien he moi..." |
+| 3 | Bật `MAIL_ENABLED=true` + BREVO_API_KEY, gửi tin mới | Gmail admin nhận email "[LIFELY] Tin nhan lien he moi..." |
 | 4 | Admin dashboard → "Gửi báo cáo này qua email" | Gmail nhận báo cáo tổng hợp; nếu chưa cấu hình email thì báo lỗi `MAIL_DISABLED` rõ ràng |
 | 5 | Gửi 6+ tin liên tiếp trong 1 phút | bị giới hạn tần suất (429) |
 
