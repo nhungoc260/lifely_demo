@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/logo";
-import { SUPPORT } from "@/lib/support";
+import { SYSTEM_SUPPORT } from "@/lib/support";
 
 const COLS = [
   { title: "Nền tảng", links: [["Cách hoạt động", "/#how-it-works"], ["Yêu cầu khẩn cấp", "/#requests"], ["Dành cho người hiến máu", "/#donors"], ["Dành cho tổ chức", "/#organizations"]] },
@@ -16,7 +16,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 text-sm text-muted-foreground">Kết nối. Hiến máu. Cứu một sinh mạng.</p>
-          <p className="mt-4 text-sm">Cần hỗ trợ? Gọi <a className="font-medium text-primary hover:underline" href={SUPPORT.telHref}>{SUPPORT.name} · {SUPPORT.phoneDisplay}</a></p>
+          <p className="mt-4 text-sm">Cần hỗ trợ? Gọi <a className="font-medium text-primary hover:underline" href={SYSTEM_SUPPORT.telHref}>{SYSTEM_SUPPORT.name} · {SYSTEM_SUPPORT.phoneDisplay}</a></p>
         </div>
         {COLS.map((c) => (
           <nav key={c.title} aria-label={c.title}>

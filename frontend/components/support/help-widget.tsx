@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronDown, LifeBuoy, PhoneCall, Search, X } from "lucide-react";
+import { ChevronDown, LifeBuoy, Mail, PhoneCall, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { useState } from "react";
 import { FAQS, searchFaq } from "@/components/support/faq-data";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SUPPORT } from "@/lib/support";
+import { STAFF, SUPPORT } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
 const APP_PREFIXES = ["/donor", "/requester", "/organization", "/admin", "/onboarding"];
@@ -38,7 +38,7 @@ export function HelpWidget() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 sm:bg-transparent" />
-        <Dialog.Content className="fixed inset-x-3 bottom-3 z-50 flex max-h-[85dvh] flex-col rounded-2xl border border-border bg-card shadow-2xl focus:outline-none sm:inset-x-auto sm:bottom-6 sm:right-4 sm:w-[24rem]">
+        <Dialog.Content className="fixed inset-x-3 bottom-3 z-50 flex max-h-[85dvh] flex-col rounded-2xl border border-border bg-card shadow-2xl focus:outline-none sm:inset-x-auto sm:bottom-6 sm:right-4 sm:w-[28rem]">
           <div className="flex items-start justify-between gap-3 border-b border-border p-5">
             <div>
               <Dialog.Title className="text-lg font-semibold tracking-tight">Chúng tôi có thể giúp gì cho bạn?</Dialog.Title>
@@ -50,8 +50,17 @@ export function HelpWidget() {
           <div className="overflow-y-auto p-5">
             <div className="rounded-2xl bg-secondary p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-secondary-foreground/70">Liên hệ nhân viên</p>
-              <p className="mt-1 font-semibold">{SUPPORT.name}</p>
-              <a href={SUPPORT.telHref} className={cn(buttonVariants({ size: "lg" }), "mt-3 w-full")}><PhoneCall /> Gọi {SUPPORT.phoneDisplay}</a>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {STAFF.map((s) => (
+                  <div key={s.phone} className="flex min-w-0 flex-col rounded-xl bg-card p-3">
+                    <p className="font-semibold leading-tight">{s.name}</p>
+                    <a href={s.telHref} className={cn(buttonVariants({ size: "sm" }), "mt-3 w-full px-2")}><PhoneCall /> {s.phoneDisplay}</a>
+                    {s.mailHref && (
+                      <a href={s.mailHref} className="mt-2 flex items-start gap-1.5 break-all text-xs text-muted-foreground hover:text-foreground hover:underline"><Mail className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {s.email}</a>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             <Link href="/info/contact#message" onClick={() => setOpen(false)} className="mt-3 block rounded-xl border border-border px-4 py-3 text-center text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Hoặc gửi tin nhắn cho chúng tôi</Link>
             <p className="mt-3 rounded-xl border border-critical/30 bg-critical/5 p-3 text-xs leading-relaxed">
