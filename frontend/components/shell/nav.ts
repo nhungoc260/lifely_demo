@@ -1,5 +1,5 @@
 import {
-  Bell, ClipboardList, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
+  BarChart3, Bell, ClipboardList, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
   Building2, HandHelping, MessageSquare, ShieldCheck, UserRound, Users, type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +45,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/organization/dashboard", label: "Tổng quan", icon: LayoutDashboard, mobile: true },
     { href: "/organization/requests", label: "Yêu cầu", icon: ClipboardList, mobile: true },
     { href: "/organization/requests/create", label: "Yêu cầu mới", icon: FilePlus2 },
+    { href: "/organization/stats", label: "Thống kê", icon: BarChart3 },
     { href: "/map", label: "Bản đồ", icon: Map, mobile: true },
     { href: "/organization/notifications", label: "Thông báo", icon: Bell, mobile: true, badge: "unread" },
     { href: "/organization/profile", label: "Tổ chức", icon: Building2 },
