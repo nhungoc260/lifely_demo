@@ -351,3 +351,11 @@ export interface ContactMessage {
   createdAt: string;
   handledAt: string | null;
 }
+
+export interface InventoryItem {
+  bloodType: string;
+  units: number;
+  lowThreshold: number;
+  low: boolean;
+  updatedAt: string | null;
+}

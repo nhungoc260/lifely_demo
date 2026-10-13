@@ -16,7 +16,6 @@ import com.lifely.matching.dto.RequestMatchEntry;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
 import com.lifely.request.*;
-import com.lifely.user.Role;
 import com.lifely.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;

@@ -9,7 +9,6 @@ import com.lifely.common.AppException;
 import com.lifely.donor.DonationHistory;
 import com.lifely.donor.DonationHistoryRepository;
 import com.lifely.donor.AvailabilityStatus;
-import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
 import com.lifely.matching.Match;
 import com.lifely.matching.MatchRepository;

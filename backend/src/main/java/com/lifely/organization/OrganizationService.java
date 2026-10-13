@@ -1,6 +1,5 @@
 package com.lifely.organization;
 
-import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
 import com.lifely.common.PageResponse;

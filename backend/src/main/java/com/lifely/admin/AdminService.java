@@ -6,7 +6,6 @@ import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
 import com.lifely.common.PageResponse;
 import com.lifely.common.Sanitizer;
-import com.lifely.matching.MatchRepository;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
 import com.lifely.organization.*;
