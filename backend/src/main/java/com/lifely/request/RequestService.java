@@ -102,7 +102,7 @@ public class RequestService {
         // Liên kết tổ chức: dùng tọa độ/tên của tổ chức ĐÃ XÁC MINH để không thể giả vị trí bệnh viện.
         Organization org = null;
         if (user.hasRole(Role.ORGANIZATION)) {
-            org = organizationRepository.findByOwnerUserId(user.getId()).filter(Organization::isVerified).orElse(null);
+            org = organizationRepository.findForUser(user.getId()).filter(Organization::isVerified).orElse(null);
         } else if (dto.organizationId() != null) {
             org = organizationRepository.findById(dto.organizationId()).filter(Organization::isVerified)
                     .orElseThrow(() -> AppException.badRequest("INVALID_ORGANIZATION",
@@ -234,8 +234,14 @@ public class RequestService {
 
     @Transactional(readOnly = true)
     public PageResponse<RequestResponse> listMine(AuthUser user, RequestStatus status, int page, int size) {
+        // Tài khoản tổ chức (chủ hoặc nhân viên) thấy cả yêu cầu do đồng nghiệp tạo cho cùng tổ chức.
+        UUID orgId = user.hasRole(Role.ORGANIZATION)
+                ? organizationRepository.findForUser(user.getId()).map(Organization::getId).orElse(null) : null;
         Specification<BloodRequest> spec = (root, q, cb) -> {
             Predicate p = cb.equal(root.get("requesterId"), user.getId());
+            if (orgId != null) {
+                p = cb.or(p, cb.equal(root.get("organizationId"), orgId));
+            }
             return status == null ? p : cb.and(p, cb.equal(root.get("status"), status));
         };
         Page<BloodRequest> result = requestRepository.findAll(spec,

@@ -7,6 +7,7 @@ import com.lifely.common.AppException;
 import com.lifely.donor.DonationHistory;
 import com.lifely.donor.DonationHistoryRepository;
 import com.lifely.donor.DonorVerificationService;
+import com.lifely.inventory.InventoryService;
 import com.lifely.donor.VerificationLevel;
 import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
@@ -44,13 +45,14 @@ public class MatchService {
     private final AuditService audit;
     private final EntityManager entityManager;
     private final DonorVerificationService verification;
+    private final InventoryService inventory;
 
     public MatchService(MatchRepository matchRepository, MatchEventRepository eventRepository,
                         DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
                         BloodRequestRepository requestRepository, RequestLifecycle lifecycle, RequestAccess access,
                         MatchingService matchingService, NotificationService notifications,
                         UserRepository userRepository, AuditService audit, EntityManager entityManager,
-                        DonorVerificationService verification) {
+                        DonorVerificationService verification, InventoryService inventory) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.donorRepository = donorRepository;
@@ -64,6 +66,7 @@ public class MatchService {
         this.audit = audit;
         this.entityManager = entityManager;
         this.verification = verification;
+        this.inventory = inventory;
     }
 
     /**
@@ -169,6 +172,9 @@ public class MatchService {
         h.setMatchId(first.getId());
         applyConfirmation(h, user.getId(), confirmation);
         historyRepository.save(h);
+        if (confirmation.level() == VerificationLevel.ORG_VERIFIED) {
+            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donor));
+        }
 
         String by = confirmation.level() == VerificationLevel.ORG_VERIFIED
                 ? " và được " + confirmation.organizationName() + " xác nhận" : "";
@@ -177,6 +183,10 @@ public class MatchService {
         audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId(),
                 Map.of("verificationLevel", confirmation.level().name()));
         return requesterEntry(first, 0);
+    }
+
+    private static String bloodCode(DonorProfile donor) {
+        return donor.getBloodType() == null ? null : donor.getBloodType().getCode();
     }
 
     /** Ghi ai xác nhận và ở mức nào lên bản ghi lịch sử hiến máu. */
@@ -197,6 +207,7 @@ public class MatchService {
             }
             applyConfirmation(h, user.getId(), confirmation);
             historyRepository.save(h);
+            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donorOf(match)));
             notifications.notify(donorOf(match).getUserId(), NotificationType.SYSTEM, "Lần hiến máu đã được xác nhận",
                     "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được " + confirmation.organizationName()
                             + " xác nhận.", "MATCH", match.getId());

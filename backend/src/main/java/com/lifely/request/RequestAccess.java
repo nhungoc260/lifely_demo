@@ -24,7 +24,7 @@ public class RequestAccess {
         this.userRepository = userRepository;
     }
 
-    /** Người được xem/quản lý request: chủ yêu cầu, chủ tổ chức liên kết, hoặc admin. */
+    /** Người được xem/quản lý request: chủ yêu cầu, chủ hoặc nhân viên của tổ chức liên kết, hoặc admin. */
     public boolean canView(UUID userId, BloodRequest r) {
         if (r.getRequesterId().equals(userId)) {
             return true;
@@ -32,8 +32,8 @@ public class RequestAccess {
         if (userRepository.findById(userId).map(u -> u.hasRole(Role.ADMIN)).orElse(false)) {
             return true;
         }
-        return r.getOrganizationId() != null && organizationRepository.findById(r.getOrganizationId())
-                .map(o -> o.getOwnerUserId().equals(userId)).orElse(false);
+        return r.getOrganizationId() != null && organizationRepository.findForUser(userId)
+                .map(o -> o.getId().equals(r.getOrganizationId())).orElse(false);
     }
 
     @Transactional(readOnly = true)

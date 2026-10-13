@@ -60,6 +60,43 @@ public class InventoryService {
         return load(org.getId());
     }
 
+    @Transactional(readOnly = true)
+    public InventorySettings settings(UUID userId) {
+        UUID orgId = mine(userId).getId();
+        return new InventorySettings(Boolean.TRUE.equals(
+                jdbc.queryForObject("SELECT inventory_auto_add FROM organizations WHERE id = ?", Boolean.class, orgId)));
+    }
+
+    @Transactional
+    public InventorySettings updateSettings(UUID userId, boolean autoAdd) {
+        Organization org = mine(userId);
+        jdbc.update("UPDATE organizations SET inventory_auto_add = ? WHERE id = ?", autoAdd, org.getId());
+        audit.log(userId, "INVENTORY_SETTINGS_UPDATED", "ORGANIZATION", org.getId(), Map.of("autoAdd", autoAdd));
+        return new InventorySettings(autoAdd);
+    }
+
+    /**
+     * Khi tổ chức xác nhận một lần hiến máu: nếu tổ chức bật "tự cộng vào kho" thì cộng 1 đơn vị đúng nhóm máu người hiến.
+     * Trả true nếu đã cộng.
+     */
+    @Transactional
+    public boolean addDonatedUnit(UUID orgId, String bloodType) {
+        if (orgId == null || bloodType == null || !InventoryItem.BLOOD_TYPES.contains(bloodType)) {
+            return false;
+        }
+        Boolean on = jdbc.queryForObject("SELECT inventory_auto_add FROM organizations WHERE id = ?", Boolean.class, orgId);
+        if (!Boolean.TRUE.equals(on)) {
+            return false;
+        }
+        jdbc.update("""
+                INSERT INTO blood_inventory (organization_id, blood_type, units, low_threshold, updated_at)
+                VALUES (?, ?, 1, ?, now())
+                ON CONFLICT (organization_id, blood_type)
+                DO UPDATE SET units = LEAST(blood_inventory.units + 1, 100000), updated_at = now()
+                """, orgId, bloodType, InventoryItem.DEFAULT_THRESHOLD);
+        return true;
+    }
+
     private List<InventoryItem> load(UUID orgId) {
         Map<String, InventoryItem> stored = new HashMap<>();
         jdbc.query("SELECT blood_type, units, low_threshold, updated_at FROM blood_inventory WHERE organization_id = ?",
@@ -75,7 +112,7 @@ public class InventoryService {
     }
 
     private Organization mine(UUID userId) {
-        return organizations.findByOwnerUserId(userId)
+        return organizations.findForUser(userId)
                 .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Hãy hoàn tất hồ sơ tổ chức trước"));
     }
 }

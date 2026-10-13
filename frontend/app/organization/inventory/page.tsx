@@ -29,6 +29,21 @@ export default function OrganizationInventory() {
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
+  const settings = useQuery(me.data ? "org-inventory-settings" : null, orgApi.inventorySettings);
+  const [savingSetting, setSavingSetting] = useState(false);
+
+  async function toggleAutoAdd(next: boolean) {
+    setSavingSetting(true);
+    try {
+      const saved = await orgApi.saveInventorySettings(next);
+      settings.mutate(() => saved);
+      toast.success(next ? "Đã bật tự cộng kho" : "Đã tắt tự cộng kho");
+    } catch (e) {
+      toast.error(toApiError(e).message);
+    } finally {
+      setSavingSetting(false);
+    }
+  }
 
   const rows = useMemo(
     () => (res.data ?? []).map((it) => {
@@ -80,6 +95,15 @@ export default function OrganizationInventory() {
                 <p className="text-muted-foreground">LIFELY không tự biết kho của bạn: nhân viên kho nhập theo sổ sách của bệnh viện. Bấm <b>Nhập</b> khi nhận thêm máu, bấm <b>Xuất</b> khi cấp máu cho bệnh nhân, hoặc gõ thẳng số đang có. Xong nhớ bấm <b>Lưu thay đổi</b>.</p>
               </div>
             </Card>
+            <Card className="mb-6 p-4">
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input type="checkbox" className="mt-1 size-4 accent-primary" checked={settings.data?.autoAdd ?? false} disabled={!settings.data || savingSetting} onChange={(e) => void toggleAutoAdd(e.target.checked)} />
+                <span>
+                  <span className="font-medium">Tự cộng vào kho khi xác nhận một lần hiến</span>
+                  <span className="mt-0.5 block text-muted-foreground">Khi cơ sở xác nhận người hiến đã đến hiến, LIFELY tự cộng 1 đơn vị đúng nhóm máu của người đó vào kho. Tắt đi nếu máu hiến được dùng ngay cho bệnh nhân, không nhập kho.</span>
+                </span>
+              </label>
+            </Card>
             <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground">Mỗi lần bấm Nhập / Xuất:</span>
               {[1, 5, 10].map((n) => (
@@ -100,7 +124,7 @@ export default function OrganizationInventory() {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-xs text-muted-foreground">Số liệu do cơ sở tự cập nhật; LIFELY không tự trừ hay cộng đơn vị máu.</p>
+            <p className="mt-4 text-xs text-muted-foreground">Số liệu do cơ sở tự cập nhật. LIFELY không tự trừ đơn vị máu; chỉ tự cộng khi bạn bật tuỳ chọn ở trên.</p>
           </>
         )}
     </>

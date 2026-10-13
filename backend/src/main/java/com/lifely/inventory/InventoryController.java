@@ -31,6 +31,19 @@ public class InventoryController {
         return ApiResponse.ok("OK", service.get(user.getId()));
     }
 
+    @GetMapping("/settings")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<InventorySettings> settings(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.ok("OK", service.settings(user.getId()));
+    }
+
+    @PutMapping("/settings")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<InventorySettings> updateSettings(@AuthenticationPrincipal AuthUser user,
+                                                         @Valid @RequestBody InventorySettings req) {
+        return ApiResponse.ok("Đã lưu tuỳ chọn", service.updateSettings(user.getId(), req.autoAdd()));
+    }
+
     @PutMapping
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<List<InventoryItem>> update(@AuthenticationPrincipal AuthUser user,

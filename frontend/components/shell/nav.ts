@@ -50,6 +50,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/organization/stats", label: "Thống kê", icon: BarChart3 },
     { href: "/map", label: "Bản đồ", icon: Map, mobile: true },
     { href: "/organization/notifications", label: "Thông báo", icon: Bell, mobile: true, badge: "unread" },
+    { href: "/organization/staff", label: "Nhân viên", icon: Users },
     { href: "/organization/profile", label: "Tổ chức", icon: Building2 },
   ],
   ADMIN: [

@@ -41,7 +41,8 @@ public class DonorVerificationService {
     public Confirmation confirmation(UUID confirmerUserId, BloodRequest request) {
         if (request.getOrganizationId() != null) {
             return organizationRepository.findById(request.getOrganizationId())
-                    .filter(o -> o.isVerified() && o.getOwnerUserId().equals(confirmerUserId))
+                    .filter(o -> o.isVerified() && organizationRepository.findForUser(confirmerUserId)
+                            .map(mine -> mine.getId().equals(o.getId())).orElse(false))
                     .map(o -> new Confirmation(VerificationLevel.ORG_VERIFIED, o.getId(), o.getName()))
                     .orElseGet(DonorVerificationService::byRequester);
         }

@@ -23,7 +23,7 @@ public class OrganizationDonationService {
 
     @Transactional(readOnly = true)
     public List<DonationLogEntry> list(UUID userId) {
-        Organization org = organizations.findByOwnerUserId(userId)
+        Organization org = organizations.findForUser(userId)
                 .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND", "Hãy hoàn tất hồ sơ tổ chức trước"));
         return jdbc.query("""
                 SELECT dh.id, dh.donated_on, dh.location, dh.verification_level, dh.confirmed_at,

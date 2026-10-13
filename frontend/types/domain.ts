@@ -369,3 +369,19 @@ export interface DonationLogEntry {
   verificationLevel: "SELF_REPORTED" | "REQUESTER_CONFIRMED" | "ORG_VERIFIED";
   confirmedAt: string | null;
 }
+
+export interface StaffMember {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: "OWNER" | "STAFF";
+}
+
+export interface StaffOverview {
+  owner: boolean;
+  members: StaffMember[];
+}
+
+export interface InventorySettings {
+  autoAdd: boolean;
+}

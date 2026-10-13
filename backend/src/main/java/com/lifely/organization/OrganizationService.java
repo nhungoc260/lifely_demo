@@ -47,12 +47,15 @@ public class OrganizationService {
 
     @Transactional(readOnly = true)
     public OrganizationDto getMine(UUID userId) {
-        return repository.findByOwnerUserId(userId).map(this::toDto).orElse(null);
+        return repository.findForUser(userId).map(this::toDto).orElse(null);
     }
 
     /** Tạo hoặc cập nhật hồ sơ. Đổi tên/địa chỉ/vị trí của tổ chức đã xác minh sẽ phải xác minh lại. */
     @Transactional
     public OrganizationDto upsert(UUID userId, UpdateOrganizationRequest req) {
+        if (repository.findByOwnerUserId(userId).isEmpty() && repository.findForUser(userId).isPresent()) {
+            throw AppException.forbidden("ORG_STAFF_READ_ONLY", "Chỉ chủ tài khoản tổ chức mới được sửa hồ sơ");
+        }
         Organization o = repository.findByOwnerUserId(userId).orElseGet(() -> {
             Organization n = new Organization();
             n.setOwnerUserId(userId);
@@ -125,7 +128,8 @@ public class OrganizationService {
                 .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ"));
         Organization o = repository.findById(d.getOrganizationId())
                 .orElseThrow(() -> AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ"));
-        if (!user.hasRole(com.lifely.user.Role.ADMIN) && !o.getOwnerUserId().equals(user.getId())) {
+        boolean sameOrg = repository.findForUser(user.getId()).map(m -> m.getId().equals(o.getId())).orElse(false);
+        if (!user.hasRole(com.lifely.user.Role.ADMIN) && !sameOrg) {
             throw AppException.notFound("DOCUMENT_NOT_FOUND", "Không tìm thấy giấy tờ");
         }
         return new DocumentFile(storage.load(d.getFileUrl()), d.getFileName(), storage.contentTypeOf(d.getFileUrl()));
@@ -190,7 +194,7 @@ public class OrganizationService {
     }
 
     private Organization mine(UUID userId) {
-        return repository.findByOwnerUserId(userId)
+        return repository.findForUser(userId)
                 .orElseThrow(() -> AppException.notFound("ORGANIZATION_NOT_FOUND",
                         "Hãy hoàn tất hồ sơ tổ chức trước"));
     }
