@@ -1,7 +1,7 @@
 import { get, post, put, qs, apiFetch } from "@/lib/api";
 import type {
   AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
-  DonationEntry, DonorDashboard, DonorMatch, DonorProfile, HistoryEntry, InventoryItem, MatchStatus, Organization, OrgDashboard,
+  DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry, HistoryEntry, InventoryItem, MatchStatus, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
 } from "@/types/domain";
@@ -96,6 +96,7 @@ export const orgApi = {
   },
   submit: () => post<Organization>("/api/organizations/me/submit"),
   dashboard: () => get<OrgDashboard>("/api/organizations/me/dashboard"),
+  donations: () => get<DonationLogEntry[]>("/api/organizations/me/donations"),
   inventory: () => get<InventoryItem[]>("/api/organizations/me/inventory"),
   saveInventory: (items: { bloodType: string; units: number; lowThreshold: number }[]) =>
     put<InventoryItem[]>("/api/organizations/me/inventory", { items }),

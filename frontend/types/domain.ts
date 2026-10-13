@@ -359,3 +359,13 @@ export interface InventoryItem {
   low: boolean;
   updatedAt: string | null;
 }
+
+export interface DonationLogEntry {
+  id: string;
+  donatedOn: string;
+  donorName: string;
+  bloodType: string | null;
+  location: string | null;
+  verificationLevel: "SELF_REPORTED" | "REQUESTER_CONFIRMED" | "ORG_VERIFIED";
+  confirmedAt: string | null;
+}

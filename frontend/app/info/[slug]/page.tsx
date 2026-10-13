@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
 import { ContactForm } from "@/components/support/contact-form";
-import { SUPPORT } from "@/lib/support";
+import { STAFF, SUPPORT } from "@/lib/support";
 
 interface Doc { title: string; intro: string; sections: { h: string; p: string }[] }
 
@@ -36,8 +36,8 @@ const DOCS: Record<string, Doc> = {
     title: "Liên hệ",
     intro: "Chúng tôi rất mong nhận được tin từ bạn.",
     sections: [
-      { h: `Đường dây nhân viên: ${SUPPORT.name}`, p: `Gọi ${SUPPORT.phoneDisplay} để được hỗ trợ tạo yêu cầu, đăng ký hiến máu hoặc mọi thắc mắc về LIFELY. Nếu bệnh nhân đang nguy kịch, hãy gọi cấp cứu ${SUPPORT.emergencyNumber} hoặc bệnh viện trước: LIFELY là nền tảng điều phối, không phải dịch vụ cấp cứu.` },
-      { h: "Email", p: "support@lifely.demo (địa chỉ demo của bản mẫu này)." },
+      { h: `Đường dây nhân viên: ${STAFF.map((s) => s.name).join(" · ")}`, p: `Gọi ${STAFF.map((s) => `${s.phoneDisplay} (${s.name})`).join(" hoặc ")} để được hỗ trợ tạo yêu cầu, đăng ký hiến máu hoặc mọi thắc mắc về LIFELY. Nếu bệnh nhân đang nguy kịch, hãy gọi cấp cứu ${SUPPORT.emergencyNumber} hoặc bệnh viện trước: LIFELY là nền tảng điều phối, không phải dịch vụ cấp cứu.` },
+      { h: "Email", p: STAFF.map((s) => `${s.email} (${s.name})`).join(" hoặc ") + "." },
       { h: "Hợp tác", p: "Bệnh viện và trung tâm máu có thể đăng ký ngay ở trang đăng ký; đội ngũ của chúng tôi sẽ xem xét giấy tờ của bạn." },
     ],
   },
