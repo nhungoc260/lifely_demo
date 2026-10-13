@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplets, Minus, Plus, TriangleAlert } from "lucide-react";
+import { Droplets, Info, Minus, Plus, TriangleAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ export default function OrganizationInventory() {
   const res = useQuery(me.data ? "org-inventory" : null, orgApi.inventory);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(1);
 
   const rows = useMemo(
     () => (res.data ?? []).map((it) => {
@@ -64,7 +65,7 @@ export default function OrganizationInventory() {
     <>
       <PageHeader
         title="Kho máu"
-        description="Số đơn vị máu hiện có theo từng nhóm. Nhóm nào sắp hết sẽ được cảnh báo để bạn tạo yêu cầu kịp thời."
+        description="Theo dõi số đơn vị máu đang có trong kho của cơ sở, nhóm nào sắp hết sẽ được cảnh báo."
         actions={dirty ? <><Button variant="outline" onClick={() => setEdits({})} disabled={saving}>Hoàn tác</Button><Button onClick={save} disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button></> : undefined}
       />
       {me.data === null ? <ErrorState message="Hãy hoàn tất hồ sơ tổ chức trước khi quản lý kho máu." />
@@ -72,6 +73,20 @@ export default function OrganizationInventory() {
         : res.initialLoading || !res.data ? <Skeleton className="h-72" />
         : (
           <>
+            <Card className="mb-6 flex gap-3 p-4 text-sm">
+              <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+              <div className="space-y-1">
+                <p className="font-medium">Cách dùng</p>
+                <p className="text-muted-foreground">LIFELY không tự biết kho của bạn: nhân viên kho nhập theo sổ sách của bệnh viện. Bấm <b>Nhập</b> khi nhận thêm máu, bấm <b>Xuất</b> khi cấp máu cho bệnh nhân, hoặc gõ thẳng số đang có. Xong nhớ bấm <b>Lưu thay đổi</b>.</p>
+              </div>
+            </Card>
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Mỗi lần bấm Nhập / Xuất:</span>
+              {[1, 5, 10].map((n) => (
+                <Button key={n} size="sm" variant={step === n ? "default" : "outline"} onClick={() => setStep(n)} aria-pressed={step === n}>{n} đơn vị</Button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <StatCard label="Tổng đơn vị" value={total} icon={Droplets} accent />
               <StatCard label="Nhóm sắp hết" value={lowCount} icon={TriangleAlert} hint="Còn ít hơn ngưỡng cảnh báo" />
@@ -81,7 +96,7 @@ export default function OrganizationInventory() {
             <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {rows.map((r) => (
                 <li key={r.bloodType}>
-                  <StockCard r={r} onUnits={(n) => change(r.bloodType, { units: clamp(n) })} onThreshold={(n) => change(r.bloodType, { lowThreshold: clamp(n) })} />
+                  <StockCard r={r} step={step} onUnits={(n) => change(r.bloodType, { units: clamp(n) })} onThreshold={(n) => change(r.bloodType, { lowThreshold: clamp(n) })} />
                 </li>
               ))}
             </ul>
@@ -92,8 +107,9 @@ export default function OrganizationInventory() {
   );
 }
 
-function StockCard({ r, onUnits, onThreshold }: {
+function StockCard({ r, step, onUnits, onThreshold }: {
   r: InventoryItem & { changed: boolean };
+  step: number;
   onUnits: (n: number) => void;
   onThreshold: (n: number) => void;
 }) {
@@ -105,10 +121,13 @@ function StockCard({ r, onUnits, onThreshold }: {
         {empty ? <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Hết máu</span>
           : r.low ? <span className="rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium">Sắp hết</span> : null}
       </div>
-      <div className="mt-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" className="w-10 shrink-0 px-0" aria-label={`Giảm 1 đơn vị nhóm ${r.bloodType}`} onClick={() => onUnits(r.units - 1)} disabled={r.units <= 0}><Minus /></Button>
-        <Input type="number" inputMode="numeric" min={0} max={MAX} value={r.units} aria-label={`Số đơn vị nhóm ${r.bloodType}`} className="text-center text-lg font-semibold tabular-nums" onChange={(e) => onUnits(Number(e.target.value))} />
-        <Button variant="outline" size="sm" className="w-10 shrink-0 px-0" aria-label={`Tăng 1 đơn vị nhóm ${r.bloodType}`} onClick={() => onUnits(r.units + 1)}><Plus /></Button>
+      <label className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        Đang có (đơn vị)
+        <Input type="number" inputMode="numeric" min={0} max={MAX} value={r.units} aria-label={`Số đơn vị nhóm ${r.bloodType}`} className="h-10 w-24 text-center text-lg font-semibold tabular-nums text-foreground" onChange={(e) => onUnits(Number(e.target.value))} />
+      </label>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Button variant="outline" size="sm" aria-label={`Xuất ${step} đơn vị nhóm ${r.bloodType}`} onClick={() => onUnits(r.units - step)} disabled={r.units <= 0}><Minus /> Xuất {step}</Button>
+        <Button variant="outline" size="sm" aria-label={`Nhập ${step} đơn vị nhóm ${r.bloodType}`} onClick={() => onUnits(r.units + step)}><Plus /> Nhập {step}</Button>
       </div>
       <label className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
         Cảnh báo khi còn ≤
