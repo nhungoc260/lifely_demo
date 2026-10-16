@@ -1,3 +1,5 @@
+> **Cập nhật 17/10/2026:** phần cuộc gọi tự động (Voice) nhắc trong báo cáo này đã bị **gỡ bỏ** theo định hướng gọi thủ công bằng `tel:`; xem `docs/AUDIT_REPORT.md` và `docs/NOTIFICATIONS.md`. Các dòng nhắc Voice bên dưới là lịch sử.
+
 # Báo cáo nâng cấp LIFELY (Luồng A/B, thông báo, nhất quán dữ liệu)
 
 > **Đọc trước:** phần backend Java trong bản nâng cấp này **chưa được compile hay chạy test** (môi trường làm việc không truy cập được Maven Central).

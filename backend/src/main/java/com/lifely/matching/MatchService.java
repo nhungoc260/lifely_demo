@@ -236,6 +236,33 @@ public class MatchService {
         return requesterEntry(first, 0);
     }
 
+    /**
+     * Nhân viên (chủ yêu cầu, nhân viên cơ sở liên kết hoặc admin) ghi nhận KẾT QUẢ liên hệ thực tế với người hiến.
+     * Chỉ áp dụng cho lượt đã nhận lời (khi đó mới được xem số điện thoại). Không đổi trạng thái match, không cộng đơn vị,
+     * không ghi hồ sơ hiến máu. Hệ thống không biết cuộc gọi có thành công hay không: dữ liệu này hoàn toàn do người dùng khai.
+     */
+    @Transactional
+    public RequestMatchEntry recordContactResult(AuthUser user, UUID matchId, ContactResult result) {
+        Match first = matchRepository.findById(matchId)
+                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối"));
+        BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
+        if (!access.canView(user.getId(), r)) {
+            throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
+        }
+        entityManager.refresh(first);
+        if (first.getStatus() != MatchStatus.ACCEPTED && first.getStatus() != MatchStatus.COMPLETED) {
+            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ ghi nhận liên hệ với người hiến đã nhận lời");
+        }
+        first.setContactResult(result);
+        first.setContactResultAt(result == ContactResult.NOT_CONTACTED ? null : Instant.now());
+        first.setContactResultBy(result == ContactResult.NOT_CONTACTED ? null : user.getId());
+        matchRepository.save(first);
+        audit.log(user.getId(), AuditAction.MATCH_CONTACT_RESULT, "MATCH", first.getId(),
+                Map.of("requestId", r.getId().toString(), "result", result.name()));
+        return requesterEntry(first, 0);
+    }
+
     /** Tăng lượng đã nhận (có xác nhận hiến thực tế). Đủ số đơn vị mới chuyển yêu cầu sang FULFILLED. Gọi khi đã giữ khóa dòng yêu cầu. */
     private void countReceived(BloodRequest r, AuthUser user) {
         r.setUnitsReceived(Math.min(r.getUnitsRequired(), r.getUnitsReceived() + 1));
@@ -374,6 +401,7 @@ public class MatchService {
         DonorVerificationService.Badge badge = verification.badge(m.getDonorId());
         return new RequestMatchEntry(m.getId(), rank > 0 ? "Người hiến #" + rank : "Người hiến", m.getDistanceKm().doubleValue(),
                 m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone,
-                badge.facilityVerified(), badge.verifiedByName());
+                badge.facilityVerified(), badge.verifiedByName(),
+                m.getContactResult(), m.getContactResultAt());
     }
 }

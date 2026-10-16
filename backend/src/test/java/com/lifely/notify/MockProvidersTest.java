@@ -26,11 +26,4 @@ class MockProvidersTest {
         assertTrue(r.retryable());
         assertTrue(p.sent().isEmpty());
     }
-
-    @Test
-    void voiceMockDoesNotDialAnything() {
-        MockVoiceProvider p = new MockVoiceProvider();
-        assertTrue(p.call("0901234567", "script", "k").ok());
-        assertEquals(1, p.calls().size());
-    }
 }

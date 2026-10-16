@@ -11,7 +11,7 @@ import { toApiError } from "@/lib/api";
 import { PushToggle } from "@/components/pwa/push-toggle";
 import { consentApi } from "@/services";
 
-type Key = "email" | "sms" | "voice" | "rejoinReminders";
+type Key = "email" | "sms" | "rejoinReminders";
 
 /** Đồng ý nhận thông báo theo từng kênh. SMS và cuộc gọi mặc định TẮT; chỉ gửi khi bạn bật và quản trị đã bật kênh. */
 export function ConsentCard() {
@@ -31,7 +31,6 @@ export function ConsentCard() {
     { key: "email", label: "Email", hint: "Thông báo khẩn cấp và nhắc việc qua email.", on: c.email },
     { key: "rejoinReminders", label: "Nhắc khi có thể hiến máu lại", hint: "Tách riêng với thông báo khẩn cấp: tắt mục này không ảnh hưởng việc nhận yêu cầu máu.", on: c.rejoinReminders },
     { key: "sms", label: "SMS", hint: c.smsChannelEnabled ? "Nhận tin nhắn khi có yêu cầu gần bạn hoặc khi có lịch hẹn." : "Kênh SMS hiện chưa được bật ở hệ thống; lựa chọn của bạn vẫn được lưu.", on: c.sms },
-    { key: "voice", label: "Cuộc gọi tự động", hint: c.voiceChannelEnabled ? "Chỉ dùng cho tình huống rất khẩn cấp." : "Kênh gọi tự động hiện chưa được bật ở hệ thống; lựa chọn của bạn vẫn được lưu.", on: c.voice },
   ] : [];
 
   return (
@@ -53,7 +52,7 @@ export function ConsentCard() {
             <PushToggle />
             <p className="text-xs text-muted-foreground">
               Bạn có thể rút lại bất cứ lúc nào; tin chưa gửi sẽ bị hủy ngay. Nội dung chỉ báo có nhu cầu hỗ trợ, không khẳng định bạn đủ điều kiện hiến máu.
-              {c.mockMode && " Hệ thống đang chạy chế độ thử nghiệm: SMS và cuộc gọi chưa được gửi thật."}
+              {c.mockMode && " Hệ thống đang chạy chế độ thử nghiệm: SMS chưa được gửi thật."}
             </p>
           </>
         )}

@@ -30,7 +30,7 @@ class OutboxWorkerFinishTest {
         jdbc = new FakeJdbc();
         NotifyProperties props = new NotifyProperties();
         props.setRetryBaseSeconds(30);
-        worker = new OutboxWorker(jdbc, new NoopTx(), props, mock(ObjectProvider.class), mock(ObjectProvider.class),
+        worker = new OutboxWorker(jdbc, new NoopTx(), props, mock(ObjectProvider.class),
                 mock(com.lifely.push.PushService.class), mock(com.lifely.push.WebPushSender.class));
     }
 

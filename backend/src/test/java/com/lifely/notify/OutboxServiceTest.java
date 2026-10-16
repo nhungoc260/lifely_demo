@@ -24,7 +24,6 @@ class OutboxServiceTest {
     @Test
     void channelsAreOffByDefault() {
         assertFalse(props.isSmsEnabled());
-        assertFalse(props.isVoiceEnabled());
         assertEquals("mock", props.getProvider());
     }
 
@@ -54,8 +53,7 @@ class OutboxServiceTest {
     @Test
     void messageTemplatesDoNotClaimEligibilityOrStock() {
         String sms = service.inviteSms("O+", "Bệnh viện A");
-        String voice = service.inviteVoice("O+", "Bệnh viện A");
-        for (String t : new String[]{sms, voice}) {
+        for (String t : new String[]{sms}) {
             assertTrue(t.contains("không") || t.contains("chỉ hỗ trợ điều phối"), "phải có lưu ý điều phối");
             assertTrue(t.contains("cơ sở y tế quyết định"));
             assertFalse(t.toLowerCase().contains("đã có máu"));
@@ -68,9 +66,16 @@ class OutboxServiceTest {
     @Test
     void revokingOrClosingCancelsOnlyPending() {
         service.cancelPending("REQUEST", UUID.randomUUID(), null);
-        service.cancelPendingForUser(user, OutboxService.Channel.VOICE);
+        service.cancelPendingForUser(user, OutboxService.Channel.SMS);
         assertTrue(jdbc.updates.stream().allMatch(u -> u.contains("status = 'PENDING'")),
                 "chỉ hủy tin chưa gửi, không đụng tin đã SENT/SENDING");
+    }
+
+    @Test
+    void noAutomatedVoiceChannelExists() {
+        for (OutboxService.Channel c : OutboxService.Channel.values()) {
+            assertNotEquals("VOICE", c.name(), "LIFELY không có cuộc gọi tự động");
+        }
     }
 
     @Test

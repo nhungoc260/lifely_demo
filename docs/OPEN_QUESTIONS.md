@@ -9,7 +9,7 @@ Hệ thống đang dùng các **giả định** bên dưới để chạy đư�
 | 2 | Có bắt buộc app native (Android Studio) không? | Native tốn thêm nhiều tuần, không dùng lại code web | Chưa có app native |
 | 3 | Có yêu cầu bản chạy trên iPhone không? | iPhone chỉ nhận thông báo đẩy khi đã "Thêm vào MH chính" (iOS 16.4 trở lên) | Có hướng dẫn trong app, **chưa thử trên iPhone thật** |
 | 4 | Dữ liệu y tế dùng thật hay giả? | Quyết định mức bảo mật phải đạt và phải có đồng ý của ai | Mặc định **toàn dữ liệu giả** (`tools/demo`); số điện thoại giả `00000000xx` |
-| 5 | SMS và cuộc gọi tự động có bắt buộc chạy thật không? | Cần nhà cung cấp, chi phí, mẫu tin được nhà mạng duyệt | Chỉ có khung và chế độ giả lập (`docs/NOTIFICATIONS.md`); thông báo đẩy và trong ứng dụng chạy thật |
+| 5 | SMS có bắt buộc chạy thật không? (Cuộc gọi tự động đã bị gỡ: nhân viên gọi thủ công bằng `tel:`) | Cần nhà cung cấp SMS, chi phí, mẫu tin được nhà mạng duyệt | Chỉ có khung và chế độ giả lập (`docs/NOTIFICATIONS.md`); thông báo đẩy và trong ứng dụng chạy thật |
 | 6 | Có cần đo hiệu năng / kiểm thử tải không? | Chưa đo | Chưa làm |
 
 ## B. Hỏi cơ sở y tế (hoặc ghi rõ "giả định" trong báo cáo)

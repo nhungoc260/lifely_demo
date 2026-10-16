@@ -8,14 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Transactional outbox cho SMS / cuộc gọi: bản ghi được ghi CÙNG transaction với nghiệp vụ gọi nó
+ * Transactional outbox cho SMS (mock) / Web Push: bản ghi được ghi CÙNG transaction với nghiệp vụ gọi nó
  * (rollback thì không có gì được gửi); {@link OutboxWorker} gửi sau khi đã commit.
  * Chỉ xếp hàng khi kênh được bật VÀ người nhận đã đồng ý kênh đó. Khóa dedupe chống xếp trùng.
  */
 @Service
 public class OutboxService {
 
-    public enum Channel { SMS, VOICE, PUSH }
+    public enum Channel { SMS, PUSH }
 
     public static final String PURPOSE_INVITE = "REQUEST_INVITE";
     public static final String PURPOSE_STAFF_ALERT = "STAFF_ALERT";
@@ -39,7 +39,6 @@ public class OutboxService {
     public boolean channelEnabled(Channel channel) {
         return switch (channel) {
             case SMS -> props.isSmsEnabled();
-            case VOICE -> props.isVoiceEnabled();
             case PUSH -> props.isPushEnabled();
         };
     }
@@ -139,11 +138,6 @@ public class OutboxService {
     public String inviteSms(String bloodCode, String hospital) {
         return "LIFELY: Cần máu " + bloodCode + " tại " + hospital + ". Mở ứng dụng để phản hồi: "
                 + frontendUrl + "/donor/requests." + DISCLAIMER;
-    }
-
-    public String inviteVoice(String bloodCode, String hospital) {
-        return "Đây là cuộc gọi tự động từ LIFELY. Có yêu cầu máu nhóm " + bloodCode + " tại " + hospital
-                + ". Vui lòng mở ứng dụng LIFELY để phản hồi." + DISCLAIMER;
     }
 
     public String staffAlertSms(String bloodCode, int units) {

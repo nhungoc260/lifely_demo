@@ -10,19 +10,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.UUID;
 
-/** Đồng ý nhận thông báo theo từng kênh. In-app luôn bật; email dùng cờ sẵn có; SMS/Voice mặc định CHƯA đồng ý. */
+/** Đồng ý nhận thông báo theo từng kênh. In-app luôn bật; email dùng cờ sẵn có; SMS mặc định CHƯA đồng ý. */
 @Service
 public class ConsentService {
 
-    public record Consents(boolean inApp, boolean email, boolean sms, boolean voice,
-                           boolean smsChannelEnabled, boolean voiceChannelEnabled, boolean mockMode,
+    public record Consents(boolean inApp, boolean email, boolean sms,
+                           boolean smsChannelEnabled, boolean mockMode,
                            boolean push, boolean pushChannelEnabled, boolean rejoinReminders) {
     }
 
     /** rejoinReminders: nhắc "đã có thể hiến lại", bật/tắt riêng với thông báo khẩn cấp. Push được bật bằng cách đăng ký thiết bị. */
-    public record Update(Boolean email, Boolean sms, Boolean voice, Boolean rejoinReminders) {
-        public Update(Boolean email, Boolean sms, Boolean voice) {
-            this(email, sms, voice, null);
+    public record Update(Boolean email, Boolean sms, Boolean rejoinReminders) {
+        public Update(Boolean email, Boolean sms) {
+            this(email, sms, null);
         }
     }
 
@@ -46,7 +46,7 @@ public class ConsentService {
         boolean email = privacy.findById(userId).map(PrivacySettings::isReceiveEmergencyNotifications).orElse(true);
         boolean rejoin = privacy.findById(userId).map(PrivacySettings::isReceiveRejoinReminders).orElse(true);
         return new Consents(true, email, outbox.hasConsent(userId, OutboxService.Channel.SMS),
-                outbox.hasConsent(userId, OutboxService.Channel.VOICE), props.isSmsEnabled(), props.isVoiceEnabled(),
+                props.isSmsEnabled(),
                 "mock".equals(props.getProvider()), outbox.hasConsent(userId, OutboxService.Channel.PUSH),
                 props.isPushEnabled(), rejoin);
     }
@@ -66,9 +66,8 @@ public class ConsentService {
             });
         }
         apply(userId, OutboxService.Channel.SMS, req.sms());
-        apply(userId, OutboxService.Channel.VOICE, req.voice());
         audit.log(userId, "CONSENT_UPDATED", "USER", userId, Map.of(
-                "email", String.valueOf(req.email()), "sms", String.valueOf(req.sms()), "voice", String.valueOf(req.voice()),
+                "email", String.valueOf(req.email()), "sms", String.valueOf(req.sms()),
                 "rejoinReminders", String.valueOf(req.rejoinReminders())));
         return get(userId);
     }

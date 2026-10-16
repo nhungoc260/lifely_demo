@@ -18,7 +18,7 @@ Tài khoản (mật khẩu = `DEMO_PASSWORD`): `demo-requester` (người cần 
 | Phút | Ai / thiết bị | Thao tác | Điều cần nói |
 |---|---|---|---|
 | 0:00 | Slide | Bài toán: cần máu khẩn cấp nhưng không biết ai gần đó sẵn sàng | Điều phối, không phải ngân hàng máu |
-| 1:30 | Điện thoại | Mở app từ **biểu tượng đã cài** (toàn màn hình). Vào Hồ sơ → **Kênh nhận thông báo** | PWA cài như app thật; thông báo đẩy bật bằng sự đồng ý của người dùng; SMS/gọi tự động đang giả lập, tắt mặc định |
+| 1:30 | Điện thoại | Mở app từ **biểu tượng đã cài** (toàn màn hình). Vào Hồ sơ → **Kênh nhận thông báo** | PWA cài như app thật; thông báo đẩy bật bằng sự đồng ý của người dùng; SMS đang giả lập, tắt mặc định; không có gọi tự động (nhân viên tự bấm “Gọi người hiến”) |
 | 3:00 | Laptop, bệnh viện | **Yêu cầu mới**: O+, 1 đơn vị, mức khẩn cấp cao, gắn Bệnh viện Demo → Tạo | Kết quả hiện "Yêu cầu đã được tiếp nhận", **không** nói "đã có máu"; không cần admin duyệt vì gắn cơ sở đã xác minh |
 | 4:30 | Điện thoại | Khóa màn hình, chờ **thông báo đẩy** "Có người cần máu gần bạn", bấm vào | Hệ thống chỉ mời người **đủ điều kiện giãn cách, đúng nhóm máu, ở gần**; nội dung không có dữ liệu bệnh nhân |
 | 5:30 | Laptop, tài khoản `deferred` | (tuỳ chọn) bệnh viện tạo thêm yêu cầu **A+**; người này **không** nhận lời mời | Người hiến mới hiến 30 ngày trước nên chưa được mời |

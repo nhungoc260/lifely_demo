@@ -12,6 +12,7 @@ public final class AuditAction {
     public static final String MATCH_ACCEPTED = "MATCH_ACCEPTED";
     public static final String MATCH_REJECTED = "MATCH_REJECTED";
     public static final String MATCH_COMPLETED = "MATCH_COMPLETED";
+    public static final String MATCH_CONTACT_RESULT = "MATCH_CONTACT_RESULT";
     public static final String ORGANIZATION_VERIFIED = "ORGANIZATION_VERIFIED";
     public static final String ORGANIZATION_REJECTED = "ORGANIZATION_REJECTED";
     public static final String ORGANIZATION_SUSPENDED = "ORGANIZATION_SUSPENDED";

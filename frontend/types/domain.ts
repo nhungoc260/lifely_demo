@@ -209,6 +209,8 @@ export interface HistoryEntry {
   createdAt: string;
 }
 
+export type ContactResult = "NOT_CONTACTED" | "CONTACTED" | "UNREACHABLE" | "CONFIRMED_CAN_JOIN" | "CANNOT_JOIN";
+
 export interface RequestMatchEntry {
   matchId: string;
   label: string;
@@ -220,6 +222,8 @@ export interface RequestMatchEntry {
   donorPhone: string | null;
   facilityVerified: boolean;
   verifiedByName: string | null;
+  contactResult: ContactResult;
+  contactResultAt: string | null;
 }
 
 export interface RequesterDashboard {
@@ -410,12 +414,13 @@ export type AppointmentAction = "CHECK_IN" | "SCREEN_PASS" | "DEFER" | "NO_SHOW"
 
 // ---- Đồng ý nhận thông báo theo kênh & theo dõi phát thông báo
 export interface NotificationConsents {
-  inApp: boolean; email: boolean; sms: boolean; voice: boolean;
-  smsChannelEnabled: boolean; voiceChannelEnabled: boolean; mockMode: boolean;
+  inApp: boolean; email: boolean; sms: boolean;
+  smsChannelEnabled: boolean; mockMode: boolean;
   push: boolean; pushChannelEnabled: boolean; rejoinReminders: boolean;
 }
+// Lưu ý: "VOICE" chỉ còn trong dữ liệu cũ; hệ thống không còn gọi điện tự động.
 export interface DeliverySummary {
-  outbox: { channel: "SMS" | "VOICE"; status: "PENDING" | "SENDING" | "SENT" | "FAILED" | "CANCELLED"; total: number }[];
+  outbox: { channel: "SMS" | "PUSH" | "VOICE"; status: "PENDING" | "SENDING" | "SENT" | "FAILED" | "CANCELLED"; total: number }[];
   responses: Record<string, number>;
   failed: number;
 }

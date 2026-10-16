@@ -46,6 +46,17 @@ public class Match {
     @Column(name = "responded_at")
     private Instant respondedAt;
 
+    /** Kết quả liên hệ thủ công do nhân viên ghi nhận (xem {@link ContactResult}). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contact_result", nullable = false)
+    private ContactResult contactResult = ContactResult.NOT_CONTACTED;
+
+    @Column(name = "contact_result_at")
+    private Instant contactResultAt;
+
+    @Column(name = "contact_result_by")
+    private UUID contactResultBy;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

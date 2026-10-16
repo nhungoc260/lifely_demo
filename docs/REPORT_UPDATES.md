@@ -13,7 +13,7 @@
 3. Tách bạch *người nhận lời*, *lịch hẹn* và *lượng máu thực tế được cơ sở xác nhận*; kho máu chỉ thay đổi sau xác nhận của cơ sở.
 4. Hỗ trợ người hiến theo dõi sức khỏe sơ bộ và biết khi nào có thể hiến lại, với dữ liệu thuộc quyền kiểm soát của họ.
 
-**Phạm vi.** Webapp (PWA), backend, cơ sở dữ liệu, thông báo trong ứng dụng, email và thông báo đẩy. SMS và cuộc gọi tự động: có khung tích hợp và chế độ giả lập. **Ngoài phạm vi:** ứng dụng native, thiết bị y tế thật, thanh toán, kết nối hệ thống bệnh viện (HIS), chẩn đoán y khoa, kiểm thử tải.
+**Phạm vi.** Webapp (PWA), backend, cơ sở dữ liệu, thông báo trong ứng dụng, email và thông báo đẩy. SMS: có khung tích hợp và chế độ giả lập. Không có cuộc gọi tự động: nhân viên bệnh viện gọi thủ công bằng liên kết `tel:` và tự ghi nhận kết quả liên hệ. **Ngoài phạm vi:** ứng dụng native, thiết bị y tế thật, thanh toán, kết nối hệ thống bệnh viện (HIS), chẩn đoán y khoa, kiểm thử tải.
 
 ## 2. Sơ đồ luồng
 
@@ -74,7 +74,7 @@ flowchart TD
 | Xóa tài khoản xóa cả dữ liệu mới | SQL chạy thật | Luồng Java đầu-cuối | – |
 | PWA: cài đặt, trang ngoại tuyến, service worker | Manifest, icon, header, trang offline phục vụ đúng (chạy `next start`) | **Cài và thử trên iPhone, Android thật** | Đồng bộ nền, APK TWA |
 | Dữ liệu demo giả, seed/clear | Chạy 2 lần không nhân đôi; xóa sạch kể cả dữ liệu phát sinh | – | – |
-| SMS / cuộc gọi tự động | Khung adapter, chế độ giả lập, đồng ý, giới hạn | **Nhà cung cấp thật** | Chọn nhà cung cấp, mẫu tin được nhà mạng duyệt |
+| SMS | Khung adapter, chế độ giả lập, đồng ý, giới hạn | **Nhà cung cấp thật** | Chọn nhà cung cấp, mẫu tin được nhà mạng duyệt |
 | Toàn bộ backend Java | Cú pháp biên dịch được (javac, không thư viện) | **`mvn test`, mọi `*IT`, chạy ứng dụng** | – |
 | App native / APK | – | Chưa build | Bọc TWA, Capacitor |
 

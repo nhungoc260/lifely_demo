@@ -1,6 +1,6 @@
 package com.lifely.notify;
 
-/** Kết quả một lần gọi nhà cung cấp SMS / Voice. */
+/** Kết quả một lần gọi nhà cung cấp SMS. */
 public record SendResult(boolean ok, boolean retryable, String providerMessageId, String errorCode) {
 
     public static SendResult ok(String providerMessageId) {

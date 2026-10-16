@@ -91,11 +91,11 @@ export function DeliveryCard({ requestId, canRetry }: { requestId: string; canRe
               )}
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">SMS / cuộc gọi tự động</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">SMS / thông báo đẩy</p>
               {d.outbox.length === 0 ? <p className="text-muted-foreground">Chưa có tin nào được xếp hàng (kênh đang tắt hoặc người nhận chưa đồng ý). Thông báo trong ứng dụng vẫn được gửi.</p> : (
                 <ul className="space-y-1">
                   {d.outbox.map((o) => (
-                    <li key={`${o.channel}-${o.status}`} className="flex justify-between"><span>{o.channel === "SMS" ? "SMS" : "Cuộc gọi"} · {OUTBOX_LABEL[o.status] ?? o.status}</span><span className="font-medium tabular-nums">{o.total}</span></li>
+                    <li key={`${o.channel}-${o.status}`} className="flex justify-between"><span>{o.channel === "SMS" ? "SMS" : o.channel === "PUSH" ? "Thông báo đẩy" : "Kênh cũ (đã ngừng)"} · {OUTBOX_LABEL[o.status] ?? o.status}</span><span className="font-medium tabular-nums">{o.total}</span></li>
                   ))}
                 </ul>
               )}

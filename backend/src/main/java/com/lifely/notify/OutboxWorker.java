@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Gửi SMS / cuộc gọi từ bảng notification_outbox SAU KHI nghiệp vụ đã commit.
+ * Gửi SMS (mock) / Web Push từ bảng notification_outbox SAU KHI nghiệp vụ đã commit.
  * - Nhận việc bằng UPDATE ... FOR UPDATE SKIP LOCKED trong transaction ngắn; GỌI NHÀ CUNG CẤP NGOÀI transaction.
  * - Kiểm tra lại ngay trước khi gửi: kênh còn bật, người dùng còn hoạt động và còn đồng ý, yêu cầu còn mở, chưa vượt giới hạn tần suất.
  * - Retry có giới hạn với độ trễ tăng dần. Đây là at-least-once: không bảo đảm exactly-once với nhà cung cấp.
@@ -33,18 +33,16 @@ public class OutboxWorker {
     private final TransactionTemplate tx;
     private final NotifyProperties props;
     private final ObjectProvider<SmsProvider> sms;
-    private final ObjectProvider<VoiceCallProvider> voice;
     private final PushService push;
     private final WebPushSender pushSender;
 
     public OutboxWorker(JdbcTemplate jdbc, PlatformTransactionManager txManager, NotifyProperties props,
-                        ObjectProvider<SmsProvider> sms, ObjectProvider<VoiceCallProvider> voice,
+                        ObjectProvider<SmsProvider> sms,
                         PushService push, WebPushSender pushSender) {
         this.jdbc = jdbc;
         this.tx = new TransactionTemplate(txManager);
         this.props = props;
         this.sms = sms;
-        this.voice = voice;
         this.push = push;
         this.pushSender = pushSender;
     }
@@ -111,7 +109,6 @@ public class OutboxWorker {
         boolean isPush = "PUSH".equals(ch);
         boolean enabled = switch (ch) {
             case "SMS" -> props.isSmsEnabled();
-            case "VOICE" -> props.isVoiceEnabled();
             default -> props.isPushEnabled() && pushSender.isConfigured();
         };
         if (!enabled) {
@@ -150,7 +147,6 @@ public class OutboxWorker {
         }
         int limit = switch (ch) {
             case "SMS" -> props.getSmsPerUserPerDay();
-            case "VOICE" -> props.getVoicePerUserPerDay();
             default -> props.getPushPerUserPerDay();
         };
         Integer recent = jdbc.queryForObject("""
@@ -172,8 +168,9 @@ public class OutboxWorker {
                 SmsProvider p = sms.getIfAvailable();
                 result = p == null ? SendResult.fail("NO_PROVIDER") : p.send(phone, c.body(), c.dedupeKey());
             } else {
-                VoiceCallProvider p = voice.getIfAvailable();
-                result = p == null ? SendResult.fail("NO_PROVIDER") : p.call(phone, c.body(), c.dedupeKey());
+                // Kênh không còn được hỗ trợ (ví dụ VOICE cũ): hủy, không bao giờ gọi điện tự động.
+                cancel(c, "CHANNEL_UNSUPPORTED");
+                return;
             }
         } catch (Exception e) {
             // Timeout / lỗi mạng: coi là tạm thời.

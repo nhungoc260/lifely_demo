@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Phone, Radio, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Radio, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { CallDonor } from "@/components/requests/call-donor";
 import { DeliveryCard, FacilityReviewBanner } from "@/components/requests/facility-delivery";
 import { ShareRequest } from "@/components/requests/share-request";
 import { MatchBadge, StatusBadge, UrgencyBadge, BloodChip } from "@/components/ui/badges";
@@ -145,7 +146,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                                   <ShieldCheck className="size-3" aria-hidden />Đã được {m.verifiedByName ?? "cơ sở y tế"} xác nhận hiến máu
                                 </p>
                               )}
-                              {m.donorPhone && <a href={`tel:${m.donorPhone}`} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"><Phone className="size-3" aria-hidden />{m.donorPhone}</a>}
+                              <CallDonor m={m} onChanged={matches.reload} />
                             </div>
                             <div className="flex items-center gap-2">
                               <MatchBadge status={m.status} />

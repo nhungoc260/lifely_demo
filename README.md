@@ -42,5 +42,11 @@ LIFELY không thay thế bệnh viện và không quyết định ai đủ đi�
 Được xây dựng với ❤️ bởi Nguyễn Trần Như Ngọc 🐨 – 2026
 
 
+## Liên hệ người hiến: gọi thủ công
+LIFELY tự tìm người hiến phù hợp và gửi thông báo, nhưng **không tự gọi điện**. Nhân viên bệnh viện bấm **Gọi người hiến** (liên kết `tel:`, mở ứng dụng gọi điện của thiết bị) rồi tự ghi nhận kết quả liên hệ. Chi tiết: [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md), thay đổi mới nhất: [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md).
+
+## Kiểm chứng migration nhanh (không cần Maven)
+`PSQL="psql -U postgres -h localhost" ./tools/db/verify-migrations.sh` áp V1→V16 trên database tạm, kiểm tra nâng cấp V15→V16 và các ràng buộc. Script tạo rồi xóa hai database `lifely_verify_*`, đừng trỏ tới database thật.
+
 ## Bản nâng cấp mới nhất
-Xem [docs/UPGRADE_REPORT.md](docs/UPGRADE_REPORT.md) (lịch hiến máu, thông báo SMS/gọi dạng mock, nhất quán dữ liệu) và [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Lưu ý: phần backend Java mới chưa được compile; chạy `mvn test` trước khi dùng.
+Xem [docs/UPGRADE_REPORT.md](docs/UPGRADE_REPORT.md) (lịch hiến máu, thông báo SMS dạng mock, nhất quán dữ liệu) và [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Lưu ý: phần backend Java mới chưa được compile; chạy `mvn test` trước khi dùng.

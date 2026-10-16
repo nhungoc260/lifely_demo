@@ -101,10 +101,9 @@ lifely:
     weight-min-female: 42
     weight-min-other: 45
   notify:
-    # SMS / cuộc gọi tự động. MẶC ĐỊNH TẮT. provider=mock chỉ ghi log, KHÔNG gửi/gọi thật.
-    # Nhà cung cấp thật chưa được tích hợp: cần thêm một bean SmsProvider / VoiceCallProvider (xem docs/NOTIFICATIONS.md).
+    # SMS (mock). MẶC ĐỊNH TẮT. provider=mock chỉ ghi log, KHÔNG gửi thật. LIFELY KHÔNG có cuộc gọi tự động:
+    # nhân viên tự bấm "Gọi người hiến" (liên kết tel:) để mở ứng dụng gọi điện của thiết bị.
     sms-enabled: ${NOTIFY_SMS_ENABLED:false}
-    voice-enabled: ${NOTIFY_VOICE_ENABLED:false}
     # Web Push (miễn phí, VAPID): cần thêm lifely.push.* bên dưới
     push-enabled: ${NOTIFY_PUSH_ENABLED:false}
     push-per-user-per-day: 20
@@ -113,7 +112,6 @@ lifely:
     retry-base-seconds: 30
     batch-size: 20
     sms-per-user-per-day: 5
-    voice-per-user-per-day: 2
     appointment-reminder-hours: 24
     worker-interval-ms: 10000
     worker-initial-delay-ms: 20000

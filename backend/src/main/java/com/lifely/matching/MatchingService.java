@@ -203,7 +203,7 @@ public class MatchingService {
                         "Cần máu " + r.getBloodType().getCode() + " tại " + r.getHospitalName() + ", cách bạn "
                                 + c.score().distanceKm() + " km.",
                         "MATCH", m.getId());
-                // SMS / cuộc gọi tự động qua outbox: chỉ khi kênh bật VÀ người hiến đã đồng ý kênh đó (kiểm tra trong enqueue).
+                // SMS (mặc định mock) và Web Push qua outbox: chỉ khi kênh bật VÀ người hiến đã đồng ý kênh đó (kiểm tra trong enqueue).
                 // Nội dung không chứa dữ liệu bệnh nhân và không khẳng định người hiến đủ điều kiện.
                 String blood = r.getBloodType().getCode();
                 outbox.enqueue(c.donor().getUserId(), OutboxService.Channel.SMS, OutboxService.PURPOSE_INVITE, "REQUEST",
@@ -211,11 +211,6 @@ public class MatchingService {
                 outbox.enqueuePush(c.donor().getUserId(), OutboxService.PURPOSE_INVITE, "REQUEST", r.getId(),
                         "Có người cần máu gần bạn", "Nhóm " + blood + " tại " + r.getHospitalName()
                                 + ". Mở LIFELY để xem và phản hồi.", "/donor/requests", "PUSH:INVITE:" + m.getId());
-                if (r.getUrgency() == Urgency.CRITICAL) {
-                    outbox.enqueue(c.donor().getUserId(), OutboxService.Channel.VOICE, OutboxService.PURPOSE_INVITE,
-                            "REQUEST", r.getId(), outbox.inviteVoice(blood, r.getHospitalName()),
-                            "VOICE:INVITE:" + m.getId());
-                }
             }
         }
         return chosen.size();
@@ -226,7 +221,7 @@ public class MatchingService {
     /** Hủy mọi match chưa kết thúc (kể cả đã accept) khi request bị hủy. */
     @Transactional
     public void cancelOpenMatches(BloodRequest r, boolean notifyDonors) {
-        outbox.cancelPending("REQUEST", r.getId(), null);   // dừng mọi SMS/cuộc gọi chưa gửi của yêu cầu này
+        outbox.cancelPending("REQUEST", r.getId(), null);   // dừng mọi SMS/push chưa gửi của yêu cầu này
         for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.NOT_FINAL)) {
             m.setStatus(MatchStatus.CANCELLED);
             matchRepository.save(m);

@@ -59,6 +59,17 @@ public class MatchController {
         return ApiResponse.ok("Đã đóng lượt nhận lời", service.markNoShow(user, id));
     }
 
+    /** Nhân viên tự khai kết quả sau khi gọi người hiến bằng ứng dụng gọi điện của thiết bị; hệ thống không gọi điện. */
+    @PostMapping("/api/matches/{id}/contact-result")
+    @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
+    public ApiResponse<RequestMatchEntry> contactResult(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                        @jakarta.validation.Valid @RequestBody ContactResultRequest req) {
+        return ApiResponse.ok("Đã ghi nhận kết quả liên hệ", service.recordContactResult(user, id, req.result()));
+    }
+
+    public record ContactResultRequest(@jakarta.validation.constraints.NotNull ContactResult result) {
+    }
+
     @GetMapping("/api/requests/{id}/matches")
     @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
     public ApiResponse<List<RequestMatchEntry>> requestMatches(@AuthenticationPrincipal AuthUser user,

@@ -3,7 +3,7 @@ import type {
   AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
-  DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
+  ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
   Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, NotificationConsents, OrgAppointment,
 } from "@/types/domain";
 
@@ -70,6 +70,7 @@ export const requestApi = {
   matches: (id: string) => get<RequestMatchEntry[]>(`/api/requests/${id}/matches`),
   cancel: (id: string, reason?: string) => post<BloodRequest>(`/api/requests/${id}/cancel`, { reason }),
   complete: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/complete`),
+  contactResult: (matchId: string, result: ContactResult) => post<RequestMatchEntry>(`/api/matches/${matchId}/contact-result`, { result }),
   noShow: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/no-show`),
   facilityConfirm: (id: string) => post<BloodRequest>(`/api/requests/${id}/facility-confirm`),
   facilityDeny: (id: string, reason?: string) => post<BloodRequest>(`/api/requests/${id}/facility-deny`, { reason }),
@@ -82,7 +83,7 @@ export const deliveryApi = {
 
 export const consentApi = {
   get: () => get<NotificationConsents>("/api/users/me/consents"),
-  update: (b: Partial<{ email: boolean; sms: boolean; voice: boolean; rejoinReminders: boolean }>) => put<NotificationConsents>("/api/users/me/consents", b),
+  update: (b: Partial<{ email: boolean; sms: boolean; rejoinReminders: boolean }>) => put<NotificationConsents>("/api/users/me/consents", b),
 };
 
 export const appointmentApi = {

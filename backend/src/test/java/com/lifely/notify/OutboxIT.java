@@ -11,11 +11,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Outbox SMS/Voice ở chế độ MOCK (không gửi thật): đồng ý, chống trùng, retry có giới hạn, dừng khi yêu cầu đóng.
+ * Outbox SMS ở chế độ MOCK (không gửi thật): đồng ý, chống trùng, retry có giới hạn, dừng khi yêu cầu đóng.
  * Cần PostgreSQL local có dữ liệu demo.   Chạy:  mvn test -Dtest=OutboxIT
  */
 @SpringBootTest(properties = {
-        "lifely.notify.sms-enabled=true", "lifely.notify.voice-enabled=true", "lifely.notify.provider=mock",
+        "lifely.notify.sms-enabled=true", "lifely.notify.provider=mock",
         "lifely.notify.retry-base-seconds=0", "lifely.notify.worker-initial-delay-ms=3600000",
         "lifely.notify.sms-per-user-per-day=1000"})
 class OutboxIT {
@@ -25,7 +25,6 @@ class OutboxIT {
     @Autowired ConsentService consents;
     @Autowired JdbcTemplate jdbc;
     @Autowired SmsProvider sms;
-    @Autowired VoiceCallProvider voice;
 
     UUID user;
 
@@ -35,7 +34,6 @@ class OutboxIT {
         jdbc.update("DELETE FROM notification_outbox WHERE dedupe_key LIKE 'IT:%'");
         jdbc.update("DELETE FROM notification_consents WHERE user_id=?", user);
         ((MockSmsProvider) sms).clear();
-        ((MockVoiceProvider) voice).clear();
     }
 
     private void consent(boolean sms) {
@@ -49,7 +47,6 @@ class OutboxIT {
     @Test
     void providersAreMocksSoNothingRealIsSent() {
         assertInstanceOf(MockSmsProvider.class, sms);
-        assertInstanceOf(MockVoiceProvider.class, voice);
     }
 
     @Test

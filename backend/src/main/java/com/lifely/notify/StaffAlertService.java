@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Cảnh báo cho nhân viên của đúng cơ sở được gắn với yêu cầu (chủ + nhân viên của tổ chức đó), không gửi cho cơ sở khác.
- * In-app luôn có; SMS/Voice chỉ khi kênh bật và nhân viên đã đồng ý.
+ * In-app luôn có; SMS (mock) / Web Push chỉ khi kênh bật và nhân viên đã đồng ý. Không có cuộc gọi tự động.
  */
 @Service
 public class StaffAlertService {
@@ -57,10 +57,6 @@ public class StaffAlertService {
             outbox.enqueuePush(staff, OutboxService.PURPOSE_STAFF_ALERT, "REQUEST", r.getId(), "Yêu cầu máu mới tại cơ sở",
                     "Nhóm " + r.getBloodType().getCode() + ", " + r.getUnitsRequired() + " đơn vị. Hãy xác nhận hoặc từ chối.",
                     "/organization/requests/" + r.getId(), "PUSH:STAFF:" + r.getId() + ":" + staff);
-            if (r.getUrgency() == Urgency.CRITICAL) {
-                outbox.enqueue(staff, OutboxService.Channel.VOICE, OutboxService.PURPOSE_STAFF_ALERT, "REQUEST",
-                        r.getId(), text, "VOICE:STAFF:" + r.getId() + ":" + staff);
-            }
             n++;
         }
         return n;
