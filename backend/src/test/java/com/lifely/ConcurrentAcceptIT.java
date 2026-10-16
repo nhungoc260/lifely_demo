@@ -95,7 +95,10 @@ class ConcurrentAcceptIT {
         assertEquals(DONORS - 2, rejected.get());
         assertEquals(2, confirmed, "confirmed must never exceed required");
         assertEquals(2, accepted);
-        assertEquals("FULFILLED", status);
+        // Đủ người nhận lời KHÔNG phải là đã có máu: yêu cầu ở trạng thái điều phối, units_received vẫn 0.
+        assertEquals("PARTIALLY_FULFILLED", status);
+        Integer received = jdbc.queryForObject("SELECT units_received FROM blood_requests WHERE id=?", Integer.class, requestId);
+        assertEquals(0, received, "chưa có xác nhận hiến máu thực tế nào");
 
         jdbc.update("DELETE FROM request_status_history WHERE request_id=?", requestId);
         jdbc.update("DELETE FROM notifications WHERE reference_id=?", requestId);

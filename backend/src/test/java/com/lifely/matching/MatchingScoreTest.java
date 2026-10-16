@@ -27,7 +27,8 @@ class MatchingScoreTest {
                 mock(com.lifely.donor.BloodTypeRepository.class), mock(MatchRepository.class),
                 mock(MatchEventRepository.class), mock(com.lifely.user.PrivacySettingsRepository.class),
                 mock(com.lifely.request.RequestLifecycle.class), mock(com.lifely.request.BloodRequestRepository.class),
-                mock(com.lifely.notification.NotificationService.class), new MatchingProperties());
+                mock(com.lifely.notification.NotificationService.class), new MatchingProperties(),
+                mock(com.lifely.notify.OutboxService.class));
     }
 
     private static BloodType type(String code) {

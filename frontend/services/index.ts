@@ -1,9 +1,10 @@
-import { get, post, put, qs, apiFetch } from "@/lib/api";
+import { get, post, put, qs, apiFetch, authFetch, toApiError } from "@/lib/api";
 import type {
   AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
+  Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, NotificationConsents, OrgAppointment,
 } from "@/types/domain";
 
 // ---- auth
@@ -57,7 +58,9 @@ export interface CreateRequestInput {
   description?: string; organizationId?: string;
 }
 export const requestApi = {
-  create: (b: CreateRequestInput) => post<BloodRequest>("/api/requests", b),
+  /** idempotencyKey: sinh MỘT lần cho mỗi lần mở biểu mẫu; gửi lại cùng khóa sẽ không tạo yêu cầu thứ hai. */
+  create: (b: CreateRequestInput, idempotencyKey?: string) =>
+    apiFetch<BloodRequest>("/api/requests", { method: "POST", body: b, headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined }),
   list: (p: { status?: RequestStatus; page?: number; size?: number }) => get<Page<BloodRequest>>(`/api/requests${qs(p)}`),
   dashboard: () => get<RequesterDashboard>("/api/requests/dashboard"),
   coverage: (bloodType: string, lat: number, lng: number) =>
@@ -67,6 +70,32 @@ export const requestApi = {
   matches: (id: string) => get<RequestMatchEntry[]>(`/api/requests/${id}/matches`),
   cancel: (id: string, reason?: string) => post<BloodRequest>(`/api/requests/${id}/cancel`, { reason }),
   complete: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/complete`),
+  noShow: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/no-show`),
+  facilityConfirm: (id: string) => post<BloodRequest>(`/api/requests/${id}/facility-confirm`),
+  facilityDeny: (id: string, reason?: string) => post<BloodRequest>(`/api/requests/${id}/facility-deny`, { reason }),
+};
+
+export const deliveryApi = {
+  summary: (id: string) => get<DeliverySummary>(`/api/requests/${id}/delivery`),
+  retry: (id: string) => post<{ requeued: number }>(`/api/requests/${id}/delivery/retry`),
+};
+
+export const consentApi = {
+  get: () => get<NotificationConsents>("/api/users/me/consents"),
+  update: (b: Partial<{ email: boolean; sms: boolean; voice: boolean; rejoinReminders: boolean }>) => put<NotificationConsents>("/api/users/me/consents", b),
+};
+
+export const appointmentApi = {
+  slots: (p: { organizationId?: string; days?: number } = {}) => get<DonationSlot[]>(`/api/slots${qs(p)}`),
+  book: (slotId: string) => post<Appointment>(`/api/slots/${slotId}/book`),
+  mine: () => get<Appointment[]>("/api/appointments/mine"),
+  cancel: (id: string) => post<Appointment>(`/api/appointments/${id}/cancel`),
+  orgSlots: () => get<DonationSlot[]>("/api/organizations/me/slots"),
+  createSlot: (b: { startsAt: string; endsAt: string; capacity: number }) => post<DonationSlot>("/api/organizations/me/slots", b),
+  closeSlot: (id: string) => post<DonationSlot>(`/api/organizations/me/slots/${id}/close`),
+  orgAppointments: (slotId: string) => get<OrgAppointment[]>(`/api/organizations/me/slots/${slotId}/appointments`),
+  transition: (id: string, action: AppointmentAction) => post<OrgAppointment>(`/api/organizations/me/appointments/${id}/status`, { action }),
+  inventoryMovements: () => get<InventoryMovement[]>("/api/organizations/me/inventory/movements"),
 };
 
 export const notificationApi = {
@@ -131,4 +160,35 @@ export const adminApi = {
   updateMessage: (id: string, status: ContactStatus) => put<ContactMessage>(`/api/admin/messages/${id}`, { status }),
   emailSummary: () => post<null>("/api/admin/summary/email"),
   auditLogs: (p: { action?: string; page?: number; size?: number }) => get<Page<AuditLogEntry>>(`/api/admin/audit-logs${qs(p)}`),
+};
+
+export const healthApi = {
+  summary: () => get<HealthSummary>("/api/donors/me/health"),
+  checks: () => get<HealthCheck[]>("/api/donors/me/health/checks"),
+  evaluate: (b: HealthInput) => post<HealthEvaluation>("/api/donors/me/health/evaluate", b),
+  save: (b: HealthInput) => post<HealthCheck>("/api/donors/me/health/checks", b),
+  deleteAll: () => apiFetch<{ deleted: number }>("/api/donors/me/health/checks", { method: "DELETE" }),
+  setConsent: (granted: boolean, deleteData = false) => put<HealthSummary>("/api/donors/me/health/consent", { granted, deleteData }),
+  setGender: (gender: Gender) => put<HealthSummary>("/api/donors/me/health/gender", { gender }),
+  /** Tải dữ liệu của chính mình về máy (JSON hoặc CSV). */
+  async download(format: "json" | "csv"): Promise<void> {
+    const res = await authFetch(`/api/donors/me/health/export?format=${format}`);
+    if (!res.ok) throw toApiError(new Error("Không xuất được dữ liệu"));
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lifely-suc-khoe.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
+};
+
+export const pushApi = {
+  config: () => get<{ enabled: boolean; publicKey: string; subscribed: boolean }>("/api/push/public-key"),
+  subscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) => post<{ subscribed: boolean }>("/api/push/subscriptions", sub),
+  unsubscribe: (endpoint: string) => apiFetch<{ subscribed: boolean }>("/api/push/subscriptions", { method: "DELETE", body: { endpoint } }),
+  test: () => post<{ queued: boolean }>("/api/push/test"),
 };

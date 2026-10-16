@@ -28,3 +28,10 @@ frontend/*.tsbuildinfo
 frontend/.env.local
 
 .env.example
+
+# Khóa bí mật (không bao giờ commit): keystore ký APK, khóa riêng, khóa VAPID
+*.keystore
+*.jks
+*.pem
+*.p12
+vapid-keys*

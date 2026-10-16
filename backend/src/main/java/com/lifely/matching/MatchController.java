@@ -53,6 +53,12 @@ public class MatchController {
         return ApiResponse.ok("Đã ghi nhận lần hiến máu", service.complete(user, id));
     }
 
+    @PostMapping("/api/matches/{id}/no-show")
+    @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
+    public ApiResponse<RequestMatchEntry> noShow(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
+        return ApiResponse.ok("Đã đóng lượt nhận lời", service.markNoShow(user, id));
+    }
+
     @GetMapping("/api/requests/{id}/matches")
     @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
     public ApiResponse<List<RequestMatchEntry>> requestMatches(@AuthenticationPrincipal AuthUser user,

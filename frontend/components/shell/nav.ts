@@ -1,5 +1,5 @@
 import {
-  BarChart3, Bell, ClipboardList, Droplets, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
+  Activity, BarChart3, Bell, CalendarDays, ClipboardList, Droplets, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
   Building2, HandHelping, MessageSquare, ShieldCheck, UserRound, Users, type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +31,8 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/map", label: "Bản đồ", icon: Map, mobile: true },
     { href: "/donor/notifications", label: "Thông báo", icon: Bell, mobile: true, badge: "unread" },
     { href: "/donor/profile", label: "Hồ sơ", icon: UserRound, mobile: true },
+    { href: "/donor/health", label: "Sức khỏe của tôi", icon: Activity },
+    { href: "/donor/appointments", label: "Đặt lịch hiến", icon: CalendarDays },
     { href: "/donor/history", label: "Lịch sử", icon: History },
   ],
   REQUESTER: [
@@ -45,6 +47,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/organization/dashboard", label: "Tổng quan", icon: LayoutDashboard, mobile: true },
     { href: "/organization/requests", label: "Yêu cầu", icon: ClipboardList, mobile: true },
     { href: "/organization/requests/create", label: "Yêu cầu mới", icon: FilePlus2 },
+    { href: "/organization/appointments", label: "Lịch hiến", icon: CalendarDays },
     { href: "/organization/inventory", label: "Kho máu", icon: Droplets },
     { href: "/organization/donations", label: "Lịch sử hiến", icon: HeartPulse },
     { href: "/organization/stats", label: "Thống kê", icon: BarChart3 },
@@ -86,7 +89,11 @@ export const TOPNAV: Partial<Record<Role, TopNav>> = {
       { href: "/donor/history", label: "Lịch sử", icon: History },
     ],
     bell: "/donor/notifications",
-    menu: [{ href: "/donor/profile", label: "Hồ sơ của tôi", icon: UserRound }],
+    menu: [
+      { href: "/donor/profile", label: "Hồ sơ của tôi", icon: UserRound },
+      { href: "/donor/health", label: "Sức khỏe của tôi", icon: Activity },
+      { href: "/donor/appointments", label: "Đặt lịch hiến", icon: CalendarDays },
+    ],
   },
   REQUESTER: {
     links: [

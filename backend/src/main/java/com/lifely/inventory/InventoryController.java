@@ -31,6 +31,12 @@ public class InventoryController {
         return ApiResponse.ok("OK", service.get(user.getId()));
     }
 
+    @GetMapping("/movements")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<List<InventoryService.Movement>> movements(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.ok("OK", service.movements(user.getId()));
+    }
+
     @GetMapping("/settings")
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<InventorySettings> settings(@AuthenticationPrincipal AuthUser user) {

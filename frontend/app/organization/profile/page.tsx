@@ -1,5 +1,6 @@
 "use client";
 
+import { ConsentCard } from "@/components/notifications/consent-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
@@ -103,6 +104,7 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
       </form>
 
       <div className="space-y-6">
+        <ConsentCard />
         <Card>
           <CardHeader><CardTitle>Xác minh</CardTitle>{org && <OrgStatusBadge status={org.verificationStatus} />}</CardHeader>
           <CardContent className="space-y-4 text-sm">

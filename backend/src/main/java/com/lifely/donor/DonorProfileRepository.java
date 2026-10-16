@@ -27,13 +27,22 @@ public interface DonorProfileRepository extends JpaRepository<DonorProfile, UUID
               and d.bloodType.id in :bloodTypeIds
               and d.latitude between :minLat and :maxLat
               and d.longitude between :minLng and :maxLng
-              and (d.lastDonationDate is null or d.lastDonationDate <= :latestAllowedDonation)
+              and (d.lastDonationDate is null
+                   or (d.gender = 'FEMALE' and d.lastDonationDate <= :latestAllowedDonationFemale)
+                   or (d.gender <> 'FEMALE' and d.lastDonationDate <= :latestAllowedDonation))
               and exists (select 1 from User u where u.id = d.userId
                           and u.status = com.lifely.user.UserStatus.ACTIVE)
               and exists (select 1 from PrivacySettings p where p.userId = d.userId
                           and p.allowEmergencyMatching = true)
               and not exists (select 1 from com.lifely.matching.Match m
                               where m.requestId = :requestId and m.donorId = d.id)
+              and not exists (select 1 from com.lifely.matching.Match m2, com.lifely.request.BloodRequest r2
+                              where m2.donorId = d.id and r2.id = m2.requestId
+                                and m2.status = com.lifely.matching.MatchStatus.ACCEPTED
+                                and r2.status in (com.lifely.request.RequestStatus.VERIFIED,
+                                                  com.lifely.request.RequestStatus.MATCHING,
+                                                  com.lifely.request.RequestStatus.DONORS_CONTACTED,
+                                                  com.lifely.request.RequestStatus.PARTIALLY_FULFILLED))
             """)
     List<DonorProfile> findCandidates(@Param("bloodTypeIds") Collection<Short> bloodTypeIds,
                                       @Param("minLat") BigDecimal minLat,
@@ -41,6 +50,7 @@ public interface DonorProfileRepository extends JpaRepository<DonorProfile, UUID
                                       @Param("minLng") BigDecimal minLng,
                                       @Param("maxLng") BigDecimal maxLng,
                                       @Param("latestAllowedDonation") LocalDate latestAllowedDonation,
+                                      @Param("latestAllowedDonationFemale") LocalDate latestAllowedDonationFemale,
                                       @Param("requestId") UUID requestId,
                                       Pageable pageable);
 }

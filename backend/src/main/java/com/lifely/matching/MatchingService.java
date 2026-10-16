@@ -8,6 +8,7 @@ import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
+import com.lifely.notify.OutboxService;
 import com.lifely.request.BloodRequest;
 import com.lifely.request.BloodRequestRepository;
 import com.lifely.request.RequestLifecycle;
@@ -44,12 +45,13 @@ public class MatchingService {
     private final BloodRequestRepository requestRepository;
     private final NotificationService notifications;
     private final MatchingProperties props;
+    private final OutboxService outbox;
 
     public MatchingService(DonorProfileRepository donorRepository, BloodTypeRepository bloodTypeRepository,
                            MatchRepository matchRepository, MatchEventRepository eventRepository,
                            PrivacySettingsRepository privacyRepository, RequestLifecycle lifecycle,
                            BloodRequestRepository requestRepository, NotificationService notifications,
-                           MatchingProperties props) {
+                           MatchingProperties props, OutboxService outbox) {
         this.donorRepository = donorRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.matchRepository = matchRepository;
@@ -59,6 +61,7 @@ public class MatchingService {
         this.requestRepository = requestRepository;
         this.notifications = notifications;
         this.props = props;
+        this.outbox = outbox;
     }
 
     // ------------------------------------------------------------------ scoring
@@ -86,7 +89,8 @@ public class MatchingService {
         double dLng = maxKm / (111.0 * Math.max(0.1, Math.cos(Math.toRadians(lat))));
         List<DonorProfile> pool = donorRepository.findCandidates(typeIds,
                 bd(lat - dLat), bd(lat + dLat), bd(lng - dLng), bd(lng + dLng),
-                LocalDate.now().minusDays(props.getMinDaysBetweenDonations()), r.getId(),
+                LocalDate.now().minusDays(props.getMinDaysBetweenDonations()),
+                LocalDate.now().minusDays(props.getMinDaysBetweenDonationsFemale()), r.getId(),
                 PageRequest.of(0, props.getCandidatePoolSize()));
         return pool.stream()
                 .map(d -> new Candidate(d, score(d, r, now)))
@@ -199,6 +203,19 @@ public class MatchingService {
                         "Cần máu " + r.getBloodType().getCode() + " tại " + r.getHospitalName() + ", cách bạn "
                                 + c.score().distanceKm() + " km.",
                         "MATCH", m.getId());
+                // SMS / cuộc gọi tự động qua outbox: chỉ khi kênh bật VÀ người hiến đã đồng ý kênh đó (kiểm tra trong enqueue).
+                // Nội dung không chứa dữ liệu bệnh nhân và không khẳng định người hiến đủ điều kiện.
+                String blood = r.getBloodType().getCode();
+                outbox.enqueue(c.donor().getUserId(), OutboxService.Channel.SMS, OutboxService.PURPOSE_INVITE, "REQUEST",
+                        r.getId(), outbox.inviteSms(blood, r.getHospitalName()), "SMS:INVITE:" + m.getId());
+                outbox.enqueuePush(c.donor().getUserId(), OutboxService.PURPOSE_INVITE, "REQUEST", r.getId(),
+                        "Có người cần máu gần bạn", "Nhóm " + blood + " tại " + r.getHospitalName()
+                                + ". Mở LIFELY để xem và phản hồi.", "/donor/requests", "PUSH:INVITE:" + m.getId());
+                if (r.getUrgency() == Urgency.CRITICAL) {
+                    outbox.enqueue(c.donor().getUserId(), OutboxService.Channel.VOICE, OutboxService.PURPOSE_INVITE,
+                            "REQUEST", r.getId(), outbox.inviteVoice(blood, r.getHospitalName()),
+                            "VOICE:INVITE:" + m.getId());
+                }
             }
         }
         return chosen.size();
@@ -209,6 +226,7 @@ public class MatchingService {
     /** Hủy mọi match chưa kết thúc (kể cả đã accept) khi request bị hủy. */
     @Transactional
     public void cancelOpenMatches(BloodRequest r, boolean notifyDonors) {
+        outbox.cancelPending("REQUEST", r.getId(), null);   // dừng mọi SMS/cuộc gọi chưa gửi của yêu cầu này
         for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.NOT_FINAL)) {
             m.setStatus(MatchStatus.CANCELLED);
             matchRepository.save(m);
@@ -225,6 +243,7 @@ public class MatchingService {
     /** Khi request hết hạn: các match chưa phản hồi hết hiệu lực. Donor đã accept giữ nguyên để lưu vết. */
     @Transactional
     public void expireOpenMatches(BloodRequest r) {
+        outbox.cancelPending("REQUEST", r.getId(), null);
         for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE)) {
             m.setStatus(MatchStatus.EXPIRED);
             matchRepository.save(m);
@@ -232,16 +251,20 @@ public class MatchingService {
         }
     }
 
-    /** Khi request đã đủ người: các donor còn chờ được thông báo để không ai đến vô ích. */
+    /**
+     * Khi yêu cầu đã đủ người nhận lời (hoặc đã đủ lượng được xác nhận): dừng mời thêm, các lời mời chưa phản hồi hết hiệu lực,
+     * SMS/cuộc gọi mời chưa gửi bị hủy và người hiến còn chờ được báo để không ai đến vô ích.
+     */
     @Transactional
     public void closeRemainingAfterFulfilled(BloodRequest r) {
+        outbox.cancelPending("REQUEST", r.getId(), OutboxService.PURPOSE_INVITE);
         for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE)) {
             m.setStatus(MatchStatus.EXPIRED);
             matchRepository.save(m);
             event(m.getId(), "EXPIRED", Map.of("reason", "REQUEST_FULFILLED"));
             donorRepository.findById(m.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
-                    NotificationType.SYSTEM, "Yêu cầu đã đủ người",
-                    "Đã đủ người hiến máu xác nhận cho yêu cầu " + r.getBloodType().getCode() + " tại "
+                    NotificationType.SYSTEM, "Yêu cầu đã đủ người nhận lời",
+                    "Đã đủ người nhận lời cho yêu cầu " + r.getBloodType().getCode() + " tại "
                             + r.getHospitalName() + ". Cảm ơn bạn đã phản hồi.", "REQUEST", r.getId()));
         }
     }

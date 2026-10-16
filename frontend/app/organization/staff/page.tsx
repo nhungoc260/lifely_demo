@@ -19,7 +19,6 @@ export default function OrganizationStaff() {
   const res = useQuery(me.data ? "org-staff" : null, orgApi.staff);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const data = res.data;
 
   async function add() {
     if (!email.trim()) return;
@@ -58,11 +57,11 @@ export default function OrganizationStaff() {
       />
       {me.data === null ? <ErrorState message="Hãy hoàn tất hồ sơ tổ chức trước." />
         : res.error && !res.data ? <ErrorState message={res.error.message} onRetry={res.reload} />
-        : res.initialLoading || !data ? <Skeleton className="h-60" />
+        : res.initialLoading || !res.data ? <Skeleton className="h-60" />
         : (
           <>
             <Card className="divide-y">
-              {data.members.map((m) => (
+              {res.data.members.map((m) => (
                 <div key={m.userId} className="flex items-center justify-between gap-4 p-4">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{m.fullName}</p>
@@ -70,7 +69,7 @@ export default function OrganizationStaff() {
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">{m.role === "OWNER" ? "Chủ tài khoản" : "Nhân viên"}</span>
-                    {data.owner && m.role === "STAFF" && (
+                    {res.data?.owner && m.role === "STAFF" && (
                       <Button variant="outline" size="sm" disabled={busy} onClick={() => remove(m.userId, m.fullName)}><UserMinus /> Gỡ</Button>
                     )}
                   </div>
@@ -78,7 +77,7 @@ export default function OrganizationStaff() {
               ))}
             </Card>
 
-            {data.owner ? (
+            {res.data.owner ? (
               <Card className="mt-6 p-5">
                 <h2 className="font-semibold">Thêm nhân viên</h2>
                 <p className="mt-1 text-sm text-muted-foreground">

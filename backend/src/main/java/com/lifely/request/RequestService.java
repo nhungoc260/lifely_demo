@@ -13,6 +13,7 @@ import com.lifely.matching.MatchStatus;
 import com.lifely.matching.MatchingService;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
+import com.lifely.notify.StaffAlertService;
 import com.lifely.organization.Organization;
 import com.lifely.organization.OrganizationRepository;
 import com.lifely.request.dto.*;
@@ -50,12 +51,14 @@ public class RequestService {
     private final NotificationService notifications;
     private final RequestStatusHistoryRepository historyRepository;
     private final AuditService audit;
+    private final RequestCreateGuard createGuard;
+    private final StaffAlertService staffAlerts;
 
     public RequestService(BloodRequestRepository requestRepository, BloodTypeRepository bloodTypeRepository,
                           OrganizationRepository organizationRepository, RequestLifecycle lifecycle,
                           RequestAccess access, MatchingService matchingService, MatchRepository matchRepository,
                           NotificationService notifications, RequestStatusHistoryRepository historyRepository,
-                          AuditService audit) {
+                          AuditService audit, RequestCreateGuard createGuard, StaffAlertService staffAlerts) {
         this.requestRepository = requestRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.organizationRepository = organizationRepository;
@@ -66,10 +69,31 @@ public class RequestService {
         this.notifications = notifications;
         this.historyRepository = historyRepository;
         this.audit = audit;
+        this.createGuard = createGuard;
+        this.staffAlerts = staffAlerts;
     }
 
-    @Transactional
     public RequestResponse create(AuthUser user, CreateRequestDto dto) {
+        return create(user, dto, null);
+    }
+
+    /**
+     * @param idempotencyKey khóa do client sinh cho MỖI lần gửi biểu mẫu (tùy chọn). Gửi lại cùng khóa trả về chính yêu cầu đã tạo,
+     *                       không tạo bản thứ hai.
+     */
+    @Transactional
+    public RequestResponse create(AuthUser user, CreateRequestDto dto, String idempotencyKey) {
+        String key = idempotencyKey == null || idempotencyKey.isBlank() ? null : idempotencyKey.trim();
+        if (key != null && !key.matches("[A-Za-z0-9_-]{8,64}")) {
+            throw AppException.badRequest("INVALID_IDEMPOTENCY_KEY", "Khóa chống gửi trùng không hợp lệ");
+        }
+        createGuard.lockRequester(user.getId());   // từ đây các lần tạo của cùng người được xếp hàng tuần tự
+        if (key != null) {
+            var existing = requestRepository.findByRequesterIdAndIdempotencyKey(user.getId(), key);
+            if (existing.isPresent()) {
+                return RequestResponse.from(existing.get());
+            }
+        }
         Instant now = Instant.now();
         if (dto.deadline().isBefore(now.plus(Duration.ofMinutes(5)))) {
             throw AppException.badRequest("INVALID_DEADLINE", "Hạn chót phải cách hiện tại ít nhất 5 phút");
@@ -121,6 +145,14 @@ public class RequestService {
             }
         }
 
+        // Chống tạo trùng ngoài ý muốn (nhiều tab, bấm lại) khi client không gửi khóa: cùng nhóm máu + cơ sở trong 10 phút.
+        if (requestRepository.countRecentDuplicates(user.getId(), dto.bloodType(), r.getHospitalName(),
+                RequestStatus.AWAITING_OR_ACTIVE, now.minus(Duration.ofMinutes(10))) > 0) {
+            throw AppException.conflict("DUPLICATE_REQUEST",
+                    "Bạn vừa tạo một yêu cầu giống hệt (cùng nhóm máu, cùng cơ sở). Hãy theo dõi yêu cầu đó hoặc hủy nó trước khi tạo lại.");
+        }
+        r.setIdempotencyKey(key);
+        r.setFacilityReview(org == null ? "NONE" : (user.hasRole(Role.ORGANIZATION) ? "CONFIRMED" : "PENDING"));
         r = requestRepository.save(r);
         lifecycle.transition(r, RequestStatus.CREATED, "Đã tạo yêu cầu", user.getId());
         audit.log(user.getId(), AuditAction.REQUEST_CREATED, "REQUEST", r.getId(),
@@ -131,6 +163,15 @@ public class RequestService {
         lifecycle.transition(r, RequestStatus.PENDING_VERIFICATION, "Đã gửi để xác minh", user.getId());
         if (autoVerified) {
             markVerified(r, user.getId(), "Tự động xác minh: yêu cầu từ tổ chức đã xác minh");
+            staffAlerts.notifyNewRequest(r);   // báo đồng nghiệp cùng cơ sở
+        } else if ("PENDING".equals(r.getFacilityReview())) {
+            // Yêu cầu gắn với cơ sở ĐÃ XÁC MINH: không chờ admin. Huy động ngay, đồng thời báo cơ sở để họ xác nhận hoặc từ chối.
+            // Yêu cầu vẫn được đánh dấu "chờ cơ sở xác nhận" và dừng ngay nếu cơ sở từ chối.
+            markVerified(r, null, "Tự động huy động: yêu cầu gắn với cơ sở đã xác minh, đang chờ cơ sở xác nhận",
+                    "Yêu cầu đã được tiếp nhận",
+                    "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã được tiếp nhận, chúng tôi đang tìm người hiến máu và đã báo cho "
+                            + r.getHospitalName() + ". Việc có máu hay không do cơ sở y tế quyết định.");
+            staffAlerts.notifyNewRequest(r);
         }
         return RequestResponse.from(r);
     }
@@ -138,11 +179,16 @@ public class RequestService {
     /** Dùng khi admin xác minh hoặc tổ chức đã xác minh tạo request. Sau đó khởi động matching. */
     @Transactional
     public void markVerified(BloodRequest r, UUID actorId, String note) {
+        markVerified(r, actorId, note, "Yêu cầu đã được xác minh",
+                "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã được xác minh và chúng tôi đang tìm người hiến máu.");
+    }
+
+    @Transactional
+    public void markVerified(BloodRequest r, UUID actorId, String note, String title, String message) {
         r.setVerified(true);
         r.setVerifiedBy(actorId);
         lifecycle.transition(r, RequestStatus.VERIFIED, note, actorId);
-        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_VERIFIED, "Yêu cầu đã được xác minh",
-                "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã được xác minh và chúng tôi đang tìm người hiến máu.",
+        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_VERIFIED, title, message,
                 "REQUEST", r.getId());
         audit.log(actorId, AuditAction.REQUEST_VERIFIED, "REQUEST", r.getId());
         matchingService.startMatching(r, actorId);
@@ -195,6 +241,48 @@ public class RequestService {
         matchingService.cancelOpenMatches(r, true);
         audit.log(user.getId(), AuditAction.REQUEST_CANCELLED, "REQUEST", r.getId());
         return RequestResponse.from(r);
+    }
+
+    /** Nhân viên của cơ sở được gắn với yêu cầu xác nhận đây đúng là nhu cầu của cơ sở. */
+    @Transactional
+    public RequestResponse facilityConfirm(AuthUser user, UUID id) {
+        BloodRequest r = lockedForFacility(user, id);
+        r.setFacilityReview("CONFIRMED");
+        requestRepository.save(r);
+        lifecycle.note(r, "Cơ sở y tế đã xác nhận yêu cầu", user.getId());
+        notifications.notify(r.getRequesterId(), NotificationType.SYSTEM, "Cơ sở đã xác nhận yêu cầu",
+                r.getHospitalName() + " đã xác nhận yêu cầu máu " + r.getBloodType().getCode() + " của bạn.", "REQUEST", r.getId());
+        audit.log(user.getId(), "REQUEST_FACILITY_CONFIRMED", "REQUEST", r.getId());
+        return RequestResponse.from(r);
+    }
+
+    /** Cơ sở từ chối (không phải nhu cầu của cơ sở): dừng huy động, hủy lời mời chưa gửi và báo người đã được mời. */
+    @Transactional
+    public RequestResponse facilityDeny(AuthUser user, UUID id, String reason) {
+        BloodRequest r = lockedForFacility(user, id);
+        String clean = Sanitizer.plain(reason);
+        r.setFacilityReview("DENIED");
+        r.setCancelReason(clean == null ? "Cơ sở y tế không xác nhận yêu cầu này" : clean);
+        lifecycle.transition(r, RequestStatus.CANCELLED, "Cơ sở y tế từ chối xác nhận", user.getId());
+        matchingService.cancelOpenMatches(r, true);
+        notifications.notify(r.getRequesterId(), NotificationType.REQUEST_REJECTED, "Cơ sở không xác nhận yêu cầu",
+                r.getHospitalName() + " không xác nhận yêu cầu của bạn: " + r.getCancelReason(), "REQUEST", r.getId());
+        audit.log(user.getId(), "REQUEST_FACILITY_DENIED", "REQUEST", r.getId());
+        return RequestResponse.from(r);
+    }
+
+    private BloodRequest lockedForFacility(AuthUser user, UUID id) {
+        BloodRequest r = requestRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
+        boolean mine = r.getOrganizationId() != null && organizationRepository.findForUser(user.getId())
+                .map(o -> o.getId().equals(r.getOrganizationId())).orElse(false);
+        if (!mine) {
+            throw AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu");   // chỉ nhân viên đúng cơ sở
+        }
+        if (!"PENDING".equals(r.getFacilityReview()) || !RequestStatus.CANCELLABLE.contains(r.getStatus())) {
+            throw AppException.conflict("INVALID_STATE", "Yêu cầu này không còn ở trạng thái chờ cơ sở xác nhận");
+        }
+        return r;
     }
 
     @Transactional

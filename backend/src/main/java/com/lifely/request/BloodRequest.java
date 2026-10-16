@@ -36,8 +36,20 @@ public class BloodRequest {
     @Column(name = "units_required")
     private int unitsRequired;
 
+    /** Số người hiến đã NHẬN LỜI (chưa phải lượng máu đã hiến). Dùng để dừng mời thêm khi đã đủ người. */
     @Column(name = "units_confirmed")
     private int unitsConfirmed;
+
+    /** Số đơn vị đã được cơ sở y tế / bên điều phối XÁC NHẬN hiến thực tế. Chỉ tăng khi xác nhận lần hiến. */
+    @Column(name = "units_received")
+    private int unitsReceived;
+
+    /** NONE | PENDING | CONFIRMED | DENIED: xác nhận của cơ sở đối với yêu cầu gắn với cơ sở đó. */
+    @Column(name = "facility_review")
+    private String facilityReview = "NONE";
+
+    @Column(name = "idempotency_key")
+    private String idempotencyKey;
 
     @Enumerated(EnumType.STRING)
     private Urgency urgency;

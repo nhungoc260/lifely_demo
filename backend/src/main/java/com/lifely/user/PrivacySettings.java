@@ -32,6 +32,10 @@ public class PrivacySettings {
     @Column(name = "receive_emergency_notifications")
     private boolean receiveEmergencyNotifications = true;
 
+    /** Nhắc "đã có thể hiến máu lại": bật/tắt riêng với thông báo khẩn cấp. */
+    @Column(name = "receive_rejoin_reminders")
+    private boolean receiveRejoinReminders = true;
+
     @Column(name = "show_donation_count")
     private boolean showDonationCount = false;
 

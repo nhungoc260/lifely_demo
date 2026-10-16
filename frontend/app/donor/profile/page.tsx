@@ -22,6 +22,7 @@ import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { donorApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
+import { ConsentCard } from "@/components/notifications/consent-card";
 import { BLOOD_TYPES, type DonorProfile, type Privacy } from "@/types/domain";
 
 const schema = z.object({
@@ -104,6 +105,7 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
       </form>
 
       <div className="space-y-6">
+        <ConsentCard />
         <Card>
           <CardHeader><CardTitle>Trạng thái sẵn sàng</CardTitle></CardHeader>
           <CardContent>

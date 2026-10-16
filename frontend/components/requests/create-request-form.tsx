@@ -63,6 +63,8 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
   const orgs = useQuery("hospitals", publicApi.organizations);
   const [preview, setPreview] = useState<Values | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Một khóa cho mỗi lần mở biểu mẫu: bấm đúp, nhiều tab hay retry mạng không tạo yêu cầu thứ hai.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [formError, setFormError] = useState<string | null>(null);
 
   const { register, control, handleSubmit, setValue, setError, formState: { errors } } = useForm<Values>({
@@ -95,8 +97,10 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         district: v.district || undefined, latitude: v.latitude, longitude: v.longitude, urgency: v.urgency,
         deadline: new Date(v.deadlineLocal).toISOString(), contactPhone: v.contactPhone,
         description: v.description || undefined, organizationId: v.organizationId || undefined,
-      });
-      toast.success(created.verified ? "Đã tạo yêu cầu. Chúng tôi đang tìm người hiến máu." : "Đã gửi yêu cầu để xác minh.");
+      }, idempotencyKey);
+      toast.success(created.verified
+        ? "Yêu cầu đã được tiếp nhận. Chúng tôi đang tìm người hiến máu; việc có máu hay không do cơ sở y tế quyết định."
+        : "Đã gửi yêu cầu để xác minh.");
       router.push(`${basePath}/requests/${created.id}`);
     } catch (e) {
       setPreview(null);

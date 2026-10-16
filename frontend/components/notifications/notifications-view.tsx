@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Bell, CheckCheck, CircleCheck, CircleX, Clock, HeartPulse, Info, Siren, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Bell, CalendarCheck, CalendarX2, CheckCheck, CircleCheck, CircleX, Clock, HeartPulse, Info, Siren, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ import type { AppNotification, NotificationType } from "@/types/domain";
 const ICONS: Record<NotificationType, LucideIcon> = {
   NEW_MATCH: HeartPulse, REQUEST_ACCEPTED: CircleCheck, REQUEST_REJECTED: CircleX, REQUEST_CANCELLED: CircleX,
   REQUEST_VERIFIED: CheckCheck, REQUEST_EXPIRED: Clock, EMERGENCY_ESCALATION: Siren, SYSTEM: Info,
+  APPOINTMENT_CONFIRMED: CalendarCheck, APPOINTMENT_CANCELLED: CalendarX2, APPOINTMENT_REMINDER: Bell,
+  STAFF_NEW_REQUEST: Siren, STAFF_DONOR_RESPONDED: HeartPulse, REJOIN_REMINDER: HeartPulse,
 };
 
 export function NotificationsView() {
@@ -38,6 +40,8 @@ export function NotificationsView() {
       if (role === "REQUESTER") return `/requester/requests/${n.referenceId}`;
       if (role === "ORGANIZATION") return `/organization/requests/${n.referenceId}`;
     }
+    if (n.referenceType === "APPOINTMENT" && role === "DONOR") return "/donor/appointments";
+    if (n.referenceType === "HEALTH" && role === "DONOR") return "/donor/health";
     if (n.referenceType === "ORGANIZATION" && role === "ORGANIZATION") return "/organization/profile";
     return null;
   }

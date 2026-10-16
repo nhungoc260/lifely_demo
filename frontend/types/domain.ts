@@ -11,7 +11,9 @@ export type ReportStatus = "OPEN" | "INVESTIGATING" | "RESOLVED" | "REJECTED";
 export type ReportReason = "FAKE_REQUEST" | "SPAM" | "INCORRECT_INFORMATION" | "ABUSE" | "OTHER";
 export type NotificationType =
   | "NEW_MATCH" | "REQUEST_ACCEPTED" | "REQUEST_REJECTED" | "REQUEST_CANCELLED"
-  | "REQUEST_VERIFIED" | "REQUEST_EXPIRED" | "EMERGENCY_ESCALATION" | "SYSTEM";
+  | "REQUEST_VERIFIED" | "REQUEST_EXPIRED" | "EMERGENCY_ESCALATION" | "SYSTEM"
+  | "APPOINTMENT_CONFIRMED" | "APPOINTMENT_CANCELLED" | "APPOINTMENT_REMINDER"
+  | "STAFF_NEW_REQUEST" | "STAFF_DONOR_RESPONDED" | "REJOIN_REMINDER";
 
 export const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"] as const;
 
@@ -157,6 +159,10 @@ export interface BloodRequest {
   cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Số đơn vị đã được cơ sở/bên điều phối xác nhận hiến thực tế (khác với số người nhận lời = unitsConfirmed). */
+  unitsReceived: number;
+  /** NONE | PENDING | CONFIRMED | DENIED: xác nhận của cơ sở đối với yêu cầu gắn với cơ sở đó. */
+  facilityReview: "NONE" | "PENDING" | "CONFIRMED" | "DENIED";
 }
 
 export interface PublicRequest {
@@ -385,3 +391,57 @@ export interface StaffOverview {
 export interface InventorySettings {
   autoAdd: boolean;
 }
+
+// ---- Luồng B: lịch hiến máu
+export interface DonationSlot {
+  id: string; organizationId: string; organizationName: string; address: string | null; city: string | null;
+  startsAt: string; endsAt: string; capacity: number; bookedCount: number; available: number; status: "ACTIVE" | "CLOSED";
+}
+export type AppointmentStatus = "BOOKED" | "CHECKED_IN" | "SCREENED" | "DONATED" | "DEFERRED" | "NO_SHOW" | "CANCELLED";
+export interface Appointment {
+  id: string; slotId: string; organizationId: string; organizationName: string; address: string | null;
+  startsAt: string; endsAt: string; status: AppointmentStatus; canCancel: boolean; createdAt: string;
+}
+export interface OrgAppointment {
+  id: string; slotId: string; donorName: string; bloodType: string | null; status: AppointmentStatus;
+  startsAt: string; handledAt: string | null; createdAt: string;
+}
+export type AppointmentAction = "CHECK_IN" | "SCREEN_PASS" | "DEFER" | "NO_SHOW" | "DONATED";
+
+// ---- Đồng ý nhận thông báo theo kênh & theo dõi phát thông báo
+export interface NotificationConsents {
+  inApp: boolean; email: boolean; sms: boolean; voice: boolean;
+  smsChannelEnabled: boolean; voiceChannelEnabled: boolean; mockMode: boolean;
+  push: boolean; pushChannelEnabled: boolean; rejoinReminders: boolean;
+}
+export interface DeliverySummary {
+  outbox: { channel: "SMS" | "VOICE"; status: "PENDING" | "SENDING" | "SENT" | "FAILED" | "CANCELLED"; total: number }[];
+  responses: Record<string, number>;
+  failed: number;
+}
+export interface InventoryMovement {
+  bloodType: string; delta: number; unitsAfter: number; reason: string; referenceType: string | null; createdAt: string;
+}
+
+// ---- Sức khỏe của tôi (người hiến). Chỉ hỗ trợ sàng lọc sơ bộ, không chẩn đoán.
+export type FindingStatus = "WITHIN" | "OUTSIDE" | "NOT_MEASURED";
+export interface HealthFinding {
+  metric: "HEART_RATE" | "SYSTOLIC" | "DIASTOLIC" | "WEIGHT"; label: string; value: number | null; unit: string;
+  status: FindingStatus; rangeText: string; note: string; provisional: boolean;
+}
+export interface HealthCheck {
+  id: string; measuredAt: string; heartRate: number | null; systolic: number | null; diastolic: number | null;
+  weightKg: number | null; source: "SELF_ENTERED" | "FACILITY"; findings: HealthFinding[]; anyOutside: boolean;
+}
+export interface HealthRules {
+  heartRateMin: number; heartRateMax: number; systolicMin: number; systolicMaxExclusive: number;
+  diastolicMin: number; diastolicMaxExclusive: number; weightMinFemale: number; weightMinOther: number;
+}
+export type Gender = "FEMALE" | "MALE" | "UNSPECIFIED";
+export interface HealthSummary {
+  bloodType: string | null; lastDonationDate: string | null; totalDonations: number; gender: Gender;
+  canDonate: boolean; daysUntilEligible: number; eligibleOn: string | null; intervalDays: number;
+  consentGranted: boolean; latestOutside: boolean; rules: HealthRules; disclaimer: string;
+}
+export interface HealthEvaluation { findings: HealthFinding[]; anyOutside: boolean; disclaimer: string }
+export interface HealthInput { heartRate?: number; systolic?: number; diastolic?: number; weightKg?: number }

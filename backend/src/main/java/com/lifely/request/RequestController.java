@@ -37,9 +37,10 @@ public class RequestController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<RequestResponse>> create(@AuthenticationPrincipal AuthUser user,
+                                                               @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
                                                                @Valid @RequestBody CreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Tạo yêu cầu thành công", service.create(user, dto)));
+                .body(ApiResponse.ok("Yêu cầu đã được tiếp nhận", service.create(user, dto, idempotencyKey)));
     }
 
     @GetMapping
@@ -79,6 +80,21 @@ public class RequestController {
     public ApiResponse<RequestResponse> cancel(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
                                                @Valid @RequestBody(required = false) CancelRequestDto dto) {
         return ApiResponse.ok("Yêu cầu đã bị hủy", service.cancel(user, id, dto == null ? null : dto.reason()));
+    }
+
+    /** Nhân viên cơ sở xác nhận yêu cầu gắn với cơ sở mình. */
+    @PostMapping("/{id}/facility-confirm")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<RequestResponse> facilityConfirm(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
+        return ApiResponse.ok("Đã xác nhận yêu cầu", service.facilityConfirm(user, id));
+    }
+
+    /** Nhân viên cơ sở từ chối: dừng huy động ngay. */
+    @PostMapping("/{id}/facility-deny")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<RequestResponse> facilityDeny(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                     @Valid @RequestBody(required = false) CancelRequestDto dto) {
+        return ApiResponse.ok("Đã từ chối yêu cầu", service.facilityDeny(user, id, dto == null ? null : dto.reason()));
     }
 
     @GetMapping("/{id}/history")

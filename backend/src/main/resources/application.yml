@@ -81,8 +81,46 @@ lifely:
   jobs:
     expiry-interval-ms: 60000
     escalation-interval-ms: 30000
+    reminder-interval-ms: 300000
+    rejoin-interval-ms: 3600000
+    rejoin-initial-delay-ms: 90000
+  push:
+    # Sinh khóa: tools/push/generate-vapid-keys.sh. Khóa riêng là BÍ MẬT: chỉ đặt trong biến môi trường, không commit.
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
+    subject: ${VAPID_SUBJECT:}
+    ttl-seconds: 86400
+  screening:
+    # Ngưỡng sàng lọc sơ bộ: GIẢ ĐỊNH theo Thông tư 26/2013/TT-BYT, cần cơ sở y tế đối chiếu (docs/OPEN_QUESTIONS.md)
+    heart-rate-min: 60
+    heart-rate-max: 90
+    systolic-min: 100
+    systolic-max-exclusive: 160
+    diastolic-min: 60
+    diastolic-max-exclusive: 100
+    weight-min-female: 42
+    weight-min-other: 45
+  notify:
+    # SMS / cuộc gọi tự động. MẶC ĐỊNH TẮT. provider=mock chỉ ghi log, KHÔNG gửi/gọi thật.
+    # Nhà cung cấp thật chưa được tích hợp: cần thêm một bean SmsProvider / VoiceCallProvider (xem docs/NOTIFICATIONS.md).
+    sms-enabled: ${NOTIFY_SMS_ENABLED:false}
+    voice-enabled: ${NOTIFY_VOICE_ENABLED:false}
+    # Web Push (miễn phí, VAPID): cần thêm lifely.push.* bên dưới
+    push-enabled: ${NOTIFY_PUSH_ENABLED:false}
+    push-per-user-per-day: 20
+    provider: ${NOTIFY_PROVIDER:mock}
+    max-attempts: 3
+    retry-base-seconds: 30
+    batch-size: 20
+    sms-per-user-per-day: 5
+    voice-per-user-per-day: 2
+    appointment-reminder-hours: 24
+    worker-interval-ms: 10000
+    worker-initial-delay-ms: 20000
   matching:
     min-days-between-donations: 84
+    # Giãn cách riêng cho nữ (mặc định bằng nam theo nguồn đã tra). GIẢ ĐỊNH, cơ sở y tế có thể chỉnh.
+    min-days-between-donations-female: 84
     level-radius-km: [5, 10, 20, 50]
     # Ước lượng thời gian di chuyển (chỉ phục vụ điều phối): đường thực tế = đường chim bay x road-factor,
     # tốc độ theo giờ địa phương; giờ cao điểm chỉ áp dụng thứ Hai-thứ Sáu.

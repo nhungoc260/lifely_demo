@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Service worker phải luôn được kiểm tra bản mới và có phạm vi toàn site.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
       {
         source: "/:path*",
         headers: [

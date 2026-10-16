@@ -41,6 +41,10 @@ public class DonorProfile {
     @Column(precision = 9, scale = 6)
     private BigDecimal longitude;
 
+    /** FEMALE | MALE | UNSPECIFIED (tự khai, tùy chọn): dùng cho quy tắc giãn cách và cân nặng. */
+    @Column(name = "gender")
+    private String gender = "UNSPECIFIED";
+
     @Column(name = "last_donation_date")
     private LocalDate lastDonationDate;
 

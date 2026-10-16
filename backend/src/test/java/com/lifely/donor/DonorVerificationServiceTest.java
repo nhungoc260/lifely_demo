@@ -48,6 +48,7 @@ class DonorVerificationServiceTest {
     @Test
     void verifiedOrganizationOwnerOfTheRequestGivesFacilityLevel() {
         when(organizations.findById(orgId)).thenReturn(Optional.of(org(OrgVerificationStatus.VERIFIED)));
+        when(organizations.findForUser(orgOwner)).thenReturn(Optional.of(org(OrgVerificationStatus.VERIFIED)));
         var c = service.confirmation(orgOwner, requestOf(orgId));
         assertEquals(VerificationLevel.ORG_VERIFIED, c.level());
         assertEquals(orgId, c.organizationId());

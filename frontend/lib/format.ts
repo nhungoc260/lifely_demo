@@ -31,8 +31,8 @@ export const STATUS_LABEL: Record<string, string> = {
   VERIFIED: "Đã xác minh",
   MATCHING: "Đang tìm người hiến",
   DONORS_CONTACTED: "Đã liên hệ người hiến",
-  PARTIALLY_FULFILLED: "Đã có một phần",
-  FULFILLED: "Đã đủ người",
+  PARTIALLY_FULFILLED: "Đang phối hợp",
+  FULFILLED: "Đã đủ số đơn vị xác nhận",
   CANCELLED: "Đã hủy",
   EXPIRED: "Đã hết hạn",
 };

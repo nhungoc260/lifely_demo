@@ -40,3 +40,7 @@ LIFELY không thay thế bệnh viện và không quyết định ai đủ đi�
 ---
 
 Được xây dựng với ❤️ bởi Nguyễn Trần Như Ngọc 🐨 – 2026
+
+
+## Bản nâng cấp mới nhất
+Xem [docs/UPGRADE_REPORT.md](docs/UPGRADE_REPORT.md) (lịch hiến máu, thông báo SMS/gọi dạng mock, nhất quán dữ liệu) và [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Lưu ý: phần backend Java mới chưa được compile; chạy `mvn test` trước khi dùng.

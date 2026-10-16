@@ -16,6 +16,7 @@ import com.lifely.matching.dto.MatchExplanation;
 import com.lifely.matching.dto.RequestMatchEntry;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
+import com.lifely.notify.StaffAlertService;
 import com.lifely.request.*;
 import com.lifely.user.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -46,13 +47,15 @@ public class MatchService {
     private final EntityManager entityManager;
     private final DonorVerificationService verification;
     private final InventoryService inventory;
+    private final StaffAlertService staffAlerts;
 
     public MatchService(MatchRepository matchRepository, MatchEventRepository eventRepository,
                         DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
                         BloodRequestRepository requestRepository, RequestLifecycle lifecycle, RequestAccess access,
                         MatchingService matchingService, NotificationService notifications,
                         UserRepository userRepository, AuditService audit, EntityManager entityManager,
-                        DonorVerificationService verification, InventoryService inventory) {
+                        DonorVerificationService verification, InventoryService inventory,
+                        StaffAlertService staffAlerts) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.donorRepository = donorRepository;
@@ -67,6 +70,7 @@ public class MatchService {
         this.entityManager = entityManager;
         this.verification = verification;
         this.inventory = inventory;
+        this.staffAlerts = staffAlerts;
     }
 
     /**
@@ -86,7 +90,7 @@ public class MatchService {
             throw AppException.conflict("MATCH_ALREADY_RESPONDED", "Bạn đã phản hồi yêu cầu này rồi");
         }
         if (r.getUnitsConfirmed() >= r.getUnitsRequired() || r.getStatus() == RequestStatus.FULFILLED) {
-            throw AppException.conflict("REQUEST_FULFILLED", "Yêu cầu này không còn nhận thêm người hiến máu");
+            throw AppException.conflict("REQUEST_FULFILLED", "Yêu cầu này đã đủ người nhận lời, không nhận thêm");
         }
         if (!r.getStatus().isActive() || r.getDeadline().isBefore(Instant.now())) {
             throw AppException.conflict("REQUEST_CLOSED", "Yêu cầu này đã đóng");
@@ -100,20 +104,25 @@ public class MatchService {
 
         int confirmed = r.getUnitsConfirmed();
         int required = r.getUnitsRequired();
-        String progress = confirmed + " / " + required + " người hiến máu đã xác nhận";
-        if (confirmed >= required) {
-            lifecycle.transition(r, RequestStatus.FULFILLED, progress, user.getId());
-            matchingService.closeRemainingAfterFulfilled(r);
-        } else if (r.getStatus() != RequestStatus.PARTIALLY_FULFILLED) {
-            lifecycle.transition(r, RequestStatus.PARTIALLY_FULFILLED, progress, user.getId());
+        String progress = confirmed + " / " + required + " người hiến máu đã nhận lời";
+        // Số người NHẬN LỜI không phải lượng máu đã có. Đủ người nhận lời chỉ dừng mời thêm; yêu cầu chỉ thành FULFILLED
+        // khi đủ số đơn vị đã được cơ sở/bên điều phối xác nhận hiến thực tế (xem complete / countReceived).
+        String note = confirmed >= required ? progress + " – đã đủ người nhận lời, chờ xác nhận hiến máu thực tế" : progress;
+        if (r.getStatus() != RequestStatus.PARTIALLY_FULFILLED) {
+            lifecycle.transition(r, RequestStatus.PARTIALLY_FULFILLED, note, user.getId());
         } else {
             requestRepository.save(r);
-            lifecycle.note(r, progress, user.getId());
+            lifecycle.note(r, note, user.getId());
             lifecycle.publish(r);
         }
+        if (confirmed >= required) {
+            matchingService.closeRemainingAfterFulfilled(r);
+        }
         notifications.notify(r.getRequesterId(), NotificationType.REQUEST_ACCEPTED,
-                confirmed >= required ? "Đã đủ người hiến máu" : "Có người hiến máu đã nhận lời yêu cầu của bạn",
-                "Yêu cầu " + r.getBloodType().getCode() + " của bạn hiện có " + progress + ".", "REQUEST", r.getId());
+                confirmed >= required ? "Đã đủ người nhận lời" : "Có người hiến máu đã nhận lời yêu cầu của bạn",
+                "Yêu cầu " + r.getBloodType().getCode() + " của bạn hiện có " + progress
+                        + ". Đây là số người nhận lời, chưa phải lượng máu đã hiến.", "REQUEST", r.getId());
+        staffAlerts.notifyDonorResponded(r, confirmed);
         audit.log(user.getId(), AuditAction.MATCH_ACCEPTED, "MATCH", m.getId(), Map.of("requestId", r.getId().toString()));
         return toDonorResponse(m, r, donorOf(m));
     }
@@ -136,7 +145,14 @@ public class MatchService {
         return toDonorResponse(first, r, donorOf(first));
     }
 
-    /** Requester/tổ chức/admin xác nhận donor đã hiến thành công: cập nhật hồ sơ và lịch sử của donor. */
+    /**
+     * Xác nhận người hiến ĐÃ HIẾN THỰC TẾ.
+     * - Nhân viên của cơ sở y tế đã xác minh gắn với yêu cầu (ORG_VERIFIED): ghi lịch sử, cập nhật hồ sơ người hiến
+     *   (lần hiến gần nhất, tổng số lần), cộng kho nếu cơ sở bật, và tính vào lượng đã nhận.
+     * - Người nhà/admin (REQUESTER_CONFIRMED): chỉ ghi nhận mức tin cậy thấp, KHÔNG đổi hồ sơ người hiến.
+     *   Với yêu cầu KHÔNG gắn cơ sở nào thì lần xác nhận này vẫn tính vào lượng đã nhận (không có cơ sở để xác nhận);
+     *   với yêu cầu có cơ sở thì chờ cơ sở xác nhận.
+     */
     @Transactional
     public RequestMatchEntry complete(AuthUser user, UUID matchId) {
         Match first = matchRepository.findById(matchId)
@@ -148,8 +164,9 @@ public class MatchService {
         }
         entityManager.refresh(first);
         DonorVerificationService.Confirmation confirmation = verification.confirmation(user.getId(), r);
-        if (first.getStatus() == MatchStatus.COMPLETED && confirmation.level() == VerificationLevel.ORG_VERIFIED) {
-            // Người nhà đã ghi nhận trước: cơ sở y tế của yêu cầu được nâng mức xác nhận, không cộng thêm lần hiến.
+        boolean facility = confirmation.level() == VerificationLevel.ORG_VERIFIED;
+        if (first.getStatus() == MatchStatus.COMPLETED && facility) {
+            // Người nhà đã ghi nhận trước: cơ sở y tế của yêu cầu nâng mức xác nhận (idempotent).
             upgradeToFacilityVerified(first, r, user, confirmation);
             return requesterEntry(first, 0);
         }
@@ -161,9 +178,6 @@ public class MatchService {
         matchingService.event(first.getId(), "COMPLETED", null);
 
         DonorProfile donor = donorOf(first);
-        donor.setTotalDonations(donor.getTotalDonations() + 1);
-        donor.setLastDonationDate(LocalDate.now());
-        donorRepository.save(donor);
         DonationHistory h = new DonationHistory();
         h.setDonorId(donor.getId());
         h.setDonatedOn(LocalDate.now());
@@ -172,17 +186,78 @@ public class MatchService {
         h.setMatchId(first.getId());
         applyConfirmation(h, user.getId(), confirmation);
         historyRepository.save(h);
-        if (confirmation.level() == VerificationLevel.ORG_VERIFIED) {
-            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donor));
+        if (facility) {
+            applyDonationToProfile(donor, h.getDonatedOn());
+            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donor), "MATCH", first.getId(), user.getId());
+        }
+        if (facility || r.getOrganizationId() == null) {
+            countReceived(r, user);
         }
 
-        String by = confirmation.level() == VerificationLevel.ORG_VERIFIED
-                ? " và được " + confirmation.organizationName() + " xác nhận" : "";
+        String by = facility ? " và được " + confirmation.organizationName() + " xác nhận"
+                : (r.getOrganizationId() != null ? " (hồ sơ hiến máu sẽ cập nhật khi cơ sở y tế xác nhận)" : "");
         notifications.notify(donor.getUserId(), NotificationType.SYSTEM, "Cảm ơn bạn đã hiến máu",
                 "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được ghi nhận" + by + ".", "MATCH", first.getId());
         audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId(),
                 Map.of("verificationLevel", confirmation.level().name()));
         return requesterEntry(first, 0);
+    }
+
+    /**
+     * Người hiến đã nhận lời nhưng không đến / rút lui: đóng lượt nhận lời để chỗ trống được mở lại cho điều phối.
+     * Chỉ chủ yêu cầu, nhân viên cơ sở liên kết hoặc admin. Không cộng bất kỳ dữ liệu hiến máu nào.
+     */
+    @Transactional
+    public RequestMatchEntry markNoShow(AuthUser user, UUID matchId) {
+        Match first = matchRepository.findById(matchId)
+                .orElseThrow(() -> AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối"));
+        BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
+                .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
+        if (!access.canView(user.getId(), r)) {
+            throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
+        }
+        entityManager.refresh(first);
+        if (first.getStatus() != MatchStatus.ACCEPTED) {
+            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ lượt đã nhận lời mới đóng được");
+        }
+        first.setStatus(MatchStatus.CANCELLED);
+        matchRepository.save(first);
+        matchingService.event(first.getId(), "NO_SHOW", null);
+        r.setUnitsConfirmed(Math.max(0, r.getUnitsConfirmed() - 1));
+        requestRepository.save(r);
+        lifecycle.note(r, "Một người nhận lời không đến/rút lui: " + r.getUnitsConfirmed() + " / "
+                + r.getUnitsRequired() + " người nhận lời", user.getId());
+        lifecycle.publish(r);
+        donorRepository.findById(first.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
+                NotificationType.SYSTEM, "Lượt nhận lời đã được đóng",
+                "Lượt nhận lời cho yêu cầu " + r.getBloodType().getCode() + " tại " + r.getHospitalName()
+                        + " đã được đóng. Cảm ơn bạn đã sẵn sàng giúp đỡ.", "REQUEST", r.getId()));
+        audit.log(user.getId(), "MATCH_NO_SHOW", "MATCH", first.getId(), Map.of("requestId", r.getId().toString()));
+        return requesterEntry(first, 0);
+    }
+
+    /** Tăng lượng đã nhận (có xác nhận hiến thực tế). Đủ số đơn vị mới chuyển yêu cầu sang FULFILLED. Gọi khi đã giữ khóa dòng yêu cầu. */
+    private void countReceived(BloodRequest r, AuthUser user) {
+        r.setUnitsReceived(Math.min(r.getUnitsRequired(), r.getUnitsReceived() + 1));
+        String progress = r.getUnitsReceived() + " / " + r.getUnitsRequired() + " đơn vị đã được xác nhận hiến";
+        if (r.getUnitsReceived() >= r.getUnitsRequired() && r.getStatus().isActive()) {
+            lifecycle.transition(r, RequestStatus.FULFILLED, progress, user.getId());
+            matchingService.closeRemainingAfterFulfilled(r);
+            notifications.notify(r.getRequesterId(), NotificationType.REQUEST_ACCEPTED, "Đã đủ số đơn vị được xác nhận",
+                    "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã có " + progress + ".", "REQUEST", r.getId());
+        } else {
+            requestRepository.save(r);
+            lifecycle.note(r, progress, user.getId());
+            lifecycle.publish(r);
+        }
+    }
+
+    private void applyDonationToProfile(DonorProfile donor, LocalDate donatedOn) {
+        donor.setTotalDonations(donor.getTotalDonations() + 1);
+        if (donor.getLastDonationDate() == null || donatedOn.isAfter(donor.getLastDonationDate())) {
+            donor.setLastDonationDate(donatedOn);
+        }
+        donorRepository.save(donor);
     }
 
     private static String bloodCode(DonorProfile donor) {
@@ -207,7 +282,10 @@ public class MatchService {
             }
             applyConfirmation(h, user.getId(), confirmation);
             historyRepository.save(h);
-            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donorOf(match)));
+            DonorProfile donor = donorOf(match);
+            applyDonationToProfile(donor, h.getDonatedOn());
+            inventory.addDonatedUnit(confirmation.organizationId(), bloodCode(donor), "MATCH", match.getId(), user.getId());
+            countReceived(r, user);
             notifications.notify(donorOf(match).getUserId(), NotificationType.SYSTEM, "Lần hiến máu đã được xác nhận",
                     "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được " + confirmation.organizationName()
                             + " xác nhận.", "MATCH", match.getId());

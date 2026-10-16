@@ -16,7 +16,7 @@ export function RequestCard({ r, href, cta = "Xem yêu cầu" }: { r: PublicRequ
         <BloodChip type={r.bloodType} />
       </div>
       <p className="mt-4 text-2xl font-semibold tracking-tight">Cần {r.unitsNeeded} đơn vị</p>
-      <p className="mt-1 text-sm text-muted-foreground">{r.unitsConfirmed} / {r.unitsRequired} đã xác nhận</p>
+      <p className="mt-1 text-sm text-muted-foreground">{r.unitsConfirmed} / {r.unitsRequired} người đã nhận lời</p>
       <dl className="mt-4 space-y-2 text-sm">
         <div className="flex items-start gap-2"><MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /><dt className="sr-only">Địa điểm</dt><dd>{r.hospitalName}{r.distanceKm != null && <span className="text-muted-foreground"> · {r.distanceKm.toFixed(1)} km</span>}</dd></div>
         <div className="flex items-center gap-2"><Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden /><dt className="text-muted-foreground">Cần trong vòng</dt><dd className="font-medium"><Countdown deadline={r.deadline} /></dd></div>

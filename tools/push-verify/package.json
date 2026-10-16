@@ -1,0 +1,2 @@
+{ "name": "lifely-push-verify", "private": true, "version": "1.0.0", "description": "Kiểm chứng độc lập mã hóa Web Push/VAPID của backend bằng thư viện tham chiếu (web-push, http_ece)",
+  "dependencies": { "http_ece": "^1.2.0", "web-push": "^3.6.7" } }

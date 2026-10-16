@@ -46,13 +46,14 @@ public class UserDataService {
     private final PasswordEncoder passwordEncoder;
     private final GoogleIdTokenVerifier googleVerifier;
     private final AuditService audit;
+    private final UserDataExtras extras;
 
     public UserDataService(UserRepository userRepository, PrivacySettingsRepository privacyRepository,
                            DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
                            MatchRepository matchRepository, NotificationRepository notificationRepository,
                            PasswordResetTokenRepository resetTokenRepository, BloodRequestRepository requestRepository,
                            RequestService requestService, PasswordEncoder passwordEncoder,
-                           GoogleIdTokenVerifier googleVerifier, AuditService audit) {
+                           GoogleIdTokenVerifier googleVerifier, AuditService audit, UserDataExtras extras) {
         this.userRepository = userRepository;
         this.privacyRepository = privacyRepository;
         this.donorRepository = donorRepository;
@@ -65,6 +66,7 @@ public class UserDataService {
         this.passwordEncoder = passwordEncoder;
         this.googleVerifier = googleVerifier;
         this.audit = audit;
+        this.extras = extras;
     }
 
     @Transactional(readOnly = true)
@@ -115,6 +117,7 @@ public class UserDataService {
                 .map(r -> Map.of("id", r.getId().toString(), "bloodType", r.getBloodType().getCode(),
                         "units", r.getUnitsRequired(), "status", r.getStatus().name(),
                         "hospital", String.valueOf(r.getHospitalName()), "createdAt", String.valueOf(r.getCreatedAt()))).toList());
+        out.put("healthAndNotifications", extras.export(u.getId()));
         audit.log(u.getId(), AuditAction.ACCOUNT_EXPORTED, "USER", u.getId());
         return out;
     }
@@ -165,6 +168,7 @@ public class UserDataService {
             d.setTotalDonations(0);
             donorRepository.save(d);
         });
+        extras.erase(u.getId());   // dữ liệu sức khỏe, thiết bị push, đồng ý theo kênh, lịch hẹn, nhật ký SMS/push
         notificationRepository.deleteAllForUser(u.getId());
         resetTokenRepository.deleteByUserId(u.getId());
 

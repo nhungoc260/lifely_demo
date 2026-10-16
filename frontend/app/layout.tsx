@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
+import { PwaRegister } from "@/components/pwa/pwa-register";
 import { HelpWidget } from "@/components/support/help-widget";
 import { AppProviders } from "@/providers/app-providers";
 import "./globals.css";
@@ -17,6 +18,9 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "LIFELY",
   },
+  applicationName: "LIFELY",
+  appleWebApp: { capable: true, title: "LIFELY", statusBarStyle: "default" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
   twitter: { card: "summary", title: "LIFELY – Điều phối người hiến máu khẩn cấp", description: "Kết nối. Hiến máu. Cứu một sinh mạng." },
 };
 
@@ -34,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AppProviders>
           {children}
           <HelpWidget />
+          <PwaRegister />
         </AppProviders>
       </body>
     </html>

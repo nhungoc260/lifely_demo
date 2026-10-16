@@ -15,6 +15,12 @@ public class MatchingProperties {
 
     /** Khoảng cách tối thiểu (ngày) giữa hai lần hiến để donor được đưa vào danh sách điều phối. */
     private int minDaysBetweenDonations = 84;
+    /** Giãn cách riêng cho nữ (mặc định bằng nam theo nguồn đã tra; cơ sở y tế có thể chỉnh). GIẢ ĐỊNH, cần đối chiếu. */
+    private int minDaysBetweenDonationsFemale = 84;
+
+    public com.lifely.screening.RejoinPolicy rejoinPolicy() {
+        return new com.lifely.screening.RejoinPolicy(minDaysBetweenDonations, minDaysBetweenDonationsFemale);
+    }
     /** Bán kính ngoài cùng của từng cấp: L1 0-5, L2 5-10, L3 10-20, L4 20-50 km. */
     private List<Double> levelRadiusKm = List.of(5.0, 10.0, 20.0, 50.0);
     private int candidatesPerUnit = 3;
