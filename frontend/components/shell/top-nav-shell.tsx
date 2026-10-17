@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { InstallButton } from "@/components/pwa/install-button";
 import { isActive, NAV, ROLE_META, TOPNAV } from "@/components/shell/nav";
 import { LiveDot } from "@/components/shell/parts";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -60,6 +61,7 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
               </Link>
             )}
             <LiveDot labelFrom="2xl" />
+            <InstallButton compact />
             <ThemeToggle />
             <Link href={cfg.bell} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Thông báo, ${unread} chưa đọc`}>
               <Bell className="size-4" aria-hidden />

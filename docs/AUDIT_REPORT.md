@@ -8,7 +8,7 @@ Ngày: 17/10/2026. Phạm vi: nhóm công việc P1 "liên hệ người hiến"
 | Kiến trúc | Next.js 16 (frontend) + Spring Boot 3.5 / Java 21 + PostgreSQL, Flyway V1→V15 (nay thêm V16) |
 | Repo | Zip không có `.git`; đã lưu bản baseline để đối chiếu |
 | Frontend baseline | `tsc` PASS, `eslint` PASS, `vitest` 76/76 PASS |
-| Backend | `mvn` **BLOCKED** (Maven Central không truy cập được trong môi trường làm việc). Tài liệu của dự án cũng ghi backend chưa từng chạy `mvn test` thật |
+| Backend | Trong môi trường làm việc `mvn` bị chặn; đã được người dùng chạy thật trên máy của họ (xem mục 5) |
 
 ## 2. Vấn đề phát hiện (P1)
 Mâu thuẫn với định hướng "chỉ gọi thủ công bằng `tel:`": code có hạ tầng **cuộc gọi tự động** (provider mock, mặc định tắt): `VoiceCallProvider`, `MockVoiceProvider`, kênh `VOICE` trong outbox (MatchingService, StaffAlertService, OutboxService, OutboxWorker), cấu hình `NOTIFY_VOICE_ENABLED`, trường `voice` trong consents API, công tắc "Cuộc gọi tự động" trong giao diện.
@@ -35,10 +35,10 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 |---|---|
 | `npx tsc --noEmit` | PASS |
 | `npx eslint .` | PASS |
-| `npx vitest run` | PASS, 83/83 (thêm 3 test `telHref` và 4 test render nút gọi) |
+| `npx vitest run` | PASS, 88/88 (thêm 3 test `telHref`, 4 test nút gọi, 5 test PWA/nút cài đặt) |
 | `npx next build` | PASS |
 | `javac` toàn bộ backend, so với baseline | **Chỉ kiểm cú pháp**: không có lỗi cú pháp mới; mọi chênh lệch lỗi đều do thiếu thư viện (Lombok, jakarta.validation, JUnit). Không phải kiểm kiểu đầy đủ |
-| `mvn test` (gồm test mới `ContactResultTest`, `noAutomatedVoiceChannelExists`) | **BLOCKED**: chưa chạy được |
+| `mvn test` (JDK 21, Maven 3.9.9, chạy trên máy người dùng sau khi xóa `target`) | **PASS**: 95 test, 0 lỗi, 0 bỏ qua, gồm `ContactResultTest` và `noAutomatedVoiceChannelExists`. Các test `*IT` cần PostgreSQL bị loại trừ theo `pom.xml` nên **NOT RUN** |
 | Migration V1→V16 trên DB trống (PostgreSQL 16 thật) | **PASS** |
 | Nâng cấp V15→V16 với 113 match và tin VOICE/SMS có sẵn | **PASS** (VOICE chờ bị hủy, lịch sử VOICE đã gửi và SMS giữ nguyên, match cũ = NOT_CONTACTED) |
 | Ràng buộc `contact_result`; chống trùng outbox; claim/recover/cancel (SQL thật) | **PASS** (`tools/db/verify-migrations.sh`) |
@@ -49,6 +49,8 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 ## 5b. Kiểm tra PWA (đọc code, chưa thử trên thiết bị)
 - Manifest đủ `name`, `start_url`, `scope`, `display: standalone`, icon 192/512/maskable.
 - Service worker chỉ cache trang offline và icon; không cache API, token hay dữ liệu cá nhân; push chỉ mở đường dẫn cùng nguồn. Không có vấn đề cần sửa.
+- Đã thêm nút **Cài ứng dụng** (`components/pwa/install-button.tsx`): chỉ hiện khi trình duyệt cho phép cài (`beforeinstallprompt`) hoặc trên iPhone/iPad (hiện hướng dẫn "Thêm vào Màn hình chính"); ẩn khi đã cài. Đặt ở thanh trên cùng của trang chủ và của ứng dụng. Chưa thử trên thiết bị thật.
+- DevTools (người dùng chụp) báo manifest hợp lệ; 2 cảnh báo "Richer PWA Install UI" chỉ gợi ý thêm ảnh chụp màn hình vào manifest, không chặn cài đặt.
 - Chưa kiểm: cài đặt thật trên Android/iOS, Web Push thật (cần khóa VAPID). Xem `docs/DEVICE_TEST_CHECKLIST.md`.
 
 ## 5c. Rà soát phân quyền (đọc code, chưa chạy)
@@ -58,7 +60,7 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 - Việc **chưa** kiểm: thử chủ động đổi ID để vượt quyền (IDOR) bằng HTTP thật, vì cần chạy backend.
 
 ## 6. Rủi ro còn lại / cần bạn làm
-1. Chạy `mvn test` và `mvn spring-boot:run` trên máy có Maven Central; báo lỗi nếu có (khả năng cao nhất: lỗi biên dịch nhỏ do mình chưa kiểm kiểu được).
+1. Lưu ý khi `mvn test` báo "failed to discover tests" sau khi xóa hoặc đổi tên class: xóa thư mục `backend/target` rồi chạy lại (file `.class` cũ còn sót). Chưa chạy `mvn spring-boot:run` và các test `*IT` (cần PostgreSQL local).
 2. Chạy Flyway V16 trên bản sao database trước khi dùng dữ liệu thật.
 3. Bản đã triển khai (nếu có) cần cập nhật frontend và backend cùng lúc vì API consents đổi.
 4. `docs/UPGRADE_REPORT.md`, `docs/OPEN_QUESTIONS.md`, `docs/REPORT_UPDATES.md` còn nhắc voice ở các đoạn lịch sử; chưa sửa.

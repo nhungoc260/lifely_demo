@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { InstallButton } from "@/components/pwa/install-button";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { homeFor, useAuth } from "@/providers/auth-provider";
@@ -33,6 +34,7 @@ export function Navbar() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
+          <InstallButton />
           <ThemeToggle />
           {authed ? (
             <Link href={homeFor(role)} className={buttonVariants({ size: "sm" })}>Vào trang của tôi</Link>
@@ -62,6 +64,7 @@ export function Navbar() {
               <Link href="/register" className={cn(buttonVariants(), "flex-1")}>Bắt đầu</Link>
             </>
           )}
+          <InstallButton compact />
           <ThemeToggle />
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { Logo, LogoMark } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { InstallButton } from "@/components/pwa/install-button";
 import { isActive, NAV, ROLE_META, TOPNAV_ROLES } from "@/components/shell/nav";
 import { LiveDot, UnreadBadge } from "@/components/shell/parts";
 import { TopNavShell } from "@/components/shell/top-nav-shell";
@@ -121,6 +122,7 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
               <Globe aria-hidden />Xem trang công khai
             </Link>
             <span className="hidden sm:inline-flex"><LiveDot /></span>
+            <InstallButton compact />
             <ThemeToggle />
             {notifHref && (
               <Link href={notifHref} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Thông báo, ${unread} chưa đọc`}>

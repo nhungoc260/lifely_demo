@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import "@/lib/pwa-install"; // bắt sự kiện beforeinstallprompt sớm, các nút "Cài ứng dụng" dùng chung
+
 /** Đăng ký service worker (nhận Web Push + trang ngoại tuyến). Không làm gì nếu trình duyệt không hỗ trợ. */
 export function PwaRegister() {
   useEffect(() => {
