@@ -28,13 +28,13 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Logo />
-        <nav aria-label="Chính" className="hidden items-center gap-7 lg:flex">
+        <nav aria-label="Chính" className="hidden items-center gap-5 xl:gap-7 lg:flex">
           {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">{l.label}</Link>
+            <Link key={l.href} href={l.href} className="whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">{l.label}</Link>
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
-          <InstallButton />
+          <InstallButton compact />
           <ThemeToggle />
           {authed ? (
             <Link href={homeFor(role)} className={buttonVariants({ size: "sm" })}>Vào trang của tôi</Link>

@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowRight, Droplets, HandHeart } from "lucide-react";
-import Link from "next/link";
 
+import { CtaLink } from "@/components/landing/cta-link";
 import { buttonVariants } from "@/components/ui/button";
 import { CountUp } from "@/components/ui/count-up";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,12 +68,12 @@ export function Hero() {
             LIFELY giúp kết nối người cần máu với người hiến máu ở gần và điều phối phản hồi trên một nền tảng đáng tin cậy.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link href="/requester/requests/create" className={cn(buttonVariants({ size: "lg" }), "shadow-lg shadow-primary/25")}>
+            <CtaLink intent="NEED_BLOOD" className={cn(buttonVariants({ size: "lg" }), "shadow-lg shadow-primary/25")}>
               <Droplets /> TÔI CẦN MÁU
-            </Link>
-            <Link href="/register?role=DONOR" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            </CtaLink>
+            <CtaLink intent="DONATE" className={buttonVariants({ variant: "outline", size: "lg" })}>
               <HandHeart /> TÔI MUỐN HIẾN MÁU <ArrowRight />
-            </Link>
+            </CtaLink>
           </div>
 
           <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { CtaLink } from "@/components/landing/cta-link";
 import { MapContainerLazy } from "@/components/map/map-dynamic";
 import { RequestCard } from "@/components/requests/request-card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -103,7 +104,7 @@ export function EmergencyRequests() {
               {q.data.items.map((r) => <RequestCard key={r.id} r={r} href={`/requests/${r.id}`} />)}
             </div>
           ) : (
-            <EmptyState title="Chưa có yêu cầu khẩn cấp nào ở gần." description="Hiện chưa có yêu cầu nào đã xác minh đang mở. Hãy tham gia làm người hiến máu để được báo khi có yêu cầu." action={<Link href="/register?role=DONOR" className={buttonVariants()}>Trở thành người hiến máu</Link>} />
+            <EmptyState title="Chưa có yêu cầu khẩn cấp nào ở gần." description="Hiện chưa có yêu cầu nào đã xác minh đang mở. Hãy tham gia làm người hiến máu để được báo khi có yêu cầu." action={<CtaLink intent="DONATE" className={buttonVariants()}>Trở thành người hiến máu</CtaLink>} />
           )}
         </div>
       </div>
@@ -138,13 +139,13 @@ export function Audiences() {
           <HeartPulse className="size-7 text-primary" aria-hidden />
           <h2 className="mt-5 text-2xl font-semibold tracking-tight">Dành cho người hiến máu</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Cho chúng tôi biết nhóm máu và khu vực của bạn, bật trạng thái sẵn sàng, và chỉ được báo khi một yêu cầu đã xác minh thật sự cần bạn. Bạn luôn biết vì sao mình được kết nối, và tự kiểm soát quyền riêng tư của mình.</p>
-          <Link href="/register?role=DONOR" className={cn(buttonVariants(), "mt-6")}>Tham gia làm người hiến máu</Link>
+          <CtaLink intent="DONATE" className={cn(buttonVariants(), "mt-6")}>Tham gia làm người hiến máu</CtaLink>
         </Card>
         <Card id="organizations" className="scroll-mt-24 p-8">
           <Building2 className="size-7 text-primary" aria-hidden />
           <h2 className="mt-5 text-2xl font-semibold tracking-tight">Dành cho tổ chức</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Bệnh viện và trung tâm máu đăng ký, được đội ngũ của chúng tôi xác minh, rồi tạo các yêu cầu được ưu tiên, theo dõi phản hồi theo thời gian thực và xác nhận các lần hiến máu.</p>
-          <Link href="/register?role=ORGANIZATION" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>Đăng ký tổ chức của bạn</Link>
+          <CtaLink intent="JOIN_ORG" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>Đăng ký tổ chức của bạn</CtaLink>
         </Card>
       </div>
     </section>
