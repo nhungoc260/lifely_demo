@@ -68,6 +68,13 @@ Phát hiện trong code: (1) thông báo "Không tìm thấy" / "Hiện chưa t�
 Sửa: `app/geocode/route.ts` (tìm qua máy chủ của app, có User-Agent định danh, dự phòng Photon, trả lỗi rõ), `components/map/map-search.tsx` (hiện thông báo rõ), `lib/geo.ts` (`locateUser`: thông báo theo từng lý do, thử lại bằng độ chính xác cao), áp vào trang bản đồ, form chọn vị trí và trang chủ. Kiểm bằng test đơn vị có giả lập mạng và `next build`.
 **Chưa kiểm:** môi trường làm việc không kết nối được Nominatim/Photon nên chưa thử tìm địa điểm thật; chưa thử định vị trên thiết bị thật. Nguyên nhân gốc của lỗi người dùng gặp chưa được xác nhận.
 
+## 5f. Ô chọn (select) ở chế độ tối
+Lỗi (người dùng báo): bấm các ô "Tất cả" ở trang Bản đồ, danh sách thả xuống hiện chữ trắng trên nền trắng khi dùng chế độ tối. Nguyên nhân: không khai báo `color-scheme` nên trình duyệt vẽ danh sách gốc nền trắng, trong khi chữ kế thừa màu sáng. Sửa trong `app/globals.css` (`color-scheme` theo sáng/tối, màu nền/chữ cho `select option`), áp cho mọi ô chọn. Có test kiểm CSS; **chưa** xem bằng trình duyệt thật.
+
+## 5g. Bấm "Tìm kiếm" trên bản đồ trong hồ sơ bị "văng" (P1)
+Nguyên nhân (xác định từ code): `MapSearch` là một `<form>` nhưng được đặt trong biểu mẫu lớn của trang Hồ sơ người hiến, Hồ sơ tổ chức, Onboarding và **Tạo yêu cầu máu**. Bấm Tìm hoặc nhấn Enter làm sự kiện submit nổi lên biểu mẫu ngoài nên lưu hồ sơ, sang bước tiếp, hoặc xem trước/gửi yêu cầu máu ngoài ý muốn.
+Sửa: bỏ `<form>` trong `components/map/map-search.tsx`, nút `type="button"`, Enter được xử lý riêng (`preventDefault`). Test `tests/map-search.test.ts` kiểm không còn form lồng nhau. **Chưa** thử bằng trình duyệt thật.
+
 ## 6. Rủi ro còn lại / cần bạn làm
 1. Lưu ý khi `mvn test` báo "failed to discover tests" sau khi xóa hoặc đổi tên class: xóa thư mục `backend/target` rồi chạy lại (file `.class` cũ còn sót). Chưa chạy `mvn spring-boot:run` và các test `*IT` (cần PostgreSQL local).
 2. Chạy Flyway V16 trên bản sao database trước khi dùng dữ liệu thật.

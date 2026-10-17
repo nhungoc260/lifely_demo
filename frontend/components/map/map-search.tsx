@@ -13,8 +13,7 @@ export function MapSearch({ onFound }: { onFound: (lat: number, lng: number, lab
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
-  async function search(e: React.FormEvent) {
-    e.preventDefault();
+  async function search() {
     const term = q.trim();
     if (term.length < 2) { setMsg({ text: "Nhập ít nhất 2 ký tự.", ok: false }); return; }
     setBusy(true);
@@ -38,10 +37,18 @@ export function MapSearch({ onFound }: { onFound: (lat: number, lng: number, lab
 
   return (
     <div>
-      <form onSubmit={search} role="search" className="flex gap-2">
-        <Input aria-label="Tìm một địa điểm" placeholder="Tìm địa điểm, VD: Quận 1" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Button type="submit" variant="outline" disabled={busy} aria-label="Tìm kiếm">{busy ? <Loader2 className="animate-spin" /> : <Search />}</Button>
-      </form>
+      {/* Không dùng thẻ biểu mẫu ở đây: ô này nằm bên trong các biểu mẫu khác (hồ sơ, đăng ký, tạo yêu cầu). Biểu mẫu lồng nhau
+          làm bấm "Tìm" hoặc nhấn Enter gửi luôn biểu mẫu bên ngoài (lưu hồ sơ, gửi yêu cầu máu...). */}
+      <div role="search" className="flex gap-2">
+        <Input
+          aria-label="Tìm một địa điểm"
+          placeholder="Tìm địa điểm, VD: Quận 1"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void search(); } }}
+        />
+        <Button type="button" variant="outline" disabled={busy} aria-label="Tìm kiếm" onClick={() => void search()}>{busy ? <Loader2 className="animate-spin" /> : <Search />}</Button>
+      </div>
       {msg && <p role="status" className={msg.ok ? "mt-1.5 line-clamp-2 text-xs text-muted-foreground" : "mt-1.5 text-xs text-destructive"}>{msg.text}</p>}
     </div>
   );

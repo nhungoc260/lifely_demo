@@ -68,6 +68,16 @@
 
 .pulse-ring { animation: lifely-pulse 2.4s ease-out infinite; transform-origin: center; transform-box: fill-box; }
 
+/* Thành phần gốc của trình duyệt (danh sách thả xuống, lịch, thanh cuộn) phải theo giao diện sáng/tối của app,
+   nếu không ô chọn ở chế độ tối bị chữ sáng trên nền trắng. */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+select option,
+select optgroup {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
