@@ -16,6 +16,7 @@ import { Field, Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
+import { locateUser } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { publicApi } from "@/services";
 import { BLOOD_TYPES } from "@/types/domain";
@@ -36,13 +37,12 @@ export default function MapPage() {
   // Vị trí người dùng luôn được làm tròn (~1 km) và vẽ như một khu vực gần đúng, không phải điểm chính xác.
   const approx = useMemo(() => (me ? { center: [Math.round(me[0] * 100) / 100, Math.round(me[1] * 100) / 100] as [number, number], km: 1 } : undefined), [me]);
 
-  function locate() {
-    if (!("geolocation" in navigator)) return toast.error("Trình duyệt của bạn không hỗ trợ định vị.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setMe([p.coords.latitude, p.coords.longitude]); setCenter([p.coords.latitude, p.coords.longitude]); },
-      () => toast.error("Không lấy được vị trí của bạn."),
-      { timeout: 8000 },
-    );
+  async function locate() {
+    try {
+      const p = await locateUser();
+      setMe([p.lat, p.lng]);
+      setCenter([p.lat, p.lng]);
+    } catch (e) { toast.error((e as Error).message); }
   }
 
   return (

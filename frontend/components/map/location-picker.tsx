@@ -8,6 +8,7 @@ import { DEFAULT_CENTER } from "@/components/map/constants";
 import { MapContainerLazy } from "@/components/map/map-dynamic";
 import { MapSearch } from "@/components/map/map-search";
 import { Button } from "@/components/ui/button";
+import { locateUser } from "@/lib/geo";
 import type { PublicOrg } from "@/types/domain";
 
 interface Props {
@@ -23,13 +24,12 @@ interface Props {
 export function LocationPicker({ latitude, longitude, onChange, hospitals, height = 300, help }: Props) {
   const [center, setCenter] = useState<[number, number]>(latitude != null && longitude != null ? [latitude, longitude] : DEFAULT_CENTER);
 
-  function useMyLocation() {
-    if (!("geolocation" in navigator)) return toast.error("Trình duyệt của bạn không hỗ trợ định vị.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setCenter([p.coords.latitude, p.coords.longitude]); onChange(p.coords.latitude, p.coords.longitude); },
-      () => toast.error("Không lấy được vị trí của bạn. Bạn có thể chọn trên bản đồ."),
-      { enableHighAccuracy: false, timeout: 8000 },
-    );
+  async function useMyLocation() {
+    try {
+      const p = await locateUser();
+      setCenter([p.lat, p.lng]);
+      onChange(p.lat, p.lng);
+    } catch (e) { toast.error((e as Error).message); }
   }
 
   return (

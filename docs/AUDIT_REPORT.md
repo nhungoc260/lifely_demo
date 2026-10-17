@@ -35,7 +35,7 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 |---|---|
 | `npx tsc --noEmit` | PASS |
 | `npx eslint .` | PASS |
-| `npx vitest run` | PASS, 93/93 (thêm 3 test `telHref`, 4 test nút gọi, 5 test PWA/nút cài đặt, 5 test nút trang chủ theo vai trò) |
+| `npx vitest run` | PASS, 103/103 (thêm test `telHref`, nút gọi, PWA/nút cài đặt, nút trang chủ theo vai trò, định vị và tìm địa điểm) |
 | `npx next build` | PASS |
 | `javac` toàn bộ backend, so với baseline | **Chỉ kiểm cú pháp**: không có lỗi cú pháp mới; mọi chênh lệch lỗi đều do thiếu thư viện (Lombok, jakarta.validation, JUnit). Không phải kiểm kiểu đầy đủ |
 | `mvn test` (JDK 21, Maven 3.9.9, chạy trên máy người dùng sau khi xóa `target`) | **PASS**: 95 test, 0 lỗi, 0 bỏ qua, gồm `ContactResultTest` và `noAutomatedVoiceChannelExists`. Các test `*IT` cần PostgreSQL bị loại trừ theo `pom.xml` nên **NOT RUN** |
@@ -62,6 +62,11 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 ## 5d. Nút ở trang chủ theo trạng thái đăng nhập
 Vấn đề (người dùng báo): đã đăng nhập mà bấm "Tôi cần máu", "Tôi muốn hiến máu", "Tham gia làm người hiến máu", "Đăng ký tổ chức" ở trang chủ vẫn bị đưa tới đăng ký/đăng nhập.
 Sửa: `lib/cta.ts` (`ctaHref`) + `components/landing/cta-link.tsx`. Khách giữ hành vi cũ; người đã đăng nhập đi thẳng tới trang phù hợp vai trò (REQUESTER/ORGANIZATION tới form tạo yêu cầu, DONOR tới danh sách yêu cầu, vai trò không làm được việc đó về trang chính của họ), không bao giờ về `/register` hay `/login`. Khớp quyền backend (chỉ REQUESTER, ORGANIZATION tạo yêu cầu). Cũng sửa thanh menu trang chủ bị xuống dòng sau khi thêm nút cài đặt (`whitespace-nowrap`, nút cài đặt dạng biểu tượng). Đã kiểm bằng test đơn vị và build; **chưa** xem bằng trình duyệt thật.
+
+## 5e. Bản đồ: định vị và tìm địa điểm (người dùng báo "lỗi hoài")
+Phát hiện trong code: (1) thông báo "Không tìm thấy" / "Hiện chưa tìm kiếm được" của ô tìm kiếm được gắn `sr-only` nên **người dùng không nhìn thấy**; (2) trình duyệt gọi thẳng Nominatim, không kiểm `res.ok`, không có dự phòng; (3) mọi lỗi định vị chỉ hiện chung một câu, chỉ chờ 8 giây, không thử lại.
+Sửa: `app/geocode/route.ts` (tìm qua máy chủ của app, có User-Agent định danh, dự phòng Photon, trả lỗi rõ), `components/map/map-search.tsx` (hiện thông báo rõ), `lib/geo.ts` (`locateUser`: thông báo theo từng lý do, thử lại bằng độ chính xác cao), áp vào trang bản đồ, form chọn vị trí và trang chủ. Kiểm bằng test đơn vị có giả lập mạng và `next build`.
+**Chưa kiểm:** môi trường làm việc không kết nối được Nominatim/Photon nên chưa thử tìm địa điểm thật; chưa thử định vị trên thiết bị thật. Nguyên nhân gốc của lỗi người dùng gặp chưa được xác nhận.
 
 ## 6. Rủi ro còn lại / cần bạn làm
 1. Lưu ý khi `mvn test` báo "failed to discover tests" sau khi xóa hoặc đổi tên class: xóa thư mục `backend/target` rồi chạy lại (file `.class` cũ còn sót). Chưa chạy `mvn spring-boot:run` và các test `*IT` (cần PostgreSQL local).

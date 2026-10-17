@@ -14,6 +14,7 @@ import { CountUp } from "@/components/ui/count-up";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@/hooks/use-query";
+import { locateUser } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { publicApi } from "@/services";
 
@@ -75,13 +76,8 @@ export function EmergencyRequests() {
   const key = `public-requests:${loc ? `${loc.lat.toFixed(2)},${loc.lng.toFixed(2)}` : "all"}`;
   const q = useQuery(key, () => publicApi.requests({ size: 6, lat: loc?.lat, lng: loc?.lng }));
 
-  function locate() {
-    if (!("geolocation" in navigator)) return toast.error("Trình duyệt của bạn không hỗ trợ định vị.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => setLoc({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => toast.error("Không lấy được vị trí của bạn."),
-      { timeout: 8000 },
-    );
+  async function locate() {
+    try { setLoc(await locateUser()); } catch (e) { toast.error((e as Error).message); }
   }
 
   return (
