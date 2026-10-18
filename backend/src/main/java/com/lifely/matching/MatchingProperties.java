@@ -23,6 +23,31 @@ public class MatchingProperties {
     }
     /** Bán kính ngoài cùng của từng cấp: L1 0-5, L2 5-10, L3 10-20, L4 20-50 km. */
     private List<Double> levelRadiusKm = List.of(5.0, 10.0, 20.0, 50.0);
+    /** Cấp cuối cùng không giới hạn bán kính (toàn quốc). Donor quá xa so với deadline vẫn bị loại bởi bước kiểm tra kịp giờ. */
+    private boolean nationwideLevelEnabled = true;
+    /** Nhóm máu hiếm: bỏ qua các vòng gần, tìm toàn quốc ngay từ đầu (người đúng nhóm gần nhất vẫn được gọi trước). */
+    private List<String> rareBloodTypes = List.of("O-", "A-", "B-", "AB-");
+    private boolean rareStartsNationwide = true;
+    private int maxContactsPerRoundRare = 30;
+    private int candidatePoolSizeNationwide = 1000;
+
+    /** Tổng số cấp: các vòng bán kính + (nếu bật) cấp toàn quốc. */
+    public int maxLevel() {
+        return levelRadiusKm.size() + (nationwideLevelEnabled ? 1 : 0);
+    }
+
+    public boolean isNationwide(int level) {
+        return nationwideLevelEnabled && level == maxLevel();
+    }
+
+    /** Bán kính ngoài cùng của cấp; cấp toàn quốc trả về vô cực. */
+    public double radiusOf(int level) {
+        return isNationwide(level) ? Double.POSITIVE_INFINITY : levelRadiusKm.get(level - 1);
+    }
+
+    public boolean isRare(String bloodTypeCode) {
+        return rareBloodTypes.contains(bloodTypeCode);
+    }
     private int candidatesPerUnit = 3;
     private int maxContactsPerRound = 15;
     private int candidatePoolSize = 300;

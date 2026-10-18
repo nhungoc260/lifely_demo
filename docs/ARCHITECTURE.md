@@ -214,7 +214,7 @@ erDiagram
     numeric longitude
     timestamptz deadline
     boolean verified
-    int escalation_level "1 đến 4"
+    int escalation_level "1 đến 5 (5 = toàn quốc)"
     timestamptz last_escalated_at
     string idempotency_key "unique theo requester_id"
   }
@@ -795,7 +795,7 @@ flowchart TD
   R --> D{"Quá thời gian chờ theo mức khẩn cấp? 5 / 15 / 60 phút"}
   D -- "Chưa" --> S
   D -- "Rồi" --> U["Khóa dòng yêu cầu và kiểm tra lại điều kiện"]
-  U --> L["Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 km"]
+  U --> L["Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 → toàn quốc"]
   L --> M["Lọc → Haversine → chấm điểm → đúng nhóm máu trước → top N"]
   M --> C["Tạo match + thông báo + SMS/Push qua outbox, giới hạn số người mỗi vòng"]
   C --> T["Thông báo cho người cần máu: đã mở rộng vùng tìm kiếm"]

@@ -85,13 +85,17 @@ public class MatchingService {
                 .stream().map(BloodType::getId).toList();
         double lat = r.getLatitude().doubleValue();
         double lng = r.getLongitude().doubleValue();
-        double dLat = maxKm / 111.0;
-        double dLng = maxKm / (111.0 * Math.max(0.1, Math.cos(Math.toRadians(lat))));
+        boolean nationwide = Double.isInfinite(maxKm);
+        // Toàn quốc: không giới hạn bounding box, pool lớn hơn và đã sắp xếp gần nhất trước (ORDER BY ở repository).
+        double dLat = nationwide ? 90.0 : maxKm / 111.0;
+        double dLng = nationwide ? 180.0 : maxKm / (111.0 * Math.max(0.1, Math.cos(Math.toRadians(lat))));
+        int poolSize = nationwide ? props.getCandidatePoolSizeNationwide() : props.getCandidatePoolSize();
         List<DonorProfile> pool = donorRepository.findCandidates(typeIds,
-                bd(lat - dLat), bd(lat + dLat), bd(lng - dLng), bd(lng + dLng),
+                bd(Math.max(-90, lat - dLat)), bd(Math.min(90, lat + dLat)),
+                bd(Math.max(-180, lng - dLng)), bd(Math.min(180, lng + dLng)),
                 LocalDate.now().minusDays(props.getMinDaysBetweenDonations()),
                 LocalDate.now().minusDays(props.getMinDaysBetweenDonationsFemale()), r.getId(),
-                PageRequest.of(0, props.getCandidatePoolSize()));
+                bd(lat), bd(lng), PageRequest.of(0, poolSize));
         return pool.stream()
                 .map(d -> new Candidate(d, score(d, r, now)))
                 .filter(c -> c.score().distanceKm() >= minKm && c.score().distanceKm() < maxKm)
@@ -106,16 +110,19 @@ public class MatchingService {
     /** Gọi khi request được xác minh. Phải chạy trong transaction đã giữ khóa dòng của request. */
     @Transactional
     public void startMatching(BloodRequest r, UUID actorId) {
-        r.setEscalationLevel(1);
+        boolean rare = props.isRare(r.getBloodType().getCode()) && props.isRareStartsNationwide();
+        int startLevel = rare ? props.maxLevel() : 1;
+        r.setEscalationLevel(startLevel);
         r.setLastEscalatedAt(Instant.now());
-        lifecycle.transition(r, RequestStatus.MATCHING, "Bắt đầu tìm người hiến máu", actorId);
-        int contacted = contactLevel(r, 1);
+        lifecycle.transition(r, RequestStatus.MATCHING,
+                rare ? "Nhóm máu hiếm " + r.getBloodType().getCode() + ": tìm người hiến trên toàn quốc ngay"
+                        : "Bắt đầu tìm người hiến máu", actorId);
+        int contacted = contactSkippingEmptyLevels(r, startLevel, actorId);
         if (contacted > 0) {
             lifecycle.transition(r, RequestStatus.DONORS_CONTACTED,
                     "Đã liên hệ " + contacted + " người hiến máu", actorId);
         } else {
-            lifecycle.note(r, "Chưa có người hiến máu phù hợp trong " + props.getLevelRadiusKm().get(0).intValue()
-                    + " km. Hệ thống sẽ tự động mở rộng phạm vi tìm kiếm.", actorId);
+            lifecycle.note(r, noDonorMessage(r), actorId);
         }
     }
 
@@ -125,26 +132,26 @@ public class MatchingService {
         BloodRequest r = requestRepository.findByIdForUpdate(requestId).orElse(null);
         Instant now = Instant.now();
         if (r == null || !r.getStatus().isActive() || !r.isVerified() || r.getUnitsConfirmed() >= r.getUnitsRequired()
-                || r.getDeadline().isBefore(now) || r.getEscalationLevel() >= props.getLevelRadiusKm().size()
+                || r.getDeadline().isBefore(now) || r.getEscalationLevel() >= props.maxLevel()
                 || !isDue(r, now)) {
             return false;
         }
-        int level = r.getEscalationLevel() + 1;
-        r.setEscalationLevel(level);
+        int fromLevel = r.getEscalationLevel() + 1;
         r.setLastEscalatedAt(now);
-        int contacted = contactLevel(r, level);
-        double radius = props.getLevelRadiusKm().get(level - 1);
+        int contacted = contactSkippingEmptyLevels(r, fromLevel, null);
+        int level = r.getEscalationLevel();
+        String scope = scopeLabel(level);
         notifications.notify(r.getRequesterId(), NotificationType.EMERGENCY_ESCALATION, "Đã mở rộng phạm vi tìm kiếm",
-                "Chúng tôi đã mở rộng phạm vi tìm kiếm tới " + (int) radius + " km và liên hệ thêm " + contacted + " người hiến máu.",
+                "Chúng tôi đã mở rộng phạm vi tìm kiếm " + scope + " và liên hệ thêm " + contacted + " người hiến máu.",
                 "REQUEST", r.getId());
         if (r.getStatus() == RequestStatus.MATCHING || r.getStatus() == RequestStatus.VERIFIED) {
             if (contacted > 0) {
                 lifecycle.transition(r, RequestStatus.DONORS_CONTACTED, "Đã liên hệ " + contacted + " người hiến máu (cấp " + level + ")", null);
             } else {
-                lifecycle.note(r, "Mở rộng tìm kiếm lên cấp " + level + " (" + (int) radius + " km), chưa có thêm người hiến máu", null);
+                lifecycle.note(r, noDonorMessage(r), null);
             }
         } else {
-            lifecycle.note(r, "Mở rộng tìm kiếm lên cấp " + level + " (" + (int) radius + " km), đã liên hệ thêm "
+            lifecycle.note(r, "Mở rộng tìm kiếm lên cấp " + level + " (" + scope + "), đã liên hệ thêm "
                     + contacted + " người hiến máu", null);
         }
         requestRepository.save(r);
@@ -157,9 +164,38 @@ public class MatchingService {
         Instant now = Instant.now();
         return requestRepository.findByStatusInAndVerifiedTrueAndDeadlineAfter(RequestStatus.ACTIVE, now).stream()
                 .filter(r -> r.getUnitsConfirmed() < r.getUnitsRequired())
-                .filter(r -> r.getEscalationLevel() < props.getLevelRadiusKm().size())
+                .filter(r -> r.getEscalationLevel() < props.maxLevel())
                 .filter(r -> isDue(r, now))
                 .map(BloodRequest::getId).toList();
+    }
+
+    /**
+     * Liên hệ ở cấp {@code fromLevel}; nếu cấp đó không có ai phù hợp thì nhảy ngay sang cấp kế tiếp
+     * (không chờ hết thời gian leo thang) cho tới khi có người hoặc hết cấp. Cập nhật escalationLevel của request.
+     */
+    private int contactSkippingEmptyLevels(BloodRequest r, int fromLevel, UUID actorId) {
+        int level = fromLevel;
+        int contacted = contactLevel(r, level);
+        while (contacted == 0 && level < props.maxLevel()) {
+            level++;
+            contacted = contactLevel(r, level);
+        }
+        r.setEscalationLevel(level);
+        return contacted;
+    }
+
+    private String scopeLabel(int level) {
+        return props.isNationwide(level) ? "trên toàn quốc" : "tới " + (int) props.radiusOf(level) + " km";
+    }
+
+    private String noDonorMessage(BloodRequest r) {
+        if (r.getEscalationLevel() >= props.maxLevel()) {
+            return "Chưa có người hiến máu " + r.getBloodType().getCode()
+                    + " phù hợp và kịp giờ trên toàn quốc. Hãy liên hệ ngân hàng máu bệnh viện hoặc Viện Huyết học - Truyền máu"
+                    + " để điều chuyển đơn vị máu từ nơi khác.";
+        }
+        return "Chưa có người hiến máu phù hợp " + scopeLabel(r.getEscalationLevel())
+                + ". Hệ thống sẽ tự động mở rộng phạm vi tìm kiếm.";
     }
 
     private boolean isDue(BloodRequest r, Instant now) {
@@ -175,10 +211,14 @@ public class MatchingService {
     /** Liên hệ donor ở một cấp bán kính. Trả về số donor đã được liên hệ. */
     private int contactLevel(BloodRequest r, int level) {
         List<Double> radii = props.getLevelRadiusKm();
-        double minKm = level == 1 ? 0 : radii.get(level - 2);
-        double maxKm = radii.get(level - 1);
+        boolean nationwide = props.isNationwide(level);
+        // Cấp toàn quốc luôn tính từ 0 km: người đã được liên hệ ở vòng trước đã bị loại bởi truy vấn (đã có match).
+        double minKm = (level == 1 || nationwide) ? 0 : radii.get(level - 2);
+        double maxKm = props.radiusOf(level);
         int needed = Math.max(1, r.unitsStillNeeded());
-        int limit = Math.min(props.getMaxContactsPerRound(), needed * props.getCandidatesPerUnit());
+        boolean rare = props.isRare(r.getBloodType().getCode());
+        int cap = rare ? props.getMaxContactsPerRoundRare() : props.getMaxContactsPerRound();
+        int limit = Math.min(cap, needed * props.getCandidatesPerUnit());
         List<Candidate> chosen = rank(r, minKm, maxKm, limit);
         Instant now = Instant.now();
         for (Candidate c : chosen) {

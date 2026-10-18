@@ -4,7 +4,7 @@
 
 LIFELY là website giúp người cần máu gấp tìm được người hiến máu phù hợp ở gần bệnh viện, và điều phối phản hồi của những người này trên một kênh duy nhất thay vì phải đăng mạng xã hội hay gọi điện từng người.
 
-Khi một yêu cầu máu được tạo và xác minh, hệ thống tự lọc những người hiến tương thích về nhóm máu, đang sẵn sàng, đã nghỉ đủ thời gian giữa hai lần hiến và ở gần bệnh viện. Việc liên hệ được thực hiện theo từng vòng bán kính mở rộng dần (0–5 km, 5–10 km, 10–20 km, 20–50 km), người đúng nhóm máu được ưu tiên trước. Mọi cập nhật hiển thị theo thời gian thực, và số người nhận lời không bao giờ vượt quá số đơn vị máu cần.
+Khi một yêu cầu máu được tạo và xác minh, hệ thống tự lọc những người hiến tương thích về nhóm máu, đang sẵn sàng, đã nghỉ đủ thời gian giữa hai lần hiến và ở gần bệnh viện. Việc liên hệ được thực hiện theo từng vòng bán kính mở rộng dần (0–5 km, 5–10 km, 10–20 km, 20–50 km, rồi toàn quốc), người đúng nhóm máu được ưu tiên trước. Cấp nào không có ai phù hợp thì hệ thống nhảy ngay sang cấp tiếp theo; nhóm máu hiếm (Rh âm) tìm toàn quốc ngay từ đầu. Người hiến quá xa so với hạn chót vẫn bị loại để không gọi người không kịp. Mọi cập nhật hiển thị theo thời gian thực, và số người nhận lời không bao giờ vượt quá số đơn vị máu cần.
 
 LIFELY phân biệt rõ hai con số: **số người đã nhận lời** và **số đơn vị đã được cơ sở y tế hoặc bên điều phối xác nhận hiến thực tế**. Yêu cầu chỉ được xem là đã đủ khi lượng hiến thực tế được xác nhận.
 

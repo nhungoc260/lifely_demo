@@ -43,6 +43,7 @@ public interface DonorProfileRepository extends JpaRepository<DonorProfile, UUID
                                                   com.lifely.request.RequestStatus.MATCHING,
                                                   com.lifely.request.RequestStatus.DONORS_CONTACTED,
                                                   com.lifely.request.RequestStatus.PARTIALLY_FULFILLED))
+            order by ((d.latitude - :lat) * (d.latitude - :lat) + (d.longitude - :lng) * (d.longitude - :lng))
             """)
     List<DonorProfile> findCandidates(@Param("bloodTypeIds") Collection<Short> bloodTypeIds,
                                       @Param("minLat") BigDecimal minLat,
@@ -52,5 +53,7 @@ public interface DonorProfileRepository extends JpaRepository<DonorProfile, UUID
                                       @Param("latestAllowedDonation") LocalDate latestAllowedDonation,
                                       @Param("latestAllowedDonationFemale") LocalDate latestAllowedDonationFemale,
                                       @Param("requestId") UUID requestId,
+                                      @Param("lat") BigDecimal lat,
+                                      @Param("lng") BigDecimal lng,
                                       Pageable pageable);
 }

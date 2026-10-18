@@ -120,6 +120,12 @@ lifely:
     # Giãn cách riêng cho nữ (mặc định bằng nam theo nguồn đã tra). GIẢ ĐỊNH, cơ sở y tế có thể chỉnh.
     min-days-between-donations-female: 84
     level-radius-km: [5, 10, 20, 50]
+    # Cấp 5 = toàn quốc (không giới hạn km). Nhóm máu hiếm bắt đầu tìm toàn quốc ngay.
+    nationwide-level-enabled: true
+    rare-blood-types: [O-, A-, B-, AB-]
+    rare-starts-nationwide: true
+    max-contacts-per-round-rare: 30
+    candidate-pool-size-nationwide: 1000
     # Ước lượng thời gian di chuyển (chỉ phục vụ điều phối): đường thực tế = đường chim bay x road-factor,
     # tốc độ theo giờ địa phương; giờ cao điểm chỉ áp dụng thứ Hai-thứ Sáu.
     road-factor: 1.35

@@ -127,7 +127,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
             <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
               <Card>
                 <CardHeader><CardTitle>Tiến độ</CardTitle></CardHeader>
-                <CardContent><Lifecycle status={r.status} /><p className="mt-5 text-xs text-muted-foreground">Cấp tìm kiếm {r.escalationLevel} trên 4. Phạm vi tìm kiếm tự động mở rộng nếu cần thêm người hiến máu.</p></CardContent>
+                <CardContent><Lifecycle status={r.status} /><p className="mt-5 text-xs text-muted-foreground">Cấp tìm kiếm {r.escalationLevel} trên 5. Phạm vi tìm kiếm tự động mở rộng nếu cần thêm người hiến máu.</p></CardContent>
               </Card>
               <Card>
                 <CardHeader><CardTitle>Người hiến máu được kết nối</CardTitle></CardHeader>

@@ -59,7 +59,7 @@ export default function AdminRequestDetail() {
                 <div><dt className="text-muted-foreground">Hạn chót</dt><dd className="font-medium">{formatDateTime(r.deadline)}</dd>{!["FULFILLED", "CANCELLED", "EXPIRED"].includes(r.status) && <dd><Countdown deadline={r.deadline} /></dd>}</div>
                 <div><dt className="text-muted-foreground">SĐT liên hệ</dt><dd className="font-medium">{r.contactPhone}</dd></div>
                 <div><dt className="text-muted-foreground">Đã xác minh</dt><dd className="font-medium">{r.verified ? "Có" : "Không"}{r.organizationId ? "· liên kết với tổ chức đã xác minh" : ""}</dd></div>
-                <div><dt className="text-muted-foreground">Cấp tìm kiếm</dt><dd className="font-medium">{r.escalationLevel} trên 4</dd></div>
+                <div><dt className="text-muted-foreground">Cấp tìm kiếm</dt><dd className="font-medium">{r.escalationLevel} trên 5</dd></div>
                 {r.description && <div className="sm:col-span-2 lg:col-span-3"><dt className="text-muted-foreground">Mô tả</dt><dd className="whitespace-pre-wrap">{r.description}</dd></div>}
                 {r.cancelReason && <div className="sm:col-span-2 lg:col-span-3"><dt className="text-muted-foreground">Lý do hủy / từ chối</dt><dd>{r.cancelReason}</dd></div>}
               </dl>

@@ -20,8 +20,8 @@ const LEVEL = {
 function Row({ ring }: { ring: CoverageRing }) {
   const l = LEVEL[ring.level];
   return (
-    <li className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 text-sm">
-      <span className="text-muted-foreground">≤ {ring.radiusKm} km</span>
+    <li className="grid grid-cols-[5rem_1fr_auto] items-center gap-3 text-sm">
+      <span className="text-muted-foreground">{ring.radiusKm === 0 ? "Toàn quốc" : `≤ ${ring.radiusKm} km`}</span>
       <span className="flex gap-1" aria-hidden>
         {[0, 1, 2].map((i) => <span key={i} className={cn("h-2 flex-1 rounded-full", i < l.bars ? l.tone : "bg-muted")} />)}
       </span>
@@ -48,7 +48,7 @@ export function CoveragePanel({ bloodType, latitude, longitude }: { bloodType: s
           <>
             <ul className="space-y-3">{q.data.map((r) => <Row key={r.radiusKm} ring={r} />)}</ul>
             {none ? (
-              <p className="mt-4 rounded-xl bg-warning/10 p-3 text-sm">Chưa tìm thấy người hiến máu {bloodType} tương thích đang sẵn sàng trong vòng 50 km. Hãy liên hệ thêm ngân hàng máu của bệnh viện, hoặc gọi {SUPPORT.name} theo số <a className="font-medium underline" href={SUPPORT.telHref}>{SUPPORT.phoneDisplay}</a>.</p>
+              <p className="mt-4 rounded-xl bg-warning/10 p-3 text-sm">Chưa tìm thấy người hiến máu {bloodType} tương thích đang sẵn sàng trên toàn quốc. Hãy liên hệ ngân hàng máu của bệnh viện hoặc Viện Huyết học - Truyền máu để điều chuyển máu từ nơi khác, hoặc gọi {SUPPORT.name} theo số <a className="font-medium underline" href={SUPPORT.telHref}>{SUPPORT.phoneDisplay}</a>.</p>
             ) : (
               <p className="mt-4 text-xs text-muted-foreground">Ước tính số người hiến máu tương thích đang sẵn sàng. Không đảm bảo sẽ có người phản hồi. Danh tính người hiến máu không bao giờ được tiết lộ.</p>
             )}
