@@ -34,11 +34,11 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
     <div data-role={role} className="flex min-h-dvh bg-surface">
       {/* Sidebar: tablet + desktop (thu gọn được) */}
       <aside className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 md:flex", collapsed ? "w-[72px]" : "w-64")}>
-        <div className={cn("flex h-16 items-center px-4", collapsed && "justify-center px-0")}>
+        <div className={cn("flex h-16 shrink-0 items-center px-4", collapsed && "justify-center px-0")}>
           {collapsed ? <LogoMark /> : <Logo href={homeFor(role)} />}
         </div>
         {/* Thẻ vai trò: luôn cho biết đang ở không gian nào (người hiến / người cần máu / tổ chức / quản trị) */}
-        <div className={cn("px-4 pb-3", collapsed && "flex justify-center px-0")}>
+        <div className={cn("shrink-0 px-4 pb-3", collapsed && "flex justify-center px-0")}>
           <div
             className={cn("rounded-xl bg-secondary text-secondary-foreground", collapsed ? "grid size-9 place-items-center" : "flex items-center gap-2.5 px-3 py-2")}
             title={collapsed ? meta.title : undefined}
@@ -52,7 +52,7 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
             )}
           </div>
         </div>
-        <nav aria-label="Chính" className="flex-1 space-y-1 px-3 py-2">
+        <nav aria-label="Chính" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2">
           {items.map((item) => {
             const active = isActive(pathname, item, items);
             return (
@@ -70,7 +70,7 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
             );
           })}
         </nav>
-        <div className="space-y-2 border-t border-border p-3">
+        <div className="shrink-0 space-y-1 border-t border-border p-3">
           <Link
             href="/"
             title={collapsed ? "Về trang chủ LIFELY" : undefined}

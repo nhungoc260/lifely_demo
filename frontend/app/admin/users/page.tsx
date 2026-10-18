@@ -57,9 +57,9 @@ export default function AdminUsers() {
               { key: "name", header: "Tên", cell: (u) => <span className="font-medium">{u.fullName}</span> },
               { key: "email", header: "Email", cell: (u) => u.email },
               { key: "role", header: "Vai trò", cell: (u) => <Pill t="slate">{u.roles.map((r) => ROLE_LABEL[r]).join(", ")}</Pill> },
-              { key: "created", header: "Ngày tham gia", cell: (u) => formatDate(u.createdAt) },
-              { key: "status", header: "Trạng thái", cell: (u) => <Pill t={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}</Pill> },
-              { key: "act", header: "Hành động", align: "right", cell: (u) => u.roles.includes("ADMIN") ? <span className="text-xs text-muted-foreground">Được bảo vệ</span> : <Button size="sm" variant="outline" onClick={() => setTarget(u)}>{u.status === "ACTIVE" ? "Tạm khóa" : "Kích hoạt"}</Button> },
+              { key: "created", header: "Ngày tham gia", cell: (u) => <span className="whitespace-nowrap">{formatDate(u.createdAt)}</span> },
+              { key: "status", header: "Trạng thái", cell: (u) => <Pill t={u.status === "ACTIVE" ? "green" : "red"} className="min-w-[5.5rem]">{u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}</Pill> },
+              { key: "act", header: "Hành động", align: "right", cell: (u) => u.roles.includes("ADMIN") ? <span className="text-xs text-muted-foreground">Được bảo vệ</span> : <Button size="sm" variant="outline" className="min-w-[5.5rem] whitespace-nowrap" onClick={() => setTarget(u)}>{u.status === "ACTIVE" ? "Tạm khóa" : "Kích hoạt"}</Button> },
             ]} />
             <Pagination page={res.data} onChange={setPage} />
           </>
