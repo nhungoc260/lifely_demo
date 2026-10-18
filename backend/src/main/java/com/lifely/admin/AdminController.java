@@ -29,12 +29,19 @@ import java.util.UUID;
 @Tag(name = "Admin")
 public class AdminController {
 
+    private static final java.time.ZoneId VN = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+
     private final AdminService service;
     private final AdminStatsService stats;
+    private final AdminAuditService auditService;
+    private final AdminOverviewService overview;
 
-    public AdminController(AdminService service, AdminStatsService stats) {
+    public AdminController(AdminService service, AdminStatsService stats, AdminAuditService auditService,
+                           AdminOverviewService overview) {
         this.service = service;
         this.stats = stats;
+        this.auditService = auditService;
+        this.overview = overview;
     }
 
     @GetMapping("/dashboard")
@@ -161,8 +168,29 @@ public class AdminController {
 
     @GetMapping("/audit-logs")
     public ApiResponse<PageResponse<AuditLogDto>> auditLogs(@RequestParam(required = false) String action,
+                                                            @RequestParam(required = false) String q,
+                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "30") int size) {
-        return ApiResponse.ok("OK", service.auditLogs(action, page, size));
+        Instant fromInstant = from == null ? null : from.atStartOfDay(VN).toInstant();
+        Instant toInstant = to == null ? null : to.plusDays(1).atStartOfDay(VN).toInstant();   // "đến ngày" gồm cả ngày đó
+        return ApiResponse.ok("OK", auditService.search(action, q, fromInstant, toInstant, page, size));
+    }
+
+    // ---- số liệu toàn hệ thống (chỉ đọc)
+    @GetMapping("/inventory")
+    public ApiResponse<Map<String, Object>> inventory() {
+        return ApiResponse.ok("OK", overview.inventory());
+    }
+
+    @GetMapping("/appointments")
+    public ApiResponse<Map<String, Object>> appointments() {
+        return ApiResponse.ok("OK", overview.appointments());
+    }
+
+    @GetMapping("/operations")
+    public ApiResponse<Map<String, Object>> operations() {
+        return ApiResponse.ok("OK", overview.operations());
     }
 }

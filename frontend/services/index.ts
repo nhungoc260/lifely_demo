@@ -1,6 +1,6 @@
 import { get, post, put, qs, apiFetch, authFetch, toApiError } from "@/lib/api";
 import type {
-  AdminDashboard, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
+  AdminAppointments, AdminDashboard, AdminInventory, AdminOperations, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
@@ -160,7 +160,10 @@ export const adminApi = {
   messages: (p: { status?: ContactStatus; page?: number; size?: number }) => get<Page<ContactMessage>>(`/api/admin/messages${qs(p)}`),
   updateMessage: (id: string, status: ContactStatus) => put<ContactMessage>(`/api/admin/messages/${id}`, { status }),
   emailSummary: () => post<null>("/api/admin/summary/email"),
-  auditLogs: (p: { action?: string; page?: number; size?: number }) => get<Page<AuditLogEntry>>(`/api/admin/audit-logs${qs(p)}`),
+  auditLogs: (p: { action?: string; q?: string; from?: string; to?: string; page?: number; size?: number }) => get<Page<AuditLogEntry>>(`/api/admin/audit-logs${qs(p)}`),
+  inventory: () => get<AdminInventory>("/api/admin/inventory"),
+  appointments: () => get<AdminAppointments>("/api/admin/appointments"),
+  operations: () => get<AdminOperations>("/api/admin/operations"),
 };
 
 export const healthApi = {

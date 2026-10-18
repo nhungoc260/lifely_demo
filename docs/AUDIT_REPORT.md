@@ -35,7 +35,7 @@ Thiếu: nút "Gọi người hiến" rõ ràng cho nhân viên và nơi ghi nh�
 |---|---|
 | `npx tsc --noEmit` | PASS |
 | `npx eslint .` | PASS |
-| `npx vitest run` | PASS, 103/103 (thêm test `telHref`, nút gọi, PWA/nút cài đặt, nút trang chủ theo vai trò, định vị và tìm địa điểm) |
+| `npx vitest run` | PASS, 114/114 (thêm test `telHref`, nút gọi, PWA/nút cài đặt, nút trang chủ theo vai trò, định vị và tìm địa điểm) |
 | `npx next build` | PASS |
 | `javac` toàn bộ backend, so với baseline | **Chỉ kiểm cú pháp**: không có lỗi cú pháp mới; mọi chênh lệch lỗi đều do thiếu thư viện (Lombok, jakarta.validation, JUnit). Không phải kiểm kiểu đầy đủ |
 | `mvn test` (JDK 21, Maven 3.9.9, chạy trên máy người dùng sau khi xóa `target`) | **PASS**: 95 test, 0 lỗi, 0 bỏ qua, gồm `ContactResultTest` và `noAutomatedVoiceChannelExists`. Các test `*IT` cần PostgreSQL bị loại trừ theo `pom.xml` nên **NOT RUN** |
@@ -74,6 +74,16 @@ Lỗi (người dùng báo): bấm các ô "Tất cả" ở trang Bản đồ, d
 ## 5g. Bấm "Tìm kiếm" trên bản đồ trong hồ sơ bị "văng" (P1)
 Nguyên nhân (xác định từ code): `MapSearch` là một `<form>` nhưng được đặt trong biểu mẫu lớn của trang Hồ sơ người hiến, Hồ sơ tổ chức, Onboarding và **Tạo yêu cầu máu**. Bấm Tìm hoặc nhấn Enter làm sự kiện submit nổi lên biểu mẫu ngoài nên lưu hồ sơ, sang bước tiếp, hoặc xem trước/gửi yêu cầu máu ngoài ý muốn.
 Sửa: bỏ `<form>` trong `components/map/map-search.tsx`, nút `type="button"`, Enter được xử lý riêng (`preventDefault`). Test `tests/map-search.test.ts` kiểm không còn form lồng nhau. **Chưa** thử bằng trình duyệt thật.
+
+## 5h. Nâng cấp admin (đợt này)
+Trước đó admin không nhìn được toàn cảnh (không kho máu, lịch hiến, thông báo) và nhật ký chỉ hiện mã 8 ký tự.
+Đã làm:
+1. **Nhật ký:** hiện tên và email người thực hiện, chi tiết đọc được (`lib/audit.ts`, dịch khóa đã biết, không in dữ liệu lạ), lọc theo người, ngày, hành động (`AdminAuditService`, truy vấn nối bảng `users`, tìm kiếm thoát ký tự `%`/`_`).
+2. **Báo admin:** `AdminAlerts` + `AdminAlertListener` tạo thông báo loại SYSTEM (không đổi schema; `ck_notif_type` không cho loại mới) cho mọi admin ACTIVE **sau khi giao dịch gốc commit, trong giao dịch riêng**, lỗi không ảnh hưởng nghiệp vụ. Phát khi: báo cáo vi phạm mới, tin nhắn liên hệ mới, tổ chức gửi hồ sơ hoặc đổi thông tin quan trọng, yêu cầu máu chờ admin xác minh (ghi "KHẨN" nếu mức nguy kịch). Có chuông và mục Thông báo cho admin.
+3. **Ba trang chỉ xem:** Kho máu, Lịch hiến, Thống kê vận hành (`AdminOverviewService`, endpoint `GET /api/admin/inventory|appointments|operations`). Không trả số điện thoại hay dữ liệu sức khỏe.
+Kiểm chứng: toàn bộ SQL mới chạy trên PostgreSQL thật có dữ liệu mẫu (kể cả phép nối lịch hẹn bằng dữ liệu tạm đã hoàn tác); `tsc`, `eslint`, `next build`, 114 test frontend PASS; `javac` chỉ cho lỗi loại thiếu thư viện (không có lỗi cú pháp). **Chưa chạy:** `mvn test` cho các test mới (`AdminAlertsTest`, `AdminAuditServiceTest`), chạy backend thật, xem giao diện bằng trình duyệt.
+Chưa làm: cảnh báo khi yêu cầu khẩn cấp đã mở rộng tìm kiếm hết cấp mà vẫn không có người hiến; Web Push và email cho admin; cờ bảo trì và chính sách phiên bản PWA; cảnh báo khi backend ngừng hoạt động (cần giám sát từ bên ngoài, Render gói miễn phí tự ngủ nên tác vụ nền không chạy khi ngủ).
+Lưu ý khi dùng: cảnh báo chỉ sinh cho sự kiện **mới** sau khi triển khai, không quét lại dữ liệu cũ.
 
 ## 6. Rủi ro còn lại / cần bạn làm
 1. Lưu ý khi `mvn test` báo "failed to discover tests" sau khi xóa hoặc đổi tên class: xóa thư mục `backend/target` rồi chạy lại (file `.class` cũ còn sót). Chưa chạy `mvn spring-boot:run` và các test `*IT` (cần PostgreSQL local).

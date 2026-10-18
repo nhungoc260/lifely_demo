@@ -1,6 +1,7 @@
 package com.lifely.report;
 
 import com.lifely.audit.AuditAction;
+import com.lifely.admin.AdminAlerts;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
@@ -22,15 +23,17 @@ public class ReportService {
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final AuditService audit;
+    private final AdminAlerts adminAlerts;
 
     public ReportService(ReportRepository repository, BloodRequestRepository requestRepository,
                          UserRepository userRepository, OrganizationRepository organizationRepository,
-                         AuditService audit) {
+                         AuditService audit, AdminAlerts adminAlerts) {
         this.repository = repository;
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.audit = audit;
+        this.adminAlerts = adminAlerts;
     }
 
     @Transactional
@@ -56,6 +59,20 @@ public class ReportService {
         r = repository.save(r);
         audit.log(user.getId(), AuditAction.REPORT_CREATED, "REPORT", r.getId(),
                 Map.of("targetType", req.targetType().name(), "reason", req.reason().name()));
+        String target = switch (req.targetType()) {
+            case REQUEST -> "một yêu cầu máu";
+            case USER -> "một người dùng";
+            case ORGANIZATION -> "một tổ chức";
+        };
+        String reason = switch (req.reason()) {
+            case FAKE_REQUEST -> "yêu cầu giả";
+            case SPAM -> "spam";
+            case INCORRECT_INFORMATION -> "thông tin sai";
+            case ABUSE -> "lạm dụng";
+            case OTHER -> "lý do khác";
+        };
+        adminAlerts.raise("Báo cáo vi phạm mới", "Có người báo cáo " + target + " (" + reason + "). Vào Báo cáo vi phạm để xử lý.",
+                "REPORT", r.getId());
         return ReportDto.from(r);
     }
 }

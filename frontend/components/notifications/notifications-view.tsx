@@ -43,6 +43,12 @@ export function NotificationsView() {
     if (n.referenceType === "APPOINTMENT" && role === "DONOR") return "/donor/appointments";
     if (n.referenceType === "HEALTH" && role === "DONOR") return "/donor/health";
     if (n.referenceType === "ORGANIZATION" && role === "ORGANIZATION") return "/organization/profile";
+    if (role === "ADMIN") {
+      if (n.referenceType === "REQUEST") return "/admin/requests";
+      if (n.referenceType === "REPORT") return "/admin/reports";
+      if (n.referenceType === "ORGANIZATION") return "/admin/organizations";
+      if (n.referenceType === "CONTACT") return "/admin/messages";
+    }
     return null;
   }
 

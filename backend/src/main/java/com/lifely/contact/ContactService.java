@@ -1,5 +1,6 @@
 package com.lifely.contact;
 
+import com.lifely.admin.AdminAlerts;
 import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
 import com.lifely.common.PageResponse;
@@ -20,10 +21,12 @@ public class ContactService {
 
     private final ContactMessageRepository repository;
     private final MailService mail;
+    private final AdminAlerts adminAlerts;
 
-    public ContactService(ContactMessageRepository repository, MailService mail) {
+    public ContactService(ContactMessageRepository repository, MailService mail, AdminAlerts adminAlerts) {
         this.repository = repository;
         this.mail = mail;
+        this.adminAlerts = adminAlerts;
     }
 
     /** Lưu vào DB trước (không bao giờ mất tin), rồi mới báo cho admin qua email. */
@@ -41,6 +44,8 @@ public class ContactService {
         m.setPhone(req.phone() == null || req.phone().isBlank() ? null : req.phone().trim());
         m.setMessage(message);
         m = repository.save(m);
+        adminAlerts.raise("Tin nhắn liên hệ mới", "Tin nhắn mới từ " + name + ". Vào mục Tin nhắn để xem và phản hồi.",
+                "CONTACT", m.getId());
 
         mail.sendToAdmin("[LIFELY] Tin nhắn liên hệ mới từ " + name,
                 "Bạn có một tin nhắn liên hệ mới trên LIFELY.\n\n"

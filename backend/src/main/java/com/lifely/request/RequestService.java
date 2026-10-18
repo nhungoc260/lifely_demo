@@ -1,5 +1,6 @@
 package com.lifely.request;
 
+import com.lifely.admin.AdminAlerts;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
@@ -53,12 +54,14 @@ public class RequestService {
     private final AuditService audit;
     private final RequestCreateGuard createGuard;
     private final StaffAlertService staffAlerts;
+    private final AdminAlerts adminAlerts;
 
     public RequestService(BloodRequestRepository requestRepository, BloodTypeRepository bloodTypeRepository,
                           OrganizationRepository organizationRepository, RequestLifecycle lifecycle,
                           RequestAccess access, MatchingService matchingService, MatchRepository matchRepository,
                           NotificationService notifications, RequestStatusHistoryRepository historyRepository,
-                          AuditService audit, RequestCreateGuard createGuard, StaffAlertService staffAlerts) {
+                          AuditService audit, RequestCreateGuard createGuard, StaffAlertService staffAlerts,
+                          AdminAlerts adminAlerts) {
         this.requestRepository = requestRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.organizationRepository = organizationRepository;
@@ -71,6 +74,7 @@ public class RequestService {
         this.audit = audit;
         this.createGuard = createGuard;
         this.staffAlerts = staffAlerts;
+        this.adminAlerts = adminAlerts;
     }
 
     public RequestResponse create(AuthUser user, CreateRequestDto dto) {
@@ -172,6 +176,12 @@ public class RequestService {
                     "Yêu cầu " + r.getBloodType().getCode() + " của bạn đã được tiếp nhận, chúng tôi đang tìm người hiến máu và đã báo cho "
                             + r.getHospitalName() + ". Việc có máu hay không do cơ sở y tế quyết định.");
             staffAlerts.notifyNewRequest(r);
+        } else {
+            // Không gắn cơ sở đã xác minh: yêu cầu đứng chờ admin xác minh, nên báo admin (khẩn cấp thì nêu rõ).
+            boolean critical = r.getUrgency() == Urgency.CRITICAL;
+            adminAlerts.raise(critical ? "KHẨN: yêu cầu máu chờ xác minh" : "Yêu cầu máu chờ xác minh",
+                    "Yêu cầu máu nhóm " + r.getBloodType().getCode() + " tại " + r.getHospitalName() + " đang chờ admin xác minh.",
+                    "REQUEST", r.getId());
         }
         return RequestResponse.from(r);
     }

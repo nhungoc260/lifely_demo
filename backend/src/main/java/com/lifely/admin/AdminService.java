@@ -224,15 +224,6 @@ public class AdminService {
         return ReportDto.from(r);
     }
 
-    @Transactional(readOnly = true)
-    public PageResponse<AuditLogDto> auditLogs(String action, int page, int size) {
-        Specification<AuditLog> spec = (root, q, cb) ->
-                action == null || action.isBlank() ? cb.conjunction() : cb.equal(root.get("action"), action);
-        Page<AuditLog> result = auditRepository.findAll(spec,
-                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by("createdAt").descending()));
-        return PageResponse.of(result, AuditLogDto::from);
-    }
-
     // verify/reject/cancel của request dùng lại RequestService để có đầy đủ transaction, lịch sử và thông báo
     @Transactional(readOnly = true)
     public java.util.List<com.lifely.request.dto.HistoryEntry> requestHistory(AuthUser admin, UUID id) {

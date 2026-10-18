@@ -48,5 +48,5 @@ export const AUDIT_LABEL: Record<string, string> = {
   ORGANIZATION_VERIFIED: "Xác minh tổ chức", ORGANIZATION_REJECTED: "Từ chối tổ chức", ORGANIZATION_SUSPENDED: "Tạm khóa tổ chức",
   USER_SUSPENDED: "Khóa người dùng", USER_ACTIVATED: "Kích hoạt người dùng", REPORT_CREATED: "Tạo báo cáo vi phạm",
   REPORT_UPDATED: "Cập nhật báo cáo", PASSWORD_RESET: "Đặt lại mật khẩu", ACCOUNT_EXPORTED: "Tải dữ liệu cá nhân",
-  ACCOUNT_DELETED: "Xóa tài khoản",
+  ACCOUNT_DELETED: "Xóa tài khoản", MATCH_CONTACT_RESULT: "Ghi nhận kết quả liên hệ",
 };

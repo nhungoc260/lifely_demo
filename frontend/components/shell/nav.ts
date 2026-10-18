@@ -60,9 +60,13 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/dashboard", label: "Tổng quan", icon: LayoutDashboard, mobile: true },
     { href: "/admin/requests", label: "Yêu cầu", icon: ClipboardList, mobile: true },
     { href: "/admin/organizations", label: "Tổ chức", icon: Building2, mobile: true },
+    { href: "/admin/inventory", label: "Kho máu", icon: Droplets },
+    { href: "/admin/appointments", label: "Lịch hiến", icon: CalendarDays },
     { href: "/admin/users", label: "Người dùng", icon: Users, mobile: true },
     { href: "/admin/reports", label: "Báo cáo vi phạm", short: "Báo cáo", icon: ShieldAlert, mobile: true },
     { href: "/admin/messages", label: "Tin nhắn", icon: MessageSquare },
+    { href: "/admin/operations", label: "Thống kê vận hành", icon: BarChart3 },
+    { href: "/admin/notifications", label: "Thông báo", icon: Bell, badge: "unread" },
     { href: "/admin/audit", label: "Nhật ký hoạt động", icon: ScrollText },
   ],
 };

@@ -321,6 +321,8 @@ export interface AdminDashboard {
 export interface AuditLogEntry {
   id: string;
   userId: string | null;
+  userName: string | null;
+  userEmail: string | null;
   action: string;
   entityType: string | null;
   entityId: string | null;
@@ -450,3 +452,21 @@ export interface HealthSummary {
 }
 export interface HealthEvaluation { findings: HealthFinding[]; anyOutside: boolean; disclaimer: string }
 export interface HealthInput { heartRate?: number; systolic?: number; diastolic?: number; weightKg?: number }
+
+// ---- Admin: số liệu toàn hệ thống (chỉ đọc)
+export interface AdminInventory {
+  byBloodType: { bloodType: string; units: number; facilities: number; lowFacilities: number }[];
+  byOrganization: { organizationId: string; name: string; city: string | null; totalUnits: number; lowTypes: number; updatedAt: string }[];
+}
+export interface AdminAppointments {
+  statusCounts: { status: string; total: number }[];
+  upcomingSlots: { activeSlots: number; capacity: number; booked: number };
+  upcoming: { id: string; status: string; startsAt: string; organizationName: string; donorName: string }[];
+}
+export interface AdminOperations {
+  notificationDelivery7d: { channel: string; status: string; total: number }[];
+  topOrganizations30d: { name: string; requests: number; fulfilled: number; expired: number }[];
+  contactResults: { result: string; total: number }[];
+  reportsByStatus: { status: string; total: number }[];
+  appointmentNoShows: number;
+}

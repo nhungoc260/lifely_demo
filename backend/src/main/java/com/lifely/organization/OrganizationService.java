@@ -1,5 +1,6 @@
 package com.lifely.organization;
 
+import com.lifely.admin.AdminAlerts;
 import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
 import com.lifely.common.PageResponse;
@@ -33,16 +34,18 @@ public class OrganizationService {
     private final BloodRequestRepository requestRepository;
     private final RequestService requestService;
     private final JdbcTemplate jdbc;
+    private final AdminAlerts adminAlerts;
 
     public OrganizationService(OrganizationRepository repository, OrganizationDocumentRepository documentRepository,
                                FileStorageService storage, BloodRequestRepository requestRepository,
-                               RequestService requestService, JdbcTemplate jdbc) {
+                               RequestService requestService, JdbcTemplate jdbc, AdminAlerts adminAlerts) {
         this.repository = repository;
         this.documentRepository = documentRepository;
         this.storage = storage;
         this.requestRepository = requestRepository;
         this.requestService = requestService;
         this.jdbc = jdbc;
+        this.adminAlerts = adminAlerts;
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +86,12 @@ public class OrganizationService {
             o.setVerificationStatus(OrgVerificationStatus.UNDER_REVIEW);
             o.setVerificationNote("Thông tin đã thay đổi; cần xác minh lại");
         }
-        return toDto(repository.save(o));
+        Organization saved = repository.save(o);
+        if (sensitiveChange) {
+            adminAlerts.raise("Tổ chức cần xác minh lại", "\"" + saved.getName() + "\" đã đổi thông tin quan trọng nên cần xác minh lại.",
+                    "ORGANIZATION", saved.getId());
+        }
+        return toDto(saved);
     }
 
     @Transactional
@@ -115,7 +123,10 @@ public class OrganizationService {
         }
         o.setVerificationStatus(OrgVerificationStatus.UNDER_REVIEW);
         o.setVerificationNote(null);
-        return toDto(repository.save(o));
+        Organization saved = repository.save(o);
+        adminAlerts.raise("Tổ chức chờ xác minh", "\"" + saved.getName() + "\" vừa gửi hồ sơ xác minh. Vào Tổ chức để xem giấy tờ và duyệt.",
+                "ORGANIZATION", saved.getId());
+        return toDto(saved);
     }
 
     public record DocumentFile(Resource resource, String fileName, String contentType) {
