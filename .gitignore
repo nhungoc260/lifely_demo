@@ -35,3 +35,7 @@ frontend/.env.local
 *.pem
 *.p12
 vapid-keys*
+
+# Python
+__pycache__/
+*.pyc
