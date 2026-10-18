@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Globe, Home, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Bell, Ellipsis, Globe, Home, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { Logo, LogoMark } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { InstallButton } from "@/components/pwa/install-button";
 import { isActive, NAV, ROLE_META, TOPNAV_ROLES } from "@/components/shell/nav";
+import { MoreSheet } from "@/components/shell/more-sheet";
 import { LiveDot, UnreadBadge } from "@/components/shell/parts";
 import { TopNavShell } from "@/components/shell/top-nav-shell";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,8 +26,12 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
   const { user, signOut } = useAuth();
   const { unread } = useNotifications();
   const [collapsed, setCollapsed] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const items = NAV[role];
-  const mobile = items.filter((i) => i.mobile);
+  // Thanh tab dưới: tối đa 4 mục chính + "Thêm" (mở danh sách phần còn lại), giống ứng dụng gốc.
+  const mobile = items.filter((i) => i.mobile).slice(0, 4);
+  const more = items.filter((i) => !mobile.includes(i));
+  const logout = () => { signOut(); router.replace("/login"); };
   const notifHref = items.find((i) => i.badge === "unread")?.href;
   const meta = ROLE_META[role];
 
@@ -105,8 +110,8 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:h-16 md:px-8">
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-[var(--role-line)]" aria-hidden />
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:h-16 md:px-8">
+          <div className="absolute inset-x-0 top-0 hidden h-0.5 bg-[var(--role-line)] md:block" aria-hidden />
           <div className="md:hidden"><Logo href={homeFor(role)} /></div>
           <span className="hidden items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground sm:inline-flex md:hidden">
             <meta.icon className="size-3.5" aria-hidden />{meta.title}
@@ -115,50 +120,49 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
             <span className="hidden text-xs text-muted-foreground md:inline">Khu vực quản trị · mọi thao tác được ghi vào nhật ký hoạt động</span>
           )}
           <div className="ml-auto flex items-center gap-3">
-            <Link href="/" className="grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden" aria-label="Về trang chủ LIFELY">
-              <Home className="size-4" aria-hidden />
-            </Link>
             <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden md:inline-flex")}>
               <Globe aria-hidden />Xem trang công khai
             </Link>
-            <span className="hidden sm:inline-flex"><LiveDot /></span>
-            <InstallButton compact />
-            <ThemeToggle />
+            <span className="hidden md:inline-flex"><LiveDot /></span>
+            <span className="hidden md:contents"><InstallButton compact /></span>
+            <span className="hidden md:contents"><ThemeToggle /></span>
             {notifHref && (
               <Link href={notifHref} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Thông báo, ${unread} chưa đọc`}>
                 <Bell className="size-4" aria-hidden />
                 {unread > 0 && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />}
               </Link>
             )}
-            <button
-              onClick={() => { signOut(); router.replace("/login"); }}
-              className="grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Đăng xuất"
-            >
-              <LogOut className="size-4" aria-hidden />
-            </button>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-28 md:px-8 md:py-8 md:pb-10">{children}</main>
+        <main id="main" key={pathname} className="page-in mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:py-8 md:pb-10">{children}</main>
       </div>
 
       {/* Bottom navigation: mobile */}
-      <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${mobile.length}, minmax(0, 1fr))` }}>
+      <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+        <ul className="mx-auto grid max-w-lg grid-cols-5">
           {mobile.map((item) => {
             const active = isActive(pathname, item, items);
             return (
               <li key={item.href}>
-                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("relative flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
-                  <item.icon className="size-5" aria-hidden />
-                  <span className="truncate">{item.short ?? item.label}</span>
-                  {item.badge === "unread" && unread > 0 && <span className="absolute right-[28%] top-1.5 size-2 rounded-full bg-primary" />}
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("press relative flex h-[58px] flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
+                  {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b-full bg-primary" aria-hidden />}
+                  <item.icon className="size-[22px]" strokeWidth={active ? 2.4 : 1.8} aria-hidden />
+                  <span className="max-w-full truncate">{item.short ?? item.label}</span>
+                  {item.badge === "unread" && unread > 0 && <span className="absolute right-[26%] top-2 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-4 text-primary-foreground">{unread > 9 ? "9+" : unread}</span>}
                 </Link>
               </li>
             );
           })}
+          <li>
+            <button type="button" onClick={() => setMoreOpen(true)} aria-haspopup="dialog" className={cn("press relative flex h-[58px] w-full flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", moreOpen && "text-primary")}>
+              <Ellipsis className="size-[22px]" strokeWidth={1.8} aria-hidden />
+              <span>Thêm</span>
+              {unread > 0 && !mobile.some((i) => i.badge === "unread") && <span className="absolute right-[30%] top-2.5 size-2 rounded-full bg-primary" aria-hidden />}
+            </button>
+          </li>
         </ul>
       </nav>
+      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} items={more} unread={unread} user={user} roleTitle={meta.title} onSignOut={logout} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Clock, MapPin } from "lucide-react";
+import { ChevronRight, Clock, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { BloodChip, MatchBadge, UrgencyBadge } from "@/components/ui/badges";
@@ -36,5 +36,29 @@ export function MatchCard({ m }: { m: DonorMatch }) {
       </dl>
       <Link href={`/donor/requests/${m.matchId}`} className={cn(buttonVariants({ variant: open ? "default" : "outline" }), "mt-5 w-full")}>{open ? "Xem yêu cầu" : "Xem chi tiết"}</Link>
     </Card>
+  );
+}
+
+/** Dạng dòng gọn cho điện thoại: nhóm máu, bệnh viện, khoảng cách và thời gian còn lại trong một dòng bấm được. */
+export function MatchRow({ m }: { m: DonorMatch }) {
+  const open = m.status === "CONTACTED" || m.status === "PENDING";
+  return (
+    <Link href={`/donor/requests/${m.matchId}`} className="press-row flex items-center gap-3 px-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+      <BloodChip type={m.bloodType} className="size-12 min-w-12 shrink-0 rounded-2xl text-base font-bold" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{m.hospitalName}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          <UrgencyBadge urgency={m.urgency} />
+          <span className="inline-flex items-center gap-1"><MapPin className="size-3" aria-hidden />{m.distanceKm.toFixed(1)} km</span>
+          <span>{m.unitsNeeded} đơn vị</span>
+        </p>
+        <p className="mt-1 flex items-center gap-1 text-xs"><Clock className="size-3 text-muted-foreground" aria-hidden />{open ? <Countdown deadline={m.deadline} className="font-medium" /> : <MatchBadge status={m.status} />}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-lg font-bold leading-none tabular-nums text-primary">{Math.round(m.matchingScore)}%</p>
+        <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Phù hợp</p>
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" aria-hidden />
+    </Link>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, CheckCircle2, Download, Loader2, Save, ShieldAlert, Trash2 } from "lucide-react";
+import { Activity, CheckCircle2, Download, Droplets, HeartPulse, Loader2, Save, ShieldAlert, Trash2, Weight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -9,14 +9,16 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Field, Input } from "@/components/ui/input";
+import { ListGroup, ListRow, MiniStat, Segmented, TINT, type Tint } from "@/components/ui/mobile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { statusText, toPoints } from "@/lib/health";
 import { healthApi } from "@/services";
+import { cn } from "@/lib/utils";
 import type { Gender, HealthEvaluation, HealthInput } from "@/types/domain";
 
 const GENDERS: { value: Gender; label: string }[] = [
@@ -27,6 +29,19 @@ const DISCLAIMER = "Chỉ là hỗ trợ sàng lọc sơ bộ, không thay thế
 function num(s: string): number | undefined {
   const v = Number(s.replace(",", "."));
   return s.trim() === "" || Number.isNaN(v) ? undefined : v;
+}
+
+/** Một chỉ số = một ô: icon màu, tên ngắn, số lớn nhập trực tiếp, đơn vị nằm cạnh số. Bấm vào ô là gõ được ngay. */
+function MetricInput({ id, icon: Icon, tint, label, unit, mode, value, onChange }: { id: string; icon: typeof Activity; tint: Tint; label: string; unit: string; mode: "numeric" | "decimal"; value: string; onChange: (v: string) => void }) {
+  return (
+    <label htmlFor={id} className="press block cursor-text rounded-2xl bg-muted/60 p-3.5 ring-1 ring-border/60 focus-within:ring-2 focus-within:ring-primary/50">
+      <span className="flex items-center gap-2 text-[13px] font-medium"><span className={cn("grid size-7 place-items-center rounded-lg", TINT[tint])}><Icon className="size-4" aria-hidden /></span>{label}</span>
+      <span className="mt-2.5 flex items-baseline gap-1.5">
+        <input id={id} inputMode={mode} placeholder="--" value={value} onChange={(e) => onChange(e.target.value)} className="w-full min-w-0 bg-transparent text-[28px] font-bold leading-none tabular-nums tracking-tight placeholder:text-muted-foreground/40 focus:outline-none" />
+        <span className="shrink-0 text-xs text-muted-foreground">{unit}</span>
+      </span>
+    </label>
+  );
 }
 
 export default function DonorHealth() {
@@ -64,122 +79,130 @@ export default function DonorHealth() {
   return (
     <>
       <PageHeader title="Sức khỏe của tôi" description="Theo dõi nhịp tim, huyết áp bạn tự đo và khả năng hiến lại. Dữ liệu chỉ của riêng bạn." />
-      <p className="mb-6 flex items-start gap-2 rounded-xl bg-muted p-3 text-sm" role="note"><ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden />{DISCLAIMER} Quyết định hiến máu luôn do nhân viên y tế tại cơ sở đưa ra sau khi sàng lọc.</p>
+      <p className="mb-6 hidden items-start gap-2 rounded-xl bg-muted p-3 text-sm md:flex" role="note"><ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden />{DISCLAIMER} Quyết định hiến máu luôn do nhân viên y tế tại cơ sở đưa ra sau khi sàng lọc.</p>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Tổng quan</CardTitle></CardHeader>
-          <CardContent>
-            {summary.initialLoading ? <Skeleton className="h-40" /> : summary.error && !s ? <ErrorState message={summary.error.message} onRetry={summary.reload} /> : s && (
-              <div className="space-y-4 text-sm">
-                <dl className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-xl bg-muted p-3"><dt className="text-xs text-muted-foreground">Nhóm máu</dt><dd className="text-xl font-semibold">{s.bloodType ?? "–"}</dd></div>
-                  <div className="rounded-xl bg-muted p-3"><dt className="text-xs text-muted-foreground">Hiến gần nhất</dt><dd className="font-semibold">{s.lastDonationDate ? formatDate(s.lastDonationDate) : "Chưa có"}</dd></div>
-                  <div className="rounded-xl bg-muted p-3"><dt className="text-xs text-muted-foreground">Tổng số lần</dt><dd className="text-xl font-semibold tabular-nums">{s.totalDonations}</dd></div>
-                </dl>
-                <p className={`rounded-xl p-3 font-medium ${s.canDonate ? "bg-success/10 text-success" : "bg-warning/10"}`} role="status">
-                  {s.canDonate ? <CheckCircle2 className="mr-2 inline size-4" aria-hidden /> : null}
-                  {statusText(s.canDonate, s.daysUntilEligible, s.eligibleOn, formatDate)}
-                </p>
-                <p className="text-xs text-muted-foreground">Khoảng cách tối thiểu giữa hai lần hiến đang áp dụng: {s.intervalDays} ngày. Đây là quy tắc tham chiếu; cơ sở y tế quyết định cuối cùng.</p>
-                <fieldset>
-                  <legend className="mb-1 text-xs font-medium text-muted-foreground">Giới tính (tùy chọn, dùng để áp quy tắc cân nặng và giãn cách)</legend>
-                  <div className="flex flex-wrap gap-2">
-                    {GENDERS.map((g) => (
-                      <label key={g.value} className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm ${s.gender === g.value ? "border-primary bg-primary/10" : "border-border"}`}>
-                        <input type="radio" name="gender" className="accent-primary" checked={s.gender === g.value} disabled={busy === "gender"} onChange={() => setGender(g.value)} />{g.label}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="size-4" aria-hidden />Kiểm tra nhanh</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Nhịp tim (lần/phút)" htmlFor="hr"><Input id="hr" inputMode="numeric" value={f.hr} onChange={(e) => setF({ ...f, hr: e.target.value })} /></Field>
-              <Field label="Cân nặng (kg)" htmlFor="kg"><Input id="kg" inputMode="decimal" value={f.kg} onChange={(e) => setF({ ...f, kg: e.target.value })} /></Field>
-              <Field label="Huyết áp tâm thu (mmHg)" htmlFor="sys"><Input id="sys" inputMode="numeric" value={f.sys} onChange={(e) => setF({ ...f, sys: e.target.value })} /></Field>
-              <Field label="Huyết áp tâm trương (mmHg)" htmlFor="dia"><Input id="dia" inputMode="numeric" value={f.dia} onChange={(e) => setF({ ...f, dia: e.target.value })} /></Field>
+      <div className="space-y-5 md:space-y-6">
+        {/* Tổng quan */}
+        {summary.initialLoading ? <Skeleton className="h-40 rounded-2xl" /> : summary.error && !s ? <ErrorState message={summary.error.message} onRetry={summary.reload} /> : s && (
+          <section aria-label="Tổng quan">
+            <div className="grid grid-cols-3 gap-2.5">
+              <MiniStat icon={Droplets} tint="rose" label="Nhóm máu" value={s.bloodType ?? "–"} />
+              <MiniStat icon={HeartPulse} tint="sky" label="Hiến gần nhất" value={<span className="text-lg">{s.lastDonationDate ? formatDate(s.lastDonationDate).slice(0, 5) : "Chưa có"}</span>} />
+              <MiniStat icon={CheckCircle2} tint="emerald" label="Tổng số lần" value={s.totalDonations} />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={evaluate} disabled={!hasInput || busy !== null}>{busy === "eval" && <Loader2 className="animate-spin" />} Kiểm tra</Button>
-              <Button variant="outline" onClick={save} disabled={!hasInput || busy !== null || !s?.consentGranted}><Save /> Lưu vào lịch sử</Button>
-            </div>
-            {s && !s.consentGranted && <p className="text-xs text-muted-foreground">Muốn lưu lịch sử, hãy bật &quot;Cho phép lưu dữ liệu sức khỏe&quot; ở phần dưới. Kiểm tra nhanh vẫn dùng được mà không lưu gì.</p>}
-            {result && (
-              <div className="space-y-2" aria-live="polite">
-                <ul className="space-y-2">
-                  {result.findings.filter((x) => x.status !== "NOT_MEASURED").map((x) => (
-                    <li key={x.metric} className={`rounded-xl p-3 text-sm ${x.status === "OUTSIDE" ? "bg-warning/10" : "bg-success/10"}`}>
-                      <p className="font-medium">{x.status === "OUTSIDE" ? "◆ Ngoài ngưỡng" : "✓ Trong ngưỡng"} · {x.label}: {x.value} {x.unit}</p>
-                      <p className="text-xs text-muted-foreground">{x.note}</p>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            <p className={cn("mt-3 flex items-center gap-2 rounded-2xl px-4 py-3 text-[15px] font-semibold", s.canDonate ? "bg-success/12 text-success" : "bg-warning/12 text-warning")} role="status">
+              {s.canDonate && <CheckCircle2 className="size-5 shrink-0" aria-hidden />}
+              {statusText(s.canDonate, s.daysUntilEligible, s.eligibleOn, formatDate)}
+            </p>
+            <p className="mt-1.5 px-1 text-xs text-muted-foreground">Cách tối thiểu {s.intervalDays} ngày giữa hai lần hiến. Cơ sở y tế quyết định cuối cùng.</p>
+          </section>
+        )}
 
-      <Card className="mt-6">
-        <CardHeader><CardTitle>Xu hướng</CardTitle></CardHeader>
-        <CardContent>
-          {checks.initialLoading ? <Skeleton className="h-48" /> : list.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Chưa có lần kiểm tra nào được lưu. Nhập chỉ số ở trên và bấm &quot;Lưu vào lịch sử&quot; để xem xu hướng.</p>
-          ) : s && (
-            <div className="grid gap-8 md:grid-cols-2">
-              <TrendChart title="Nhịp tim" unit="lần/phút" band={{ min: s.rules.heartRateMin, max: s.rules.heartRateMax }}
-                series={[{ name: "Nhịp tim", stroke: "stroke-primary", fill: "fill-primary", points: toPoints(list, (c) => c.heartRate, "HEART_RATE", short) }]} />
-              <TrendChart title="Huyết áp" unit="mmHg" band={{ min: s.rules.systolicMin, max: s.rules.systolicMaxExclusive }}
-                series={[
-                  { name: "Tâm thu", stroke: "stroke-primary", fill: "fill-primary", points: toPoints(list, (c) => c.systolic, "SYSTOLIC", short) },
-                  { name: "Tâm trương", stroke: "stroke-muted-foreground", fill: "fill-muted-foreground", points: toPoints(list, (c) => c.diastolic, "DIASTOLIC", short) },
-                ]} />
-            </div>
-          )}
-          {list.length > 0 && (
-            <details className="mt-6 text-sm">
-              <summary className="cursor-pointer font-medium">Xem dạng bảng ({list.length} lần)</summary>
-              <div className="mt-3 overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead><tr className="text-muted-foreground"><th className="py-1 pr-3">Thời điểm</th><th className="pr-3">Nhịp tim</th><th className="pr-3">Huyết áp</th><th className="pr-3">Cân nặng</th><th>Ngưỡng sơ bộ</th></tr></thead>
-                  <tbody>
-                    {[...list].reverse().map((c) => (
-                      <tr key={c.id} className="border-t border-border">
-                        <td className="py-1 pr-3">{formatDateTime(c.measuredAt)}</td><td className="pr-3">{c.heartRate ?? "–"}</td>
-                        <td className="pr-3">{c.systolic ?? "–"}/{c.diastolic ?? "–"}</td><td className="pr-3">{c.weightKg ?? "–"}</td>
-                        <td>{c.anyOutside ? "◆ Có chỉ số ngoài ngưỡng" : "✓ Trong ngưỡng"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </details>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="mt-6">
-        <CardHeader><CardTitle>Dữ liệu của tôi</CardTitle></CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <label className="flex items-start justify-between gap-4">
-            <span><span className="block font-medium">Cho phép lưu dữ liệu sức khỏe của tôi</span><span className="block text-xs text-muted-foreground">Chỉ bạn xem được. Không chia sẻ cho người cần máu hay người hiến khác. Bạn có thể tắt bất cứ lúc nào.</span></span>
-            <input type="checkbox" className="mt-1 size-4 accent-primary" checked={!!s?.consentGranted} disabled={!s || busy === "consent"} onChange={(e) => toggleConsent(e.target.checked)} aria-label="Cho phép lưu dữ liệu sức khỏe" />
+        {/* Cho phép lưu dữ liệu: cài đặt quan trọng nên nằm ngay đầu trang */}
+        <ListGroup footer="Chỉ bạn xem được, không chia sẻ cho người cần máu hay người hiến khác. Tắt bất cứ lúc nào.">
+          <label className="press-row flex min-h-[56px] cursor-pointer items-center justify-between gap-4 px-4 py-2.5">
+            <span className="min-w-0"><span className="block text-[15px] font-medium">Lưu dữ liệu sức khỏe</span><span className="block text-xs text-muted-foreground">{s?.consentGranted ? "Đang bật" : "Đang tắt: kiểm tra nhanh vẫn dùng được"}</span></span>
+            <Switch checked={!!s?.consentGranted} disabled={!s || busy === "consent"} onCheckedChange={toggleConsent} aria-label="Cho phép lưu dữ liệu sức khỏe" />
           </label>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => download("json")} disabled={busy !== null}><Download /> Xuất JSON</Button>
-            <Button variant="outline" size="sm" onClick={() => download("csv")} disabled={busy !== null}><Download /> Xuất CSV</Button>
-            <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)} disabled={busy !== null || list.length === 0}><Trash2 /> Xóa lịch sử sức khỏe</Button>
-          </div>
-        </CardContent>
-      </Card>
+        </ListGroup>
+
+        <div className="grid gap-5 md:gap-6 lg:grid-cols-2">
+          {/* Kiểm tra nhanh */}
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="size-4" aria-hidden />Kiểm tra nhanh</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-2.5">
+                <MetricInput id="hr" icon={HeartPulse} tint="rose" label="Nhịp tim" unit="lần/phút" mode="numeric" value={f.hr} onChange={(v) => setF({ ...f, hr: v })} />
+                <MetricInput id="kg" icon={Weight} tint="amber" label="Cân nặng" unit="kg" mode="decimal" value={f.kg} onChange={(v) => setF({ ...f, kg: v })} />
+                <MetricInput id="sys" icon={Activity} tint="sky" label="Tâm thu" unit="mmHg" mode="numeric" value={f.sys} onChange={(v) => setF({ ...f, sys: v })} />
+                <MetricInput id="dia" icon={Activity} tint="violet" label="Tâm trương" unit="mmHg" mode="numeric" value={f.dia} onChange={(v) => setF({ ...f, dia: v })} />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button size="lg" className="press w-full" onClick={evaluate} disabled={!hasInput || busy !== null}>{busy === "eval" && <Loader2 className="animate-spin" />} Kiểm tra</Button>
+                <Button size="lg" variant="outline" className="press w-full" onClick={save} disabled={!hasInput || busy !== null || !s?.consentGranted}><Save /> Lưu vào lịch sử</Button>
+              </div>
+              {s && !s.consentGranted && <p className="text-xs text-muted-foreground">Bật &quot;Lưu dữ liệu sức khỏe&quot; ở trên để lưu lịch sử.</p>}
+              {result && (
+                <div className="space-y-2" aria-live="polite">
+                  <ul className="space-y-2">
+                    {result.findings.filter((x) => x.status !== "NOT_MEASURED").map((x) => (
+                      <li key={x.metric} className={`rounded-2xl p-3.5 text-sm ${x.status === "OUTSIDE" ? "bg-warning/10" : "bg-success/10"}`}>
+                        <p className="font-semibold">{x.status === "OUTSIDE" ? "◆ Ngoài ngưỡng" : "✓ Trong ngưỡng"} · {x.label}: {x.value} {x.unit}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{x.note}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Giới tính */}
+          {s && (
+            <Card className="self-start">
+              <CardHeader><CardTitle>Giới tính</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <Segmented label="Giới tính" value={s.gender as Gender} onChange={(g) => { if (busy !== "gender") setGender(g); }} options={GENDERS} />
+                <p className="text-xs text-muted-foreground">Tùy chọn, dùng để áp quy tắc cân nặng và giãn cách.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Xu hướng */}
+        <Card>
+          <CardHeader><CardTitle>Xu hướng</CardTitle></CardHeader>
+          <CardContent>
+            {checks.initialLoading ? <Skeleton className="h-48" /> : list.length === 0 ? (
+              <div className="flex flex-col items-center py-2 text-center">
+                <svg viewBox="0 0 240 64" className="h-16 w-full max-w-xs text-primary/25" fill="none" aria-hidden>
+                  <path d="M2 44 C 30 44, 36 14, 62 20 S 100 52, 126 32 S 168 6, 192 26 S 224 40, 238 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 7" />
+                </svg>
+                <p className="mt-2 text-sm font-medium">Chưa có dữ liệu</p>
+                <p className="text-xs text-muted-foreground">Lưu một lần kiểm tra để xem xu hướng.</p>
+              </div>
+            ) : s && (
+              <div className="grid gap-8 md:grid-cols-2">
+                <TrendChart title="Nhịp tim" unit="lần/phút" band={{ min: s.rules.heartRateMin, max: s.rules.heartRateMax }}
+                  series={[{ name: "Nhịp tim", stroke: "stroke-primary", fill: "fill-primary", points: toPoints(list, (c) => c.heartRate, "HEART_RATE", short) }]} />
+                <TrendChart title="Huyết áp" unit="mmHg" band={{ min: s.rules.systolicMin, max: s.rules.systolicMaxExclusive }}
+                  series={[
+                    { name: "Tâm thu", stroke: "stroke-primary", fill: "fill-primary", points: toPoints(list, (c) => c.systolic, "SYSTOLIC", short) },
+                    { name: "Tâm trương", stroke: "stroke-muted-foreground", fill: "fill-muted-foreground", points: toPoints(list, (c) => c.diastolic, "DIASTOLIC", short) },
+                  ]} />
+              </div>
+            )}
+            {list.length > 0 && (
+              <details className="mt-6 text-sm">
+                <summary className="cursor-pointer font-medium">Xem dạng bảng ({list.length} lần)</summary>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead><tr className="text-muted-foreground"><th className="py-1 pr-3">Thời điểm</th><th className="pr-3">Nhịp tim</th><th className="pr-3">Huyết áp</th><th className="pr-3">Cân nặng</th><th>Ngưỡng sơ bộ</th></tr></thead>
+                    <tbody>
+                      {[...list].reverse().map((c) => (
+                        <tr key={c.id} className="border-t border-border">
+                          <td className="py-1 pr-3">{formatDateTime(c.measuredAt)}</td><td className="pr-3">{c.heartRate ?? "–"}</td>
+                          <td className="pr-3">{c.systolic ?? "–"}/{c.diastolic ?? "–"}</td><td className="pr-3">{c.weightKg ?? "–"}</td>
+                          <td>{c.anyOutside ? "◆ Có chỉ số ngoài ngưỡng" : "✓ Trong ngưỡng"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Dữ liệu của tôi */}
+        <ListGroup title="Dữ liệu của tôi">
+          <ListRow icon={Download} tint="sky" label="Xuất JSON" onClick={busy === null ? () => download("json") : undefined} />
+          <ListRow icon={Download} tint="emerald" label="Xuất CSV" onClick={busy === null ? () => download("csv") : undefined} />
+          <ListRow icon={Trash2} danger label="Xóa lịch sử sức khỏe" onClick={busy === null && list.length > 0 ? () => setDeleteOpen(true) : undefined} chevron={false} />
+        </ListGroup>
+        <p className="px-1 text-xs text-muted-foreground md:hidden"><ShieldAlert className="mr-1 inline size-3.5 align-text-bottom" aria-hidden />{DISCLAIMER}</p>
+      </div>
       <ConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} title="Xóa toàn bộ lịch sử sức khỏe?"
         description="Mọi lần kiểm tra bạn đã lưu sẽ bị xóa vĩnh viễn và không khôi phục được. Hồ sơ hiến máu của bạn không bị ảnh hưởng."
         confirmLabel="Xóa vĩnh viễn" destructive onConfirm={wipe} />

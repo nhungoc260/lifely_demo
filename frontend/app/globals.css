@@ -106,3 +106,25 @@ body {
   [data-role] > aside, [data-role] header, [data-role] > nav, [data-print-hide] { display: none !important; }
   [data-role] { background: #fff !important; }
 }
+
+/* ===== Cảm giác ứng dụng di động (PWA / APK dùng chung một mã nguồn với web) ===== */
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+a, button, [role="tab"], label { touch-action: manipulation; }
+
+/* iOS tự phóng to trang khi ô nhập có chữ nhỏ hơn 16px, nên giữ 16px trên màn hình nhỏ. */
+@media (max-width: 1023px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* Chạm vào là có phản hồi, giống nút của ứng dụng gốc. */
+.press { transition: transform 120ms ease, background-color 120ms ease; }
+.press:active { transform: scale(0.97); }
+.press-row:active { background-color: color-mix(in srgb, var(--muted) 70%, transparent); }
+
+@keyframes lifely-page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.page-in { animation: lifely-page-in 280ms ease-out both; }
+
+/* Cuộn ngang gọn, không hiện thanh cuộn. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

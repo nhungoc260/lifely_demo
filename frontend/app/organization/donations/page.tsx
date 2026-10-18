@@ -62,13 +62,28 @@ export default function OrganizationDonations() {
         : rows.length === 0 ? <EmptyState title="Chưa có lần hiến nào được xác nhận" description="Khi người hiến đến hiến máu và cơ sở bấm xác nhận trong trang chi tiết yêu cầu, lịch sử sẽ hiện ở đây." />
         : (
           <>
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
               <StatCard label="Lần hiến đã xác nhận" value={s.total} icon={ShieldCheck} accent />
               <StatCard label="Trong tháng này" value={s.thisMonth} icon={CalendarCheck} />
               <StatCard label="Số người hiến" value={s.donors} icon={Users} />
               <StatCard label="Nhóm máu nhiều nhất" value={s.topBlood} icon={Droplets} />
             </div>
-            <Card className="mt-6 overflow-x-auto">
+            <ul className="mt-5 space-y-3 md:hidden">
+              {rows.map((r) => (
+                <li key={r.id} className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 text-[15px] font-semibold [overflow-wrap:anywhere]">{r.donorName}</p>
+                    <span className="shrink-0 rounded-xl bg-secondary px-2.5 py-1 text-sm font-bold text-secondary-foreground">{r.bloodType ?? "–"}</span>
+                  </div>
+                  <dl className="mt-3 space-y-1.5 text-sm">
+                    <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Ngày hiến</dt><dd className="tabular-nums">{formatDate(r.donatedOn)}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Địa điểm</dt><dd className="text-right">{r.location ?? "–"}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Xác nhận</dt><dd className="text-right">{LEVEL_LABEL[r.verificationLevel]}</dd></div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+            <Card className="mt-6 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">

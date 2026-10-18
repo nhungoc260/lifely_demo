@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown, LifeBuoy, Mail, PhoneCall, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FAQS, searchFaq } from "@/components/support/faq-data";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,6 +20,12 @@ export function HelpWidget() {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const inApp = APP_PREFIXES.some((p) => pathname.startsWith(p));
+  // Trên điện thoại, trong ứng dụng: nút nổi được ẩn đi, mở từ mục "Trợ giúp" ở Hồ sơ.
+  useEffect(() => {
+    const openHelp = () => setOpen(true);
+    window.addEventListener("lifely:open-help", openHelp);
+    return () => window.removeEventListener("lifely:open-help", openHelp);
+  }, []);
   const searching = query.trim().length >= 2;
   const results = searching ? searchFaq(query) : FAQS.slice(0, 5);
 
@@ -30,7 +36,7 @@ export function HelpWidget() {
           data-print-hide
           className={cn(
             "fixed right-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            inApp ? "bottom-24 lg:bottom-6" : "bottom-5",
+            inApp ? "max-lg:hidden bottom-6" : "bottom-5",
           )}
           aria-label="Cần hỗ trợ? Liên hệ nhân viên"
         >

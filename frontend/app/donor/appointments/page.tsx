@@ -52,27 +52,34 @@ export default function DonorAppointments() {
               : slots.error && !slots.data ? <ErrorState message={slots.error.message} onRetry={slots.reload} />
               : slots.data && slots.data.length === 0 ? <EmptyState title="Chưa có khung giờ nào" description="Các cơ sở sẽ mở thêm lịch. Bạn vẫn có thể phản hồi các yêu cầu máu khẩn cấp gần bạn." />
               : (
-                <ul className="divide-y divide-border">
-                  {slots.data?.map((s) => (
-                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                      <div>
-                        <p className="font-medium">{formatSlotRange(s.startsAt, s.endsAt)}</p>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" aria-hidden />{s.organizationName}{s.city ? `, ${s.city}` : ""}</p>
-                        <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
-                          {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
-                        </p>
-                      </div>
-                      <Button size="sm" onClick={() => book(s.id)} disabled={s.available === 0 || busy === s.id}>
-                        {busy === s.id ? <Loader2 className="animate-spin" /> : <CalendarCheck />} Đặt lịch
-                      </Button>
-                    </li>
-                  ))}
+                <ul className="-mx-1 divide-y divide-border/60">
+                  {slots.data?.map((s) => {
+                    const st = new Date(s.startsAt);
+                    return (
+                      <li key={s.id} className="flex items-center gap-3 px-1 py-3 text-sm">
+                        <span className="grid size-12 shrink-0 place-content-center rounded-2xl bg-sky-500/10 text-center text-sky-600 dark:text-sky-400">
+                          <span className="text-lg font-bold leading-none tabular-nums">{String(st.getDate()).padStart(2, "0")}</span>
+                          <span className="mt-0.5 text-[10px] font-semibold uppercase">Th{st.getMonth() + 1}</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold">{formatSlotRange(s.startsAt, s.endsAt)}</p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{s.organizationName}{s.city ? `, ${s.city}` : ""}</span></p>
+                          <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
+                            {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
+                          </p>
+                        </div>
+                        <Button size="sm" className="press shrink-0" onClick={() => book(s.id)} disabled={s.available === 0 || busy === s.id}>
+                          {busy === s.id ? <Loader2 className="animate-spin" /> : <CalendarCheck />} Đặt
+                        </Button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="max-lg:order-first">
           <CardHeader><CardTitle>Lịch của tôi</CardTitle></CardHeader>
           <CardContent>
             {mine.initialLoading ? <Skeleton className="h-32" />
@@ -83,7 +90,7 @@ export default function DonorAppointments() {
                   {upcoming.length > 0 && (
                     <ul className="space-y-3">
                       {upcoming.map((a) => (
-                        <li key={a.id} className="rounded-xl border border-border p-3 text-sm">
+                        <li key={a.id} className="rounded-2xl bg-muted/60 p-3.5 text-sm ring-1 ring-border/60">
                           <p className="font-medium">{formatDateTime(a.startsAt)}</p>
                           <p className="text-xs text-muted-foreground">{a.organizationName}{a.address ? ` · ${a.address}` : ""}</p>
                           <p className="mt-1 text-xs">{APPOINTMENT_STATUS_LABEL[a.status]}</p>

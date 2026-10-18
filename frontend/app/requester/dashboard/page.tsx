@@ -25,19 +25,21 @@ export default function RequesterDashboard() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Xin chào, {user?.fullName}</h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+      <div className="mb-5 md:mb-8">
+        <p className="text-sm text-muted-foreground md:hidden">Xin chào</p>
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight md:text-3xl md:font-semibold"><span className="hidden md:inline">Xin chào, </span>{user?.fullName}</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
           {active === undefined ? "\u00a0"
-            : active > 0 ? `Bạn có ${active} yêu cầu đang mở. Số người hiến nhận lời sẽ tự cập nhật, không cần tải lại trang.`
-            : "Bạn chưa có yêu cầu nào đang mở. Cần máu? Hãy tạo yêu cầu, LIFELY sẽ tìm người hiến phù hợp gần bệnh viện."}
+            : active > 0 ? `Bạn có ${active} yêu cầu đang mở. Số người hiến nhận lời sẽ tự cập nhật.`
+            : "Chưa có yêu cầu nào đang mở. Cần máu? Hãy tạo yêu cầu, LIFELY sẽ tìm người hiến gần bệnh viện."}
         </p>
+        <Link href="/requester/requests/create" className={buttonVariants({ size: "lg", className: "press mt-4 w-full md:hidden" })}>Tạo yêu cầu máu</Link>
       </div>
 
       {recent.data && recent.data.items.length === 0 && <div className="mb-8"><HowItWorks /></div>}
 
       <section aria-labelledby="open-requests">
-        <h2 id="open-requests" className="mb-4 text-xl font-semibold tracking-tight">Yêu cầu đang mở</h2>
+        <h2 id="open-requests" className="mb-3 text-lg font-bold tracking-tight md:mb-4 md:text-xl md:font-semibold">Yêu cầu đang mở</h2>
         {recent.initialLoading ? <Skeleton className="h-40" />
           : recent.error && !recent.data ? <ErrorState message={recent.error.message} onRetry={recent.reload} />
           : open.length === 0 ? <EmptyState
@@ -54,9 +56,9 @@ export default function RequesterDashboard() {
         </details>
       )}
 
-      <section className="mt-10" aria-label="Tóm tắt">
+      <section className="mt-7 md:mt-10" aria-label="Tóm tắt">
         {dash.error && !dash.data ? <ErrorState message={dash.error.message} onRetry={dash.reload} /> : (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             <StatCard label="Yêu cầu đang mở" value={dash.data?.activeRequests ?? 0} icon={ClipboardList} accent loading={dash.initialLoading} />
             <StatCard label="Người hiến đã nhận lời" value={dash.data?.confirmedDonors ?? 0} icon={UsersRound} loading={dash.initialLoading} hint="Trên tất cả yêu cầu của bạn" />
             <StatCard label="Người hiến đã trả lời" value={dash.data?.responses ?? 0} icon={MessageSquareReply} loading={dash.initialLoading} hint="Gồm cả nhận lời và từ chối" />

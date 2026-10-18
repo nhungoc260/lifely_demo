@@ -37,9 +37,9 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
 
   return (
     <div data-role={role} className="flex min-h-dvh flex-col bg-surface">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-        <div className="h-0.5 w-full bg-[var(--role-line)]" aria-hidden />
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 md:px-8">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className="hidden h-0.5 w-full bg-[var(--role-line)] lg:block" aria-hidden />
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-8 lg:h-16">
           <Logo href={cfg.links[0].href} />
           <span className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground 2xl:inline-flex">
             <meta.icon className="size-3.5" aria-hidden />{meta.title}
@@ -60,9 +60,9 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
                 <Plus aria-hidden />{cfg.cta.label}
               </Link>
             )}
-            <LiveDot labelFrom="2xl" />
-            <InstallButton compact />
-            <ThemeToggle />
+            <span className="hidden lg:contents"><LiveDot labelFrom="2xl" /></span>
+            <span className="hidden lg:contents"><InstallButton compact /></span>
+            <span className="hidden lg:contents"><ThemeToggle /></span>
             <Link href={cfg.bell} className="relative grid size-9 place-items-center rounded-full border border-border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Thông báo, ${unread} chưa đọc`}>
               <Bell className="size-4" aria-hidden />
               {unread > 0 && (
@@ -74,7 +74,7 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
         </div>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-28 md:px-8 md:py-10 lg:pb-12">{children}</main>
+      <main id="main" key={pathname} className="page-in mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:py-10 lg:pb-12">{children}</main>
 
       <footer className="hidden border-t border-border bg-background/60 lg:block">
         <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-6 px-8 py-6 text-xs text-muted-foreground">
@@ -90,17 +90,18 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
         </div>
       </footer>
 
-      {/* Thanh điều hướng dưới: di động */}
-      <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+      {/* Thanh điều hướng dưới: di động, kiểu ứng dụng gốc */}
+      <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${mobile.length}, minmax(0, 1fr))` }}>
           {mobile.map((item) => {
             const active = isActive(pathname, item, all);
             return (
               <li key={item.href}>
-                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("relative flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
-                  <item.icon className="size-5" aria-hidden />
-                  <span className="truncate">{item.short ?? item.label}</span>
-                  {item.badge === "unread" && unread > 0 && <span className="absolute right-[28%] top-1.5 size-2 rounded-full bg-primary" />}
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("press relative flex h-[58px] flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
+                  {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b-full bg-primary" aria-hidden />}
+                  <item.icon className="size-[22px]" strokeWidth={active ? 2.4 : 1.8} aria-hidden />
+                  <span className="max-w-full truncate">{item.short ?? item.label}</span>
+                  {item.badge === "unread" && unread > 0 && <span className="absolute right-[26%] top-2 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-4 text-primary-foreground">{unread > 9 ? "9+" : unread}</span>}
                 </Link>
               </li>
             );

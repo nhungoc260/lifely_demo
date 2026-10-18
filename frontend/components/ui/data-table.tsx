@@ -31,13 +31,20 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, caption }: { c
         </table>
       </div>
       <ul className="space-y-3 md:hidden">
-        {rows.map((r) => (
-          <li key={rowKey(r)} className="rounded-2xl border border-border bg-card p-4" onClick={() => onRowClick?.(r)}>
-            <dl className="space-y-2 text-sm">
-              {columns.map((c) => <div key={c.key} className="flex items-start justify-between gap-4"><dt className="shrink-0 text-muted-foreground">{c.header}</dt><dd className="text-right">{c.cell(r)}</dd></div>)}
-            </dl>
-          </li>
-        ))}
+        {rows.map((r) => {
+          const [first, ...rest] = columns;
+          const last = rest.length > 1 && rest[rest.length - 1].align === "right" ? rest[rest.length - 1] : null;
+          const mid = last ? rest.slice(0, -1) : rest;
+          return (
+            <li key={rowKey(r)} className={cn("rounded-2xl bg-card p-4 ring-1 ring-border/60", onRowClick && "press cursor-pointer")} onClick={() => onRowClick?.(r)}>
+              <div className="min-w-0 text-[15px] font-semibold [overflow-wrap:anywhere]">{first.cell(r)}</div>
+              <dl className="mt-3 space-y-2 text-sm">
+                {mid.map((c) => <div key={c.key} className="flex items-start justify-between gap-4"><dt className="shrink-0 text-muted-foreground">{c.header}</dt><dd className="min-w-0 text-right [overflow-wrap:anywhere]">{c.cell(r)}</dd></div>)}
+              </dl>
+              {last && <div className="mt-3 flex justify-end border-t border-border/60 pt-3">{last.cell(r)}</div>}
+            </li>
+          );
+        })}
       </ul>
     </>
   );

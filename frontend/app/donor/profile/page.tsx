@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { AccountDataCard } from "@/components/account/account-data-card";
+import { DonorProfileHub } from "@/components/donor/profile-hub";
 import { ReadinessCard } from "@/components/donor/readiness-card";
 import { LocationPicker } from "@/components/map/location-picker";
 import { PageHeader } from "@/components/shell/page-header";
@@ -140,6 +141,8 @@ export default function DonorProfilePage() {
   return (
     <>
       <PageHeader title="Hồ sơ" description="Hãy giữ thông tin luôn cập nhật để LIFELY kết nối chính xác cho bạn." />
+      <DonorProfileHub />
+      <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:hidden">Thông tin hồ sơ</h2>
       {profile.error ? <ErrorState message={profile.error.message} onRetry={profile.reload} />
         : profile.data && privacy.data ? <ProfileForm profile={profile.data} privacy={privacy.data} />
         : <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]"><Skeleton className="h-96" /><Skeleton className="h-64" /></div>}

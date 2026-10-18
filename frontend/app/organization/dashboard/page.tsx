@@ -32,12 +32,12 @@ export default function OrganizationDashboard() {
       ) : (
         <>
           {me.data && !verified && (
-            <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 border-warning/40 bg-warning/5 p-5">
+            <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-4 md:mb-6 md:p-5">
               <div><p className="flex items-center gap-2 font-medium">Xác minh <OrgStatusBadge status={me.data.verificationStatus} /></p><p className="mt-1 text-sm text-muted-foreground">{me.data.verificationStatus === "REJECTED" ? (me.data.verificationNote ?? "Vui lòng cập nhật thông tin và nộp lại.") : "Khi chưa được xác minh, yêu cầu của bạn sẽ được admin xem xét trước khi liên hệ người hiến máu."}</p></div>
               <Link href="/organization/profile" className={buttonVariants({ size: "sm", variant: "outline" })}>Quản lý xác minh</Link>
             </Card>
           )}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
             <StatCard label="Xác minh" value={me.data ? <OrgStatusBadge status={me.data.verificationStatus} /> : "–"} icon={BadgeCheck} loading={me.initialLoading} />
             <StatCard label="Yêu cầu đang hoạt động" value={dash.data?.activeRequests ?? 0} icon={Activity} accent loading={dash.initialLoading} />
             <StatCard label="Yêu cầu nguy kịch" value={dash.data?.criticalRequests ?? 0} icon={AlertOctagon} loading={dash.initialLoading} />
@@ -45,8 +45,8 @@ export default function OrganizationDashboard() {
             <StatCard label="Tỷ lệ phản hồi" value={`${dash.data?.responseRate ?? 0}%`} icon={Percent} loading={dash.initialLoading} hint="Người hiến máu được liên hệ đã trả lời" />
           </div>
 
-          <section className="mt-10" aria-labelledby="org-open">
-            <h2 id="org-open" className="mb-4 text-xl font-semibold tracking-tight">Yêu cầu đang mở</h2>
+          <section className="mt-7 md:mt-10" aria-labelledby="org-open">
+            <h2 id="org-open" className="mb-3 text-lg font-bold tracking-tight md:mb-4 md:text-xl md:font-semibold">Yêu cầu đang mở</h2>
             {recent.initialLoading ? <Skeleton className="h-40" />
               : recent.error && !recent.data ? <ErrorState message={recent.error.message} onRetry={recent.reload} />
               : open.length === 0 ? <EmptyState

@@ -139,7 +139,7 @@ function StockCard({ r, step, onUnits, onThreshold }: {
 }) {
   const empty = r.units === 0;
   return (
-    <Card className={cn("p-5", empty ? "border-primary/40 bg-primary/5" : r.low && "border-warning/40 bg-warning/5")}>
+    <Card className={cn("p-5", empty ? "border-primary/40 bg-primary/5" : r.low && "border-critical/30")}>
       <div className="flex items-center justify-between">
         <p className="text-2xl font-semibold tracking-tight">{r.bloodType}</p>
         {empty ? <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Hết máu</span>

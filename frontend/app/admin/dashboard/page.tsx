@@ -1,7 +1,6 @@
 "use client";
 
-import { AlertOctagon, Building2, CheckCheck, ClipboardList, Handshake, Users, HeartPulse } from "lucide-react";
-import Link from "next/link";
+import { AlertOctagon, Building2, ClipboardList, Handshake, MessageSquare, ShieldAlert, Users, HeartPulse } from "lucide-react";
 
 import { BloodTypeChart, DonorGrowth, RequestsOverTime, ResponseChart, StatusChart } from "@/components/admin/charts";
 import { Mail } from "lucide-react";
@@ -12,6 +11,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
+import { ListGroup, ListRow } from "@/components/ui/mobile";
 import { ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { Button } from "@/components/ui/button";
@@ -45,15 +45,12 @@ export default function AdminDashboard() {
             <StatCard label="Lượt hiến máu hoàn tất" value={k?.completedMatches ?? 0} icon={Handshake} loading={L} href="/admin/requests" hint={`Tổng cộng ${k?.confirmedMatches ?? 0} lượt đã xác nhận`} />
           </div>
           {k && (k.pendingVerification > 0 || k.organizationsUnderReview > 0 || k.openReports > 0 || k.newMessages > 0) && (
-            <Card className="mt-6 border-warning/40 bg-warning/5 p-5">
-              <p className="flex items-center gap-2 font-medium"><CheckCheck className="size-4" aria-hidden />Cần bạn xử lý</p>
-              <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                {k.pendingVerification > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/requests">{k.pendingVerification} yêu cầu</Link> đang chờ xác minh</li>}
-                {k.organizationsUnderReview > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/organizations">{k.organizationsUnderReview} tổ chức</Link> đang được xem xét</li>}
-                {k.newMessages > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/messages">{k.newMessages} tin nhắn mới</Link></li>}
-                {k.openReports > 0 && <li><Link className="font-medium text-primary hover:underline" href="/admin/reports">{k.openReports} báo cáo đang mở</Link></li>}
-              </ul>
-            </Card>
+            <ListGroup title="Cần bạn xử lý" className="mt-6">
+              {k.pendingVerification > 0 && <ListRow icon={ClipboardList} tint="sky" href="/admin/requests" label={`${k.pendingVerification} yêu cầu`} hint="Đang chờ xác minh" />}
+              {k.organizationsUnderReview > 0 && <ListRow icon={Building2} tint="violet" href="/admin/organizations" label={`${k.organizationsUnderReview} tổ chức`} hint="Đang được xem xét" />}
+              {k.newMessages > 0 && <ListRow icon={MessageSquare} tint="emerald" href="/admin/messages" label={`${k.newMessages} tin nhắn mới`} hint="Từ người dùng" />}
+              {k.openReports > 0 && <ListRow icon={ShieldAlert} tint="rose" href="/admin/reports" label={`${k.openReports} báo cáo`} hint="Đang mở" />}
+            </ListGroup>
           )}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Card><CardHeader><CardTitle>Yêu cầu theo thời gian (14 ngày)</CardTitle></CardHeader><CardContent>{d ? <RequestsOverTime data={d.requestsOverTime} /> : <Skeleton className="h-[260px]" />}</CardContent></Card>

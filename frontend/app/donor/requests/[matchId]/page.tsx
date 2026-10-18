@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { donorApi } from "@/services";
 import { useNotifications } from "@/providers/notifications-provider";
 
@@ -69,12 +70,12 @@ export default function MatchDetail() {
         : q.error && !m ? <ErrorState message={q.error.message} onRetry={q.reload} />
         : m ? (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-            <Card className="p-6 sm:p-8">
+            <Card className={cn("p-5 sm:p-8", open && !closed && "max-lg:pb-28")}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2"><UrgencyBadge urgency={m.urgency} /><StatusBadge status={m.requestStatus} /><MatchBadge status={m.status} /></div>
                 <MatchScore value={m.matchingScore} />
               </div>
-              <div className="mt-6 flex items-center gap-4"><BloodChip type={m.bloodType} className="text-xl" /><h1 className="text-3xl font-semibold tracking-tight">Cần {m.unitsNeeded} đơn vị</h1></div>
+              <div className="mt-6 flex items-center gap-4"><BloodChip type={m.bloodType} className="text-xl" /><h1 className="text-2xl font-bold tracking-tight md:text-3xl md:font-semibold">Cần {m.unitsNeeded} đơn vị</h1></div>
               <div className="mt-6">
                 <div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">Đã xác nhận</span><span className="font-medium tabular-nums">{m.unitsConfirmed} / {m.unitsRequired}</span></div>
                 <ProgressBar value={m.unitsConfirmed} max={m.unitsRequired} label="Người hiến máu đã xác nhận" />
@@ -87,9 +88,9 @@ export default function MatchDetail() {
               </dl>
 
               {open && !closed && (
-                <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
-                  <Button size="lg" className="flex-1" onClick={accept} disabled={busy !== null}>{busy === "accept" && <Loader2 className="animate-spin" />} {busy === "accept" ? "Đang gửi phản hồi…" : "Nhận lời — tôi có thể hiến máu"}</Button>
-                  <Button size="lg" variant="outline" className="flex-1" onClick={() => setConfirmReject(true)} disabled={busy !== null}>Từ chối</Button>
+                <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(58px+env(safe-area-inset-bottom))] max-lg:z-30 max-lg:mt-0 max-lg:flex-row max-lg:gap-2 max-lg:border-border/60 max-lg:bg-background/95 max-lg:px-4 max-lg:pb-3 max-lg:pt-3 max-lg:backdrop-blur-xl">
+                  <Button size="lg" className="press flex-[2]" onClick={accept} disabled={busy !== null}>{busy === "accept" && <Loader2 className="animate-spin" />} {busy === "accept" ? "Đang gửi phản hồi…" : "Nhận lời hiến máu"}</Button>
+                  <Button size="lg" variant="outline" className="press flex-1" onClick={() => setConfirmReject(true)} disabled={busy !== null}>Từ chối</Button>
                 </div>
               )}
               {closed && <p className="mt-6 rounded-xl bg-muted p-4 text-sm text-muted-foreground">Yêu cầu này không còn nhận thêm người hiến máu.</p>}
