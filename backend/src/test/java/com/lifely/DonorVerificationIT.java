@@ -27,7 +27,7 @@ class DonorVerificationIT {
 
     private String token(String email) throws Exception {
         String body = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"Lifely@2027\"}"))
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + System.getenv("DEMO_PASSWORD") + "\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return mapper.readTree(body).path("data").path("token").asText();
     }

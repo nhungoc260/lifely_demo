@@ -17,14 +17,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration test: cần PostgreSQL local đã chạy migration V1-V8 (dữ liệu demo) và biến môi trường DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET.
+ * Integration test: cần PostgreSQL local đã chạy migration V1-V8 (dữ liệu demo) và biến môi trường DEMO_PASSWORD (mật khẩu tài khoản demo), DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET.
  * Chạy:  mvn test -Dtest=ApiSecurityIT
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 class ApiSecurityIT {
 
-    private static final String PASSWORD = "Lifely@2027";
+    private static final String PASSWORD = System.getenv("DEMO_PASSWORD");
+    private static final String ADMIN_PASSWORD = System.getenv("ADMIN_PASSWORD") != null ? System.getenv("ADMIN_PASSWORD") : PASSWORD;
 
     @Autowired
     MockMvc mvc;
@@ -86,7 +87,7 @@ class ApiSecurityIT {
 
     @Test
     void adminCanReachAdminApi() throws Exception {
-        String token = login("admin@lifely.demo", PASSWORD);
+        String token = login("admin@lifely.demo", ADMIN_PASSWORD);
         mvc.perform(get("/api/admin/dashboard").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.kpi.users").value(50));
     }
@@ -102,7 +103,7 @@ class ApiSecurityIT {
 
     @Test
     void donorCannotActOnAnotherDonorsMatch_IDOR() throws Exception {
-        String admin = login("admin@lifely.demo", PASSWORD);
+        String admin = login("admin@lifely.demo", ADMIN_PASSWORD);
         String donor = login("donor@lifely.demo", PASSWORD);
         // Lấy một match bất kỳ của donor khác qua danh sách request của admin không có sẵn,
         // nên dùng một UUID ngẫu nhiên: phải trả 404 chứ không tiết lộ tồn tại hay cho phép thao tác.
@@ -128,7 +129,7 @@ class ApiSecurityIT {
         mvc.perform(post("/api/public/contact").contentType(MediaType.APPLICATION_JSON).content(ok)).andExpect(status().isCreated());
         String donor = login("donor@lifely.demo", PASSWORD);
         mvc.perform(get("/api/admin/messages").header("Authorization", "Bearer " + donor)).andExpect(status().isForbidden());
-        String admin = login("admin@lifely.demo", PASSWORD);
+        String admin = login("admin@lifely.demo", ADMIN_PASSWORD);
         mvc.perform(get("/api/admin/messages").header("Authorization", "Bearer " + admin)).andExpect(status().isOk());
     }
 
@@ -155,9 +156,9 @@ class ApiSecurityIT {
         mvc.perform(post("/api/users/me/delete").header("Authorization", "Bearer " + donor)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"wrong-password\"}"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("WRONG_PASSWORD"));
-        String admin = login("admin@lifely.demo", PASSWORD);
+        String admin = login("admin@lifely.demo", ADMIN_PASSWORD);
         mvc.perform(post("/api/users/me/delete").header("Authorization", "Bearer " + admin)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"" + PASSWORD + "\"}"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"" + ADMIN_PASSWORD + "\"}"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("CANNOT_DELETE_ADMIN"));
     }
 }

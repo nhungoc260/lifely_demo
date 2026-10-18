@@ -1,10 +1,18 @@
 {
   "info": {
     "name": "LIFELY API",
-    "description": "Chạy theo thứ tự từ trên xuống. Mật khẩu demo: Lifely@2027. Yêu cầu backend chạy tại baseUrl.",
+    "description": "Chạy theo thứ tự từ trên xuống. Điền demoPassword (tài khoản demo) và adminPassword (admin) ở tab Variables trước khi chạy. Yêu cầu backend chạy tại baseUrl.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
+    {
+      "key": "demoPassword",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
@@ -134,7 +142,7 @@
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+              "raw": "{\n  \"email\": \"admin@lifely.demo\",\n  \"password\": \"{{adminPassword}}\"\n}"
             }
           },
           "event": [
@@ -164,7 +172,7 @@
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"donor@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+              "raw": "{\n  \"email\": \"donor@lifely.demo\",\n  \"password\": \"{{demoPassword}}\"\n}"
             }
           },
           "event": [
@@ -194,7 +202,7 @@
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"requester@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+              "raw": "{\n  \"email\": \"requester@lifely.demo\",\n  \"password\": \"{{demoPassword}}\"\n}"
             }
           },
           "event": [
@@ -224,7 +232,7 @@
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"hospital@lifely.demo\",\n  \"password\": \"Lifely@2027\"\n}"
+              "raw": "{\n  \"email\": \"hospital@lifely.demo\",\n  \"password\": \"{{demoPassword}}\"\n}"
             }
           },
           "event": [

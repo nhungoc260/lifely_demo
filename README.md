@@ -1,5 +1,7 @@
 # LIFELY – Website kết nối và điều phối hiến máu khẩn cấp
 
+Link: https://lifely-demo.vercel.app
+
 ## Giới thiệu
 
 LIFELY là website giúp người cần máu gấp tìm được người hiến máu phù hợp ở gần bệnh viện, và điều phối phản hồi của những người này trên một kênh duy nhất thay vì phải đăng mạng xã hội hay gọi điện từng người.

@@ -2,7 +2,7 @@
 """Sinh backend/src/main/resources/db/migration/V5__seed_data.sql (dữ liệu DEMO, tất định).
 
 Chạy lại:  pip install bcrypt && python database/tools/generate_seed.py
-Mật khẩu demo của mọi tài khoản: Lifely@2027  (CHỈ dùng cho môi trường demo).
+Mật khẩu demo đọc từ biến môi trường DEMO_PASSWORD (CHỈ dùng cho môi trường demo, không ghi vào source).
 Tên + địa chỉ bệnh viện là thông tin công khai (dùng để định vị trên bản đồ). Tài khoản, người hiến,
 yêu cầu máu, tin nhắn... là dữ liệu MÔ PHỎNG, không liên quan tới các cơ sở này và không phải sự kiện thật.
 """
@@ -13,7 +13,9 @@ random.seed(2027)
 NS = uuid.UUID("11111111-2222-3333-4444-555555555555")
 def uid(name): return str(uuid.uuid5(NS, name))
 def q(s): return "NULL" if s is None else "'" + str(s).replace("'", "''") + "'"
-PASSWORD = "Lifely@2027"
+PASSWORD = os.environ.get("DEMO_PASSWORD")
+if not PASSWORD:
+    raise SystemExit("Hãy đặt biến môi trường DEMO_PASSWORD trước khi chạy script.")
 PW_HASH = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt(10)).decode()
 
 BT = {"O+":1,"O-":2,"A+":3,"A-":4,"B+":5,"B-":6,"AB+":7,"AB-":8}
@@ -80,7 +82,7 @@ def add_user(key,email,full,role,onboarded=True):
     return i
 
 w("-- V5: DỮ LIỆU DEMO (sinh bởi database/tools/generate_seed.py). Không dùng cho production.")
-w("-- Mật khẩu mọi tài khoản demo: Lifely@2027")
+w("-- Mật khẩu mọi tài khoản demo: xem biến DEMO_PASSWORD (không ghi trong source).")
 
 admin=add_user("admin","admin@lifely.demo","Quản trị viên LIFELY","ADMIN")
 # --- Donors: 30 ---

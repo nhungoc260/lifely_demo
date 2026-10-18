@@ -34,7 +34,7 @@ class RefreshTokenIT {
 
     private MvcResult login() throws Exception {
         return mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"donor@lifely.demo\",\"password\":\"Lifely@2027\"}"))
+                        .content("{\"email\":\"donor@lifely.demo\",\"password\":\"" + System.getenv("DEMO_PASSWORD") + "\"}"))
                 .andExpect(status().isOk()).andReturn();
     }
 
