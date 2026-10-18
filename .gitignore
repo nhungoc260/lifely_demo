@@ -9,8 +9,8 @@ Thumbs.db
 .idea/
 *.iml
 .vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+.vscode/extensions.json
+.vscode/settings.json
 
 # Backend
 backend/target/
