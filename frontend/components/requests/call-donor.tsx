@@ -17,6 +17,10 @@ export const CONTACT_LABEL: Record<ContactResult, string> = {
   CANNOT_JOIN: "Không thể tham gia",
 };
 
+export const CONTACT_TONE: Record<ContactResult, "slate" | "blue" | "amber" | "green" | "red"> = {
+  NOT_CONTACTED: "slate", CONTACTED: "blue", UNREACHABLE: "amber", CONFIRMED_CAN_JOIN: "green", CANNOT_JOIN: "red",
+};
+
 const ORDER: ContactResult[] = ["NOT_CONTACTED", "CONTACTED", "UNREACHABLE", "CONFIRMED_CAN_JOIN", "CANNOT_JOIN"];
 
 /**

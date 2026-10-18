@@ -457,16 +457,19 @@ export interface HealthInput { heartRate?: number; systolic?: number; diastolic?
 export interface AdminInventory {
   byBloodType: { bloodType: string; units: number; facilities: number; lowFacilities: number }[];
   byOrganization: { organizationId: string; name: string; city: string | null; totalUnits: number; lowTypes: number; updatedAt: string }[];
+  cells: { organizationId: string; bloodType: string; units: number; lowThreshold: number }[];
 }
 export interface AdminAppointments {
   statusCounts: { status: string; total: number }[];
   upcomingSlots: { activeSlots: number; capacity: number; booked: number };
-  upcoming: { id: string; status: string; startsAt: string; organizationName: string; donorName: string }[];
+  recent: { id: string; status: string; startsAt: string; organizationName: string; donorName: string }[];
 }
 export interface AdminOperations {
   notificationDelivery7d: { channel: string; status: string; total: number }[];
   topOrganizations30d: { name: string; requests: number; fulfilled: number; expired: number }[];
   contactResults: { result: string; total: number }[];
+  contactLog: { matchId: string; requestId: string; result: string; at: string | null; donorName: string; staffName: string | null; bloodType: string; hospital: string }[];
   reportsByStatus: { status: string; total: number }[];
   appointmentNoShows: number;
+  failedDeliveries: { channel: string; purpose: string; errorCode: string | null; attempts: number; at: string }[];
 }

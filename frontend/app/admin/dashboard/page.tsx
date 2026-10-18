@@ -37,12 +37,12 @@ export default function AdminDashboard() {
       {q.error && !d ? <ErrorState message={q.error.message} onRetry={q.reload} /> : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <StatCard label="Người dùng" value={k?.users ?? 0} icon={Users} loading={L} />
-            <StatCard label="Người hiến máu" value={k?.donors ?? 0} icon={HeartPulse} loading={L} />
-            <StatCard label="Yêu cầu đang hoạt động" value={k?.activeRequests ?? 0} icon={ClipboardList} accent loading={L} />
-            <StatCard label="Yêu cầu nguy kịch" value={k?.criticalRequests ?? 0} icon={AlertOctagon} loading={L} />
-            <StatCard label="Tổ chức đã xác minh" value={k?.verifiedOrganizations ?? 0} icon={Building2} loading={L} />
-            <StatCard label="Lượt hiến máu hoàn tất" value={k?.completedMatches ?? 0} icon={Handshake} loading={L} hint={`Tổng cộng ${k?.confirmedMatches ?? 0} lượt đã xác nhận`} />
+            <StatCard label="Người dùng" value={k?.users ?? 0} icon={Users} loading={L} href="/admin/users" />
+            <StatCard label="Người hiến máu" value={k?.donors ?? 0} icon={HeartPulse} loading={L} href="/admin/users" />
+            <StatCard label="Yêu cầu đang hoạt động" value={k?.activeRequests ?? 0} icon={ClipboardList} accent loading={L} href="/admin/requests" />
+            <StatCard label="Yêu cầu nguy kịch" value={k?.criticalRequests ?? 0} icon={AlertOctagon} loading={L} href="/admin/requests" />
+            <StatCard label="Tổ chức đã xác minh" value={k?.verifiedOrganizations ?? 0} icon={Building2} loading={L} href="/admin/organizations" />
+            <StatCard label="Lượt hiến máu hoàn tất" value={k?.completedMatches ?? 0} icon={Handshake} loading={L} href="/admin/requests" hint={`Tổng cộng ${k?.confirmedMatches ?? 0} lượt đã xác nhận`} />
           </div>
           {k && (k.pendingVerification > 0 || k.organizationsUnderReview > 0 || k.openReports > 0 || k.newMessages > 0) && (
             <Card className="mt-6 border-warning/40 bg-warning/5 p-5">

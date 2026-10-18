@@ -37,3 +37,13 @@ describe("điều hướng của admin", () => {
     expect(NAV.ADMIN.find((i) => i.href === "/admin/notifications")?.badge).toBe("unread");
   });
 });
+
+import { CONTACT_LABEL, CONTACT_TONE } from "@/components/requests/call-donor";
+
+describe("kết quả liên hệ hiển thị cho admin", () => {
+  it("mọi kết quả đều có nhãn tiếng Việt và màu", () => {
+    const keys = ["NOT_CONTACTED", "CONTACTED", "UNREACHABLE", "CONFIRMED_CAN_JOIN", "CANNOT_JOIN"] as const;
+    for (const k of keys) { expect(CONTACT_LABEL[k]).toBeTruthy(); expect(CONTACT_TONE[k]).toBeTruthy(); }
+    expect(Object.keys(CONTACT_LABEL).sort()).toEqual([...keys].sort());
+  });
+});
