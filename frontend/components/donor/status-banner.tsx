@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 const ICON = { READY: CheckCircle2, RESTING: CalendarClock, OFF: PauseCircle, INCOMPLETE: ShieldAlert } satisfies Record<DonorStatusKind, typeof CheckCircle2>;
 // Thẻ trạng thái là điểm nhấn của trang chủ: một màu đậm cho mỗi trạng thái.
 const TONE = {
-  success: "from-emerald-500 to-emerald-700",
-  warning: "from-amber-500 to-orange-600",
-  muted: "from-slate-500 to-slate-700",
+  // Màu thương hiệu (đỏ rượu), giống nhau ở chế độ sáng và tối để web và app khớp nhau.
+  success: "from-[#be123c] to-[#881337]",
+  warning: "from-amber-600 to-orange-700",
+  muted: "from-slate-600 to-slate-800",
 } as const;
 
 /** MỘT khối trạng thái duy nhất cho người hiến máu, kèm công tắc nhận yêu cầu. */
@@ -35,7 +36,7 @@ export function DonorStatusBanner({
       <div className="relative mt-4 flex flex-wrap items-center gap-3">
         <label className="flex min-h-12 flex-1 items-center justify-between gap-3 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-900 md:max-w-xs">
           Nhận yêu cầu hiến máu
-          <Switch checked={available} disabled={saving} onCheckedChange={onToggle} aria-label="Nhận yêu cầu hiến máu" />
+          <Switch checked={available} disabled={saving} onCheckedChange={onToggle} aria-label="Nhận yêu cầu hiến máu" className="data-[state=checked]:bg-[#9f1239]" />
         </label>
         {status.action && <Link href={status.action.href} className="press inline-flex min-h-12 items-center rounded-2xl bg-white/20 px-4 text-sm font-semibold hover:bg-white/30">{status.action.label}</Link>}
       </div>
