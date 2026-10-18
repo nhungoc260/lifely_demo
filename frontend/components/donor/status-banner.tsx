@@ -9,12 +9,11 @@ import type { DonorStatus, DonorStatusKind } from "@/lib/donor-status";
 import { cn } from "@/lib/utils";
 
 const ICON = { READY: CheckCircle2, RESTING: CalendarClock, OFF: PauseCircle, INCOMPLETE: ShieldAlert } satisfies Record<DonorStatusKind, typeof CheckCircle2>;
-// Thẻ trạng thái là điểm nhấn của trang chủ: một màu đậm cho mỗi trạng thái.
+// Thẻ nền trung tính như mọi thẻ khác; trạng thái chỉ thể hiện ở ô icon (nhẹ, đọc tốt ở cả chế độ sáng và tối).
 const TONE = {
-  // Màu thương hiệu (đỏ rượu), giống nhau ở chế độ sáng và tối để web và app khớp nhau.
-  success: "from-[#be123c] to-[#881337]",
-  warning: "from-amber-600 to-orange-700",
-  muted: "from-slate-600 to-slate-800",
+  success: "bg-primary/10 text-primary",
+  warning: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  muted: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
 } as const;
 
 /** MỘT khối trạng thái duy nhất cho người hiến máu, kèm công tắc nhận yêu cầu. */
@@ -24,21 +23,20 @@ export function DonorStatusBanner({
   if (!status) return <Skeleton className="h-44 w-full rounded-3xl" />;
   const Icon = ICON[status.kind];
   return (
-    <div className={cn("relative overflow-hidden rounded-3xl bg-gradient-to-br p-5 text-white shadow-lg md:p-6", TONE[status.tone])} aria-live="polite">
-      <Icon className="pointer-events-none absolute -right-4 -top-4 size-32 text-white/10" aria-hidden />
-      <div className="relative flex items-start gap-3.5">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/20"><Icon className="size-6" aria-hidden /></span>
+    <div className="rounded-3xl bg-card p-5 ring-1 ring-border/60 md:p-6" aria-live="polite">
+      <div className="flex items-start gap-3.5">
+        <span className={cn("grid size-12 shrink-0 place-items-center rounded-2xl", TONE[status.tone])}><Icon className="size-6" aria-hidden /></span>
         <div className="min-w-0">
           <h2 className="text-xl font-bold leading-tight tracking-tight">{status.title}</h2>
-          <p className="mt-1 line-clamp-2 text-sm leading-snug text-white/85 md:line-clamp-none md:max-w-2xl">{status.description}</p>
+          <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground md:line-clamp-none md:max-w-2xl">{status.description}</p>
         </div>
       </div>
-      <div className="relative mt-4 flex flex-wrap items-center gap-3">
-        <label className="flex min-h-12 flex-1 items-center justify-between gap-3 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-900 md:max-w-xs">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <label className="flex min-h-12 flex-1 items-center justify-between gap-3 rounded-2xl bg-muted/60 px-4 text-sm font-semibold md:max-w-xs">
           Nhận yêu cầu hiến máu
-          <Switch checked={available} disabled={saving} onCheckedChange={onToggle} aria-label="Nhận yêu cầu hiến máu" className="data-[state=checked]:bg-[#9f1239]" />
+          <Switch checked={available} disabled={saving} onCheckedChange={onToggle} aria-label="Nhận yêu cầu hiến máu" className="data-[state=checked]:bg-primary" />
         </label>
-        {status.action && <Link href={status.action.href} className="press inline-flex min-h-12 items-center rounded-2xl bg-white/20 px-4 text-sm font-semibold hover:bg-white/30">{status.action.label}</Link>}
+        {status.action && <Link href={status.action.href} className="press inline-flex min-h-12 items-center rounded-2xl px-2 text-sm font-semibold text-primary hover:underline">{status.action.label}</Link>}
       </div>
     </div>
   );
