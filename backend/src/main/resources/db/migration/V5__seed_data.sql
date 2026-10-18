@@ -1,5 +1,4 @@
 -- V5: DỮ LIỆU DEMO (sinh bởi database/tools/generate_seed.py). Không dùng cho production.
--- Mật khẩu mọi tài khoản demo: Lifely@2027
 INSERT INTO users (id,email,password_hash,full_name,phone,status,onboarding_step,onboarding_completed,created_at) VALUES ('87917977-3158-59f6-a2e6-8eb30e7f1c81','admin@lifely.demo','$2b$10$V0Br7Ywl7pcm6HnLeJNdYu47uejCiW1FOsHkUxjDN4Q3wjW1l9djW','Quản trị viên LIFELY','0707785501','ACTIVE',6,TRUE,now() - interval '25 days');
 INSERT INTO user_roles (user_id,role_id) VALUES ('87917977-3158-59f6-a2e6-8eb30e7f1c81',4);
 INSERT INTO privacy_settings (user_id) VALUES ('87917977-3158-59f6-a2e6-8eb30e7f1c81');
