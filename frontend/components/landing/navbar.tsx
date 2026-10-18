@@ -45,9 +45,12 @@ export function Navbar() {
             </>
           )}
         </div>
+        <div className="flex items-center gap-2 lg:hidden">
+        {authed && <Link href={homeFor(role)} className={buttonVariants({ size: "sm" })}>Về ứng dụng</Link>}
         <button className="grid size-10 place-items-center rounded-xl border border-border lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Đóng menu" : "Mở menu"} onClick={() => setOpen((o) => !o)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
+        </div>
       </div>
       <div id="mobile-menu" className={cn("border-t border-border bg-background px-5 pb-5 lg:hidden", open ? "block" : "hidden")}>
         <nav aria-label="Di động" className="flex flex-col py-2">

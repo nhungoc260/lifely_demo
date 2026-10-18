@@ -84,7 +84,7 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
           </div>
           <nav aria-label="Liên kết" className="flex gap-4">
             <Link href="/" className="hover:text-foreground">Giới thiệu LIFELY</Link>
-            <Link href="/map" className="hover:text-foreground">Bản đồ</Link>
+            <Link href={role === "DONOR" ? "/donor/map" : "/requester/map"} className="hover:text-foreground">Bản đồ</Link>
             <Link href="/info/faq" className="hover:text-foreground">Câu hỏi thường gặp</Link>
           </nav>
         </div>
