@@ -21,48 +21,59 @@ flowchart LR
     SW["Service Worker: Web Push và trang offline"]
   end
   subgraph Vercel["Máy chủ Next.js"]
-    RW["Rewrite /api/* sang backend (BACKEND_URL)"]
+    RW["Rewrite /api sang backend (BACKEND_URL)"]
     GEO["Route /geocode: proxy tìm địa điểm"]
   end
-  subgraph Backend["Máy chủ Spring Boot 3.5 (Java 21)"]
-    F["Bộ lọc: RateLimitFilter, JwtAuthFilter"]
-    C["Controller (tiếp nhận yêu cầu)"] --> S["Service (xử lý nghiệp vụ)"] --> R["Repository / JdbcTemplate"]
-    S --> M["MatchingService (ghép người hiến)"]
-    S --> N["NotificationService (thông báo trong ứng dụng)"]
-    S --> OB["OutboxService (xếp hàng SMS / Push)"]
-    S --> AU["AuditService (nhật ký)"]
+  subgraph Backend["Máy chủ Spring Boot 3.5 - Java 21"]
+    FILTER["Bộ lọc: RateLimitFilter, JwtAuthFilter"]
+    CTRL["Controller: tiếp nhận yêu cầu"]
+    SVC["Service: xử lý nghiệp vụ"]
+    REPO["Repository / JdbcTemplate"]
+    MATCH["MatchingService: ghép người hiến"]
+    NOTI["NotificationService: thông báo trong ứng dụng"]
+    OUTBOX["OutboxService: xếp hàng SMS / Push"]
+    AUDIT["AuditService: nhật ký"]
     WS["WebSocket STOMP /ws"]
-    PUB["RealtimePublisher (sau khi commit)"]
+    PUB["RealtimePublisher: phát sau khi commit"]
     JOBS["Tác vụ định kỳ @Scheduled"]
-    WK["OutboxWorker"]
+    WORKER["OutboxWorker"]
   end
-  DB[("PostgreSQL 16 + Flyway")]
-  FS[("Thư mục uploads: tài liệu xác minh")]
-  OSM[("Ô bản đồ OpenStreetMap / MapTiler")]
-  NOM[("Nominatim, dự phòng Photon")]
-  GID[("Google Identity: tokeninfo")]
-  MAIL[("Email: Apps Script / Brevo / Gmail SMTP")]
-  PUSHSVC[("Dịch vụ Web Push của trình duyệt, VAPID")]
-  SMS[("SMS: MockSmsProvider, chỉ ghi log")]
+  DB["PostgreSQL 16 + Flyway"]
+  FILES["Thư mục uploads: tài liệu xác minh"]
+  OSM["Ô bản đồ OpenStreetMap / MapTiler"]
+  NOM["Nominatim, dự phòng Photon"]
+  GID["Google Identity: tokeninfo"]
+  MAIL["Email: Apps Script / Brevo / Gmail SMTP"]
+  PUSHSVC["Dịch vụ Web Push của trình duyệt, VAPID"]
+  SMS["SMS: MockSmsProvider, chỉ ghi log"]
 
-  FE -- "REST + JWT (cookie refresh httpOnly)" --> RW --> F --> C
-  FE -- "WebSocket + JWT" --> WS
-  FE -- "tải ô bản đồ" --> OSM
-  FE -- "tìm địa điểm" --> GEO --> NOM
-  FE -- "đăng nhập Google" --> GID
-  S -- "xác thực ID token" --> GID
-  R --> DB
-  S --> FS
-  N -. "sự kiện sau commit" .-> PUB
-  S -. "sự kiện sau commit" .-> PUB
+  FE -->|"REST + JWT, cookie refresh httpOnly"| RW
+  RW --> FILTER
+  FILTER --> CTRL
+  CTRL --> SVC
+  SVC --> REPO
+  SVC --> MATCH
+  SVC --> NOTI
+  SVC --> OUTBOX
+  SVC --> AUDIT
+  FE -->|"WebSocket + JWT"| WS
+  FE -->|"tải ô bản đồ"| OSM
+  FE -->|"tìm địa điểm"| GEO
+  GEO --> NOM
+  FE -->|"đăng nhập Google"| GID
+  SVC -->|"xác thực ID token"| GID
+  REPO --> DB
+  SVC --> FILES
+  NOTI -.->|"sự kiện sau commit"| PUB
+  SVC -.->|"sự kiện sau commit"| PUB
   PUB --> WS
-  OB --> DB
-  WK -- "đọc notification_outbox" --> DB
-  WK --> SMS
-  WK --> PUSHSVC
-  PUSHSVC -. "push" .-> SW
-  JOBS --> S
-  S --> MAIL
+  OUTBOX --> DB
+  WORKER -->|"đọc notification_outbox"| DB
+  WORKER --> SMS
+  WORKER --> PUSHSVC
+  PUSHSVC -.->|"push"| SW
+  JOBS --> SVC
+  SVC --> MAIL
 ```
 
 ### Tác vụ định kỳ
@@ -276,7 +287,7 @@ erDiagram
     timestamptz starts_at "unique cùng organization_id"
     timestamptz ends_at
     int capacity "1 đến 500"
-    int booked_count "CHECK <= capacity"
+    int booked_count "CHECK booked_count không vượt capacity"
     string status "ACTIVE, CLOSED"
   }
   appointments {
@@ -511,7 +522,7 @@ sequenceDiagram
       MS->>DB: ngừng mời thêm: hủy SMS/Push chưa gửi, các lời mời còn chờ = EXPIRED, báo người hiến đó
     end
     MS->>DB: thông báo REQUEST_ACCEPTED cho người cần máu, báo nhân viên cơ sở, audit
-    MS->>DB: COMMIT (CHECK units_confirmed <= units_required)
+    MS->>DB: COMMIT (CHECK units_confirmed không vượt units_required)
     DB-->>WS: sự kiện sau khi commit
     WS-->>R: /topic/requests/{id} {3 / 5}
     WS-->>R: /user/queue/notifications
@@ -602,7 +613,7 @@ sequenceDiagram
   AS->>DB: đọc khung giờ của cơ sở đã xác minh
   AS->>AS: kiểm tra khung giờ ACTIVE và còn ở tương lai, đủ giãn cách từ lần hiến gần nhất
   AS->>DB: kiểm tra không trùng lịch còn hiệu lực
-  AS->>DB: UPDATE donation_slots SET booked_count + 1 WHERE booked_count < capacity
+  AS->>DB: UPDATE donation_slots SET booked_count + 1 WHERE booked_count còn nhỏ hơn capacity
   alt cập nhật 0 dòng
     AS-->>API: 409 SLOT_FULL
     API-->>D: 409
@@ -648,11 +659,11 @@ Cơ chế này là *at-least-once*, không bảo đảm *exactly-once* với nh�
 ## 12. Use case
 ```mermaid
 flowchart TB
-  Guest(("Khách")) --> G1["Xem thống kê, yêu cầu công khai, bản đồ, poster QR"]
+  Guest("Khách") --> G1["Xem thống kê, yêu cầu công khai, bản đồ, poster QR"]
   Guest --> G2["Đăng ký / đăng nhập, gồm Google"]
   Guest --> G3["Gửi tin nhắn liên hệ"]
 
-  Donor(("Người hiến máu")) --> U1["Khai báo hồ sơ, nhóm máu, vị trí và quyền riêng tư"]
+  Donor("Người hiến máu") --> U1["Khai báo hồ sơ, nhóm máu, vị trí và quyền riêng tư"]
   Donor --> U2["Bật/tắt trạng thái sẵn sàng"]
   Donor --> U3["Xem lý do được ghép, chấp nhận / từ chối"]
   Donor --> U10["Đặt và hủy lịch hiến máu tại cơ sở đã xác minh"]
@@ -660,20 +671,20 @@ flowchart TB
   Donor --> U12["Bật thông báo SMS / Push, nhận nhắc hiến lại"]
   Donor --> U13["Xem lịch sử và mức xác nhận các lần hiến"]
 
-  Requester(("Người cần máu")) --> U4["Tạo và theo dõi yêu cầu realtime"]
+  Requester("Người cần máu") --> U4["Tạo và theo dõi yêu cầu realtime"]
   Requester --> U5["Xác nhận người hiến đã hiến, ghi nhận không đến"]
   Requester --> U14["Xem độ phủ người hiến quanh bệnh viện"]
   Requester --> U15["Ghi kết quả liên hệ sau khi gọi người hiến"]
   Requester --> U16["Chia sẻ yêu cầu, in poster QR, báo cáo vi phạm"]
 
-  Org(("Tổ chức y tế")) --> U6["Đăng ký, tải tài liệu xác minh, gửi duyệt"]
+  Org("Tổ chức y tế") --> U6["Đăng ký, tải tài liệu xác minh, gửi duyệt"]
   Org --> U7["Xác nhận hoặc từ chối yêu cầu gắn với cơ sở mình"]
   Org --> U17["Quản lý kho máu và sổ biến động"]
   Org --> U18["Mở khung giờ, xử lý lịch hẹn: check-in, sàng lọc, ghi nhận hiến"]
   Org --> U19["Thêm / xóa nhân viên, xem nhật ký hiến và thống kê"]
   Org --> U20["Tạo yêu cầu máu đã xác minh sẵn"]
 
-  Admin(("Quản trị viên")) --> U8["Xác minh hoặc từ chối yêu cầu / tổ chức"]
+  Admin("Quản trị viên") --> U8["Xác minh hoặc từ chối yêu cầu / tổ chức"]
   Admin --> U9["Quản lý người dùng, báo cáo, nhật ký, thống kê"]
   Admin --> U21["Xem tổng quan kho máu, lịch hẹn, vận hành"]
   Admin --> U22["Xử lý tin nhắn liên hệ, nhận báo cáo tuần qua email"]
@@ -701,34 +712,151 @@ flowchart TB
 ## 14. Class diagram (các lớp chính)
 ```mermaid
 classDiagram
-  class User { UUID id; String email; String fullName; String phone; UserStatus status; Set~Role~ roles }
-  class DonorProfile { UUID id; BloodType bloodType; BigDecimal latitude; BigDecimal longitude; LocalDate lastDonationDate; AvailabilityStatus availability; String gender }
-  class Organization { UUID id; String name; OrgType type; OrgVerificationStatus verificationStatus; boolean inventoryAutoAdd }
-  class BloodRequest { UUID id; BloodType bloodType; int unitsRequired; int unitsConfirmed; int unitsReceived; Urgency urgency; RequestStatus status; String facilityReview; int escalationLevel; Instant deadline }
-  class Match { UUID id; BigDecimal matchingScore; BigDecimal distanceKm; MatchStatus status; ContactResult contactResult }
-  class DonationHistory { UUID id; LocalDate donatedOn; String source; String verificationLevel }
-  class Notification { UUID id; NotificationType type; boolean readFlag }
+  class User {
+    UUID id
+    String email
+    String fullName
+    String phone
+    UserStatus status
+    Set roles
+  }
+  class DonorProfile {
+    UUID id
+    BloodType bloodType
+    BigDecimal latitude
+    BigDecimal longitude
+    LocalDate lastDonationDate
+    AvailabilityStatus availability
+    String gender
+  }
+  class Organization {
+    UUID id
+    String name
+    OrgType type
+    OrgVerificationStatus verificationStatus
+    boolean inventoryAutoAdd
+  }
+  class BloodRequest {
+    UUID id
+    BloodType bloodType
+    int unitsRequired
+    int unitsConfirmed
+    int unitsReceived
+    Urgency urgency
+    RequestStatus status
+    String facilityReview
+    int escalationLevel
+    Instant deadline
+  }
+  class Match {
+    UUID id
+    BigDecimal matchingScore
+    BigDecimal distanceKm
+    MatchStatus status
+    ContactResult contactResult
+  }
+  class DonationHistory {
+    UUID id
+    LocalDate donatedOn
+    String source
+    String verificationLevel
+  }
+  class Notification {
+    UUID id
+    NotificationType type
+    boolean readFlag
+  }
 
-  class RequestService { create() verifyByAdmin() rejectByAdmin() cancel() facilityConfirm() facilityDeny() }
-  class RequestLifecycle { transition() note() publish() }
-  class RequestAccess { canView() requireViewable() }
-  class MatchingService { score() rank() startMatching() escalate() cancelOpenMatches() closeRemainingAfterFulfilled() }
-  class ScoreCalculator { score() }
-  class MatchService { accept() reject() complete() markNoShow() recordContactResult() }
-  class DonorVerificationService { confirmation() badge() }
-  class AppointmentService { book() cancel() createSlot() transition() sendDueReminders() }
-  class InventoryService { get() update() addDonatedUnit() }
-  class NotificationService { notify() markRead() }
-  class OutboxService { enqueue() enqueuePush() cancelPending() }
-  class OutboxWorker { runOnce() }
-  class StaffAlertService { notifyNewRequest() notifyDonorResponded() }
-  class AdminAlerts { raise() }
-  class RealtimePublisher { onRequestChanged() onNotification() }
-  class CoverageService { coverage() }
-  class UserDataService { export() deleteAccount() }
-  class EscalationJob { run() }
-  class RequestExpiryJob { run() }
-  class RequestExpiryService { expire() }
+  class RequestService {
+    create()
+    verifyByAdmin()
+    rejectByAdmin()
+    cancel()
+    facilityConfirm()
+    facilityDeny()
+  }
+  class RequestLifecycle {
+    transition()
+    note()
+    publish()
+  }
+  class RequestAccess {
+    canView()
+    requireViewable()
+  }
+  class MatchingService {
+    score()
+    rank()
+    startMatching()
+    escalate()
+    cancelOpenMatches()
+    closeRemainingAfterFulfilled()
+  }
+  class ScoreCalculator {
+    score()
+  }
+  class MatchService {
+    accept()
+    reject()
+    complete()
+    markNoShow()
+    recordContactResult()
+  }
+  class DonorVerificationService {
+    confirmation()
+    badge()
+  }
+  class AppointmentService {
+    book()
+    cancel()
+    createSlot()
+    transition()
+    sendDueReminders()
+  }
+  class InventoryService {
+    get()
+    update()
+    addDonatedUnit()
+  }
+  class NotificationService {
+    notify()
+    markRead()
+  }
+  class OutboxService {
+    enqueue()
+    enqueuePush()
+    cancelPending()
+  }
+  class OutboxWorker {
+    runOnce()
+  }
+  class StaffAlertService {
+    notifyNewRequest()
+    notifyDonorResponded()
+  }
+  class AdminAlerts {
+    raise()
+  }
+  class RealtimePublisher {
+    onRequestChanged()
+    onNotification()
+  }
+  class CoverageService {
+    coverage()
+  }
+  class UserDataService {
+    export()
+    deleteAccount()
+  }
+  class EscalationJob {
+    run()
+  }
+  class RequestExpiryJob {
+    run()
+  }
+  class RequestExpiryService {
+    expire()
+  }
 
   User "1" --> "0..1" DonorProfile
   User "1" --> "0..1" Organization
@@ -767,13 +895,16 @@ classDiagram
 ## 15. Activity diagram: người hiến phản hồi một yêu cầu
 ```mermaid
 flowchart TD
-  A(["Nhận thông báo NEW_MATCH, SMS hoặc Push"]) --> B["Mở chi tiết yêu cầu + lý do được ghép"]
+  A("Nhận thông báo NEW_MATCH, SMS hoặc Push") --> B["Mở chi tiết yêu cầu + lý do được ghép"]
   B --> C{"Quyết định"}
-  C -- "Từ chối" --> D["Xác nhận từ chối"] --> E["match = REJECTED"] --> Z(["Kết thúc"])
+  C -- "Từ chối" --> D["Xác nhận từ chối"]
+  D --> E["match = REJECTED"]
+  E --> Z("Kết thúc")
   C -- "Chấp nhận" --> F["POST /matches/id/accept"]
   F --> G["Khóa dòng yêu cầu bằng FOR UPDATE"]
   G --> H{"Còn chỗ và còn hạn?"}
-  H -- "Không" --> I["409 REQUEST_FULFILLED / REQUEST_CLOSED / MATCH_ALREADY_RESPONDED"] --> Z
+  H -- "Không" --> I["409 REQUEST_FULFILLED / REQUEST_CLOSED / MATCH_ALREADY_RESPONDED"]
+  I --> Z
   H -- "Có" --> J["units_confirmed + 1, match = ACCEPTED, request = PARTIALLY_FULFILLED"]
   J --> K{"Đã đủ người nhận lời?"}
   K -- "Có" --> L["Ngừng mời thêm: các lời mời còn chờ hết hiệu lực, báo người hiến đó"]
@@ -784,24 +915,27 @@ flowchart TD
   O --> P["Đến hiến máu, cơ sở hoặc người nhà xác nhận đã hiến"]
   P --> Q["match = COMPLETED, ghi lịch sử hiến, units_received + 1"]
   Q --> R{"units_received = units_required?"}
-  R -- "Có" --> S["request = FULFILLED"] --> Z
+  R -- "Có" --> S["request = FULFILLED"]
+  S --> Z
   R -- "Chưa" --> Z
 ```
 
 ## 16. Activity diagram: leo thang khi chưa đủ người
 ```mermaid
 flowchart TD
-  S(["Tác vụ chạy mỗi 30 giây"]) --> R["Lấy yêu cầu đang điều phối, đã xác minh, còn hạn, chưa đủ người nhận lời, chưa tới cấp 4"]
+  S("Tác vụ chạy mỗi 30 giây") --> R["Lấy yêu cầu đang điều phối, đã xác minh, còn hạn, chưa đủ người nhận lời, chưa tới cấp 4"]
   R --> D{"Quá thời gian chờ theo mức khẩn cấp? 5 / 15 / 60 phút"}
   D -- "Chưa" --> S
   D -- "Rồi" --> U["Khóa dòng yêu cầu và kiểm tra lại điều kiện"]
-  U --> L["Tăng cấp: 0-5 → 5-10 → 10-20 → 20-50 → toàn quốc"]
-  L --> M["Lọc → Haversine → chấm điểm → đúng nhóm máu trước → top N"]
+  U --> L["Tăng cấp: 0-5, 5-10, 10-20, 20-50 km rồi toàn quốc"]
+  L --> M["Lọc, Haversine, chấm điểm, đúng nhóm máu trước, lấy top N"]
   M --> C["Tạo match + thông báo + SMS/Push qua outbox, giới hạn số người mỗi vòng"]
   C --> T["Thông báo cho người cần máu: đã mở rộng vùng tìm kiếm"]
   T --> ST{"Đang MATCHING / VERIFIED và mời được người?"}
-  ST -- "Có" --> DC["request = DONORS_CONTACTED"] --> S
-  ST -- "Không" --> NT["Chỉ ghi chú vào lịch sử"] --> S
+  ST -- "Có" --> DC["request = DONORS_CONTACTED"]
+  DC --> S
+  ST -- "Không" --> NT["Chỉ ghi chú vào lịch sử"]
+  NT --> S
 ```
 Số người được mời mỗi vòng là `min(15, số còn thiếu × 3)`. Người hiến đã ở cấp trước không bị mời lại (`UNIQUE (request_id, donor_id)`).
 
