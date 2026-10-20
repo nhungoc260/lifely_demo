@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { useQuery } from "@/hooks/use-query";
-import { get, logoutRequest, post, refreshSession } from "@/lib/api";
+import { get, logoutRequest, post, put, refreshSession } from "@/lib/api";
 import { tokenStore } from "@/lib/auth-store";
 import { realtime } from "@/lib/realtime";
 import type { AuthResponse, Role, UserSummary } from "@/types/domain";
@@ -22,6 +22,8 @@ interface AuthContextValue {
   switchMode: (role: Role) => void;
   /** Bật thêm một vai trò cho tài khoản (backend: POST /api/users/me/roles) rồi chuyển sang đó. */
   enableRole: (role: Role) => Promise<void>;
+  /** Đổi hoặc xóa (null) ảnh đại diện của chính mình. */
+  setAvatar: (dataUrl: string | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -90,13 +92,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     mutateMe(() => updated);
     modeStore.set(r);
   }, [mutateMe]);
+  const setAvatar = useCallback(async (dataUrl: string | null) => {
+    const updated = await put<UserSummary>("/api/users/me/avatar", { avatarUrl: dataUrl });
+    mutateMe(() => updated);
+  }, [mutateMe]);
 
   const value = useMemo<AuthContextValue>(() => {
     const user = token ? (me.data ?? null) : null;
     const status: Status = !hydrated || restoring ? "loading" : !token ? "anonymous" : user ? "authenticated" : me.error ? "anonymous" : "loading";
     const role = user ? (mode && user.roles.includes(mode as Role) ? (mode as Role) : user.roles[0] ?? null) : null;
-    return { status, user, token, role, signIn, signOut, refresh: me.reload, switchMode, enableRole };
-  }, [hydrated, restoring, token, me.data, me.error, me.reload, mode, signIn, signOut, switchMode, enableRole]);
+    return { status, user, token, role, signIn, signOut, refresh: me.reload, switchMode, enableRole, setAvatar };
+  }, [hydrated, restoring, token, me.data, me.error, me.reload, mode, signIn, signOut, switchMode, enableRole, setAvatar]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

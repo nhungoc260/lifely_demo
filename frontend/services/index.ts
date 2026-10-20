@@ -2,7 +2,7 @@ import { get, post, put, qs, apiFetch, authFetch, toApiError } from "@/lib/api";
 import type {
   AdminAppointments, AdminDashboard, AdminInventory, AdminOperations, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry,
-  OrgDonorEntry, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
+  OrgDonorEntry, AdminUserOverview, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
   Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, NotificationConsents, OrgAppointment,
@@ -147,6 +147,7 @@ export const adminApi = {
   users: (p: { q?: string; role?: string; status?: string; page?: number; size?: number; sort?: string; dir?: string }) =>
     get<Page<AdminUser>>(`/api/admin/users${qs(p)}`),
   user: (id: string) => get<AdminUser>(`/api/admin/users/${id}`),
+  userOverview: (id: string) => get<AdminUserOverview>(`/api/admin/users/${id}/overview`),
   setUserStatus: (id: string, action: "suspend" | "activate") => post<AdminUser>(`/api/admin/users/${id}/${action}`),
   requests: (p: { urgency?: string; bloodType?: string; status?: string; city?: string; page?: number; size?: number; sort?: string; dir?: string }) =>
     get<Page<AdminRequestRow>>(`/api/admin/requests${qs(p)}`),

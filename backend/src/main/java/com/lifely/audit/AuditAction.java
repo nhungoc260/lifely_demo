@@ -23,6 +23,8 @@ public final class AuditAction {
     public static final String PASSWORD_RESET = "PASSWORD_RESET";
     public static final String ACCOUNT_EXPORTED = "ACCOUNT_EXPORTED";
     public static final String ACCOUNT_DELETED = "ACCOUNT_DELETED";
+    public static final String ROLE_ADDED = "ROLE_ADDED";
+    public static final String ADMIN_USER_VIEWED = "ADMIN_USER_VIEWED";
 
     private AuditAction() {
     }

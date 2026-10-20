@@ -15,7 +15,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { APPOINTMENT_STATUS_LABEL, formatSlotRange, ORG_ACTIONS } from "@/lib/appointments";
-import { appointmentApi } from "@/services";
+import { appointmentApi, orgApi } from "@/services";
 import type { AppointmentAction, DonationSlot } from "@/types/domain";
 
 function SlotAppointments({ slot, onChanged }: { slot: DonationSlot; onChanged: () => void }) {
@@ -61,6 +61,8 @@ function SlotAppointments({ slot, onChanged }: { slot: DonationSlot; onChanged: 
 
 export default function OrgAppointments() {
   const slots = useQuery("org-slots", appointmentApi.orgSlots);
+  const me = useQuery("org-me", orgApi.me);
+  const place = [me.data?.address, me.data?.city].filter(Boolean).join(", ");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [capacity, setCapacity] = useState(5);
@@ -101,6 +103,7 @@ export default function OrgAppointments() {
                     <p className="font-medium">{formatSlotRange(s.startsAt, s.endsAt)}</p>
                     <span className="text-xs text-muted-foreground">{s.status === "CLOSED" ? "Đã đóng · " : ""}{s.bookedCount} / {s.capacity} chỗ đã đặt</span>
                   </div>
+                  {(s.address || s.city) && <p className="text-xs text-muted-foreground">Địa điểm: {[s.address, s.city].filter(Boolean).join(", ")}</p>}
                   <div className="flex gap-2 pt-1">
                     <Button size="sm" variant="outline" onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? "Ẩn danh sách" : "Xem người đặt"}</Button>
                     {s.status === "ACTIVE" && <Button size="sm" variant="ghost" onClick={() => close(s.id)}>Đóng khung giờ</Button>}
@@ -114,6 +117,7 @@ export default function OrgAppointments() {
           <CardHeader><CardTitle>Mở khung giờ mới</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={create} className="space-y-4">
+              {place && <p className="rounded-xl bg-muted p-3 text-sm"><span className="font-medium">Địa điểm hiến máu:</span> {place}<span className="block text-xs text-muted-foreground">Là địa chỉ của cơ sở; người hiến sẽ thấy khi đặt lịch.</span></p>}
               <Field label="Bắt đầu" htmlFor="slot-start"><Input id="slot-start" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
               <Field label="Kết thúc" htmlFor="slot-end"><Input id="slot-end" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
               <Field label="Sức chứa (số người)" htmlFor="slot-cap" hint="Hệ thống không bao giờ nhận quá số chỗ này, kể cả khi nhiều người đặt cùng lúc."><Input id="slot-cap" type="number" min={1} max={500} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required /></Field>

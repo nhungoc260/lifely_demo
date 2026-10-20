@@ -7,7 +7,7 @@ import { ModeSwitchBanner } from "@/components/shell/mode-switch";
 import { MatchRow } from "@/components/donor/match-card";
 import { ListGroup } from "@/components/ui/mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initialsOf } from "@/components/app/profile-menu";
+import { Avatar } from "@/components/shell/avatar";
 import { cn } from "@/lib/utils";
 
 type RowProps = React.ComponentProps<typeof MatchRow>;
@@ -23,14 +23,14 @@ const TILES = [
 
 /** Trang chủ người hiến kiểu app: hero đỏ + công tắc sẵn sàng, thẻ người hiến, lưới tiện ích, danh sách cần phản hồi. Dữ liệu do trang dashboard truyền vào (cùng hook với web). */
 export function DonorAppHome(p: {
-  greet: string; name?: string; available: boolean; saving: boolean; onToggle: (v: boolean) => void;
+  greet: string; name?: string; avatarUrl?: string | null; available: boolean; saving: boolean; onToggle: (v: boolean) => void;
   loading: boolean; bloodType?: string | null; donations?: number; nearby?: number; matches: RowProps["m"][];
 }) {
   return (
     <div>
       <section className="-mx-4 rounded-b-[28px] bg-primary px-4 pb-10 pt-1 text-primary-foreground">
         <p className="text-sm opacity-80">{p.greet}</p>
-        <div className="mt-1 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-white/90 font-bold text-primary">{initialsOf(p.name)}</span>
+        <div className="mt-1 flex items-center gap-3"><Link href="/donor/profile" aria-label="Hồ sơ của tôi" className="press rounded-full"><Avatar src={p.avatarUrl} name={p.name} className="size-12 bg-white/90 text-primary" /></Link>
           <div><h2 className="text-xl font-bold leading-tight">{p.name}</h2><span className="mt-0.5 inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium">Người hiến máu{p.bloodType ? ` · Nhóm ${p.bloodType}` : ""}</span></div></div>
         <button type="button" role="switch" aria-checked={p.available} disabled={p.saving} onClick={() => p.onToggle(!p.available)}
           className="press mt-4 flex w-full items-center justify-between rounded-2xl bg-white/15 px-4 py-3 text-left disabled:opacity-60">

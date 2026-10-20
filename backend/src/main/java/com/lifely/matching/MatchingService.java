@@ -97,6 +97,8 @@ public class MatchingService {
                 LocalDate.now().minusDays(props.getMinDaysBetweenDonationsFemale()), r.getId(),
                 bd(lat), bd(lng), PageRequest.of(0, poolSize));
         return pool.stream()
+                // Một tài khoản vừa hiến vừa cần máu không bao giờ được ghép vào yêu cầu của chính mình.
+                .filter(d -> !d.getUserId().equals(r.getRequesterId()))
                 .map(d -> new Candidate(d, score(d, r, now)))
                 .filter(c -> c.score().distanceKm() >= minKm && c.score().distanceKm() < maxKm)
                 .filter(c -> c.score().deadlineFeasible())

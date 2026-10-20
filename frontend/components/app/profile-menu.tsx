@@ -5,15 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Avatar, AvatarEditor, initialsOf } from "@/components/shell/avatar";
 import { useModeSwitch } from "@/components/shell/mode-switch";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { DonorProfile } from "@/types/domain";
 
-export function initialsOf(name?: string | null): string {
-  return (name ?? "").split(" ").filter(Boolean).slice(-2).map((w) => w[0]).join("").toUpperCase() || "·";
-}
+export { initialsOf };
 
 function Row({ icon: Icon, tone, title, hint, href, onClick, danger }: { icon: LucideIcon; tone: string; title: string; hint?: string; href?: string; onClick?: () => void; danger?: boolean }) {
   const cls = "press flex w-full items-center gap-3 border-b border-border px-4 py-3.5 text-left last:border-b-0";
@@ -39,9 +38,10 @@ export function AppProfile({ profile, editor }: { profile: DonorProfile; editor:
   if (view === "info") return (
     <div className="pt-3">
       <button type="button" onClick={() => setView("menu")} className="press mb-3 inline-flex items-center gap-1 text-sm font-medium text-primary"><ChevronLeft className="size-4" aria-hidden />Quay lại</button>
-      <div className="flex items-center gap-4"><span className="grid size-16 place-items-center rounded-full bg-primary text-xl font-bold text-primary-foreground">{initialsOf(name)}</span>
+      <div className="flex items-center gap-4"><Avatar src={user?.avatarUrl} name={name} className="size-16 text-xl" />
         <div><h2 className="text-2xl font-bold">{name}</h2><p className="text-sm text-muted-foreground">Người hiến máu · Nhóm {profile.bloodType ?? "chưa rõ"} · {profile.totalDonations} lần hiến</p></div></div>
-      <section className="mt-5 rounded-2xl border border-border bg-card p-4">
+      <section className="mt-5 rounded-2xl border border-border bg-card p-4"><AvatarEditor /></section>
+      <section className="mt-4 rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center justify-between"><h3 className="font-semibold">Thông tin cơ bản</h3>
           <button type="button" onClick={() => setView("edit")} aria-label="Chỉnh sửa thông tin" className="press grid size-9 place-items-center rounded-full bg-muted text-primary"><Pencil className="size-4" /></button></div>
         <dl className="space-y-3 text-sm">
@@ -58,7 +58,7 @@ export function AppProfile({ profile, editor }: { profile: DonorProfile; editor:
       <h2 className="mb-3 text-2xl font-bold">Hồ sơ</h2>
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <button type="button" onClick={() => setView("info")} className="press flex w-full items-center gap-3 px-4 py-4 text-left">
-          <span className="grid size-12 place-items-center rounded-full bg-primary font-bold text-primary-foreground">{initialsOf(name)}</span>
+          <Avatar src={user?.avatarUrl} name={name} className="size-12" />
           <span className="min-w-0 flex-1"><span className="block text-lg font-semibold">{name}</span><span className="block text-sm text-muted-foreground">Chỉnh sửa thông tin cá nhân</span></span>
           <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </button>

@@ -4,11 +4,15 @@ import { Bell, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { Avatar } from "@/components/shell/avatar";
 import { isActive, NAV } from "@/components/shell/nav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import { useNotifications } from "@/providers/notifications-provider";
 import type { Role } from "@/types/domain";
+
+/** Trang hồ sơ của từng vai trò (bấm vào ảnh đại diện trên thanh trên). Admin chưa có trang hồ sơ riêng. */
+const PROFILE_HREF: Partial<Record<Role, string>> = { DONOR: "/donor/profile", REQUESTER: "/requester/account", ORGANIZATION: "/organization/profile" };
 
 /** Khung giao diện app (mobile): thanh trên đậm màu, thanh tab dưới, trang con có nút quay lại. Chỉ dùng khi useAppMode() = true. */
 export function AppModeShell({ role, children }: { role: Role; children: React.ReactNode }) {
@@ -22,7 +26,6 @@ export function AppModeShell({ role, children }: { role: Role; children: React.R
   const isHome = pathname === tabs[0]?.href;
   const isRoot = items.some((i) => i.href === pathname);
   const title = items.find((i) => isActive(pathname, i, items))?.label ?? "LIFELY";
-  const initials = (user?.fullName ?? "").split(" ").filter(Boolean).slice(-2).map((w) => w[0]).join("").toUpperCase();
 
   return (
     <div data-role={role} data-app-mode className="min-h-dvh bg-surface">
@@ -34,7 +37,9 @@ export function AppModeShell({ role, children }: { role: Role; children: React.R
             : <><button type="button" onClick={() => router.back()} aria-label="Quay lại" className="press -ml-2 grid size-10 place-items-center rounded-full"><ChevronLeft className="size-6" /></button><h1 className="truncate text-base font-semibold">{title}</h1></>}
           <div className="ml-auto flex items-center gap-2">
             {notif && <Link href={notif} aria-label={`Thông báo, ${unread} chưa đọc`} className="press relative grid size-10 place-items-center rounded-full bg-white/15"><Bell className="size-5" />{unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-white px-1 text-[10px] font-bold leading-4 text-primary">{unread > 9 ? "9+" : unread}</span>}</Link>}
-            <span className="grid size-9 place-items-center rounded-full bg-white/90 text-xs font-bold text-primary">{initials || "·"}</span>
+            {PROFILE_HREF[role]
+              ? <Link href={PROFILE_HREF[role]} aria-label="Hồ sơ của tôi" className="press rounded-full"><Avatar src={user?.avatarUrl} name={user?.fullName} className="size-9 bg-white/90 text-xs text-primary" /></Link>
+              : <Avatar src={user?.avatarUrl} name={user?.fullName} className="size-9 bg-white/90 text-xs text-primary" />}
           </div>
         </div>
       </header>

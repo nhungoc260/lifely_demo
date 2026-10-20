@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Avatar } from "@/components/shell/avatar";
 import { PageHeader } from "@/components/shell/page-header";
 import { Pill } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export default function AdminUserDetail() {
   const user = useQuery(`admin-user:${id}`, () => adminApi.user(id));
   const reports = useQuery("admin-user-reports", () => adminApi.reports({ size: 100 }));
   const requests = useQuery(user.data ? "admin-user-requests" : null, () => adminApi.requests({ size: 100 }));
+  const overview = useQuery(`admin-user-overview:${id}`, () => adminApi.userOverview(id));
   const [confirm, setConfirm] = useState(false);
 
   const u = user.data;
@@ -51,6 +53,7 @@ export default function AdminUserDetail() {
           <Card>
             <CardHeader><CardTitle>Tài khoản</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
+              <Avatar src={overview.data?.avatarUrl} name={u.fullName} className="size-16 text-xl" />
               {([["Họ tên", u.fullName], ["Email", u.email], ["Số điện thoại", u.phone || "–"], ["Ngày tham gia", formatDate(u.createdAt)]] as const).map(([k, v]) => (
                 <div key={k} className="flex gap-4"><span className="w-32 shrink-0 text-muted-foreground">{k}</span><span className="min-w-0 flex-1 break-words font-medium">{v}</span></div>
               ))}
@@ -58,6 +61,33 @@ export default function AdminUserDetail() {
               <div className="flex items-center gap-4"><span className="w-32 shrink-0 text-muted-foreground">Trạng thái</span><Pill t={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}</Pill></div>
               <div className="pt-2">{protectedAdmin ? <span className="text-xs text-muted-foreground">Tài khoản quản trị được bảo vệ.</span>
                 : <Button variant="outline" size="sm" onClick={() => setConfirm(true)}>{u.status === "ACTIVE" ? "Tạm khóa" : "Kích hoạt"}</Button>}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>Thông tin liên hệ và hoạt động</CardTitle></CardHeader>
+            <CardContent>
+              {overview.error && !overview.data ? <p className="text-sm text-muted-foreground">Chưa tải được thông tin chi tiết: {overview.error.message}</p>
+                : !overview.data ? <Skeleton className="h-24" /> : (() => {
+                  const o = overview.data, d = o.donor;
+                  const rows: [string, string][] = [
+                    ["Email", o.email], ["Số điện thoại", o.phone || "–"], ["Ngày tham gia", formatDate(o.createdAt)],
+                    ["Hoạt động gần nhất", o.lastActivityAt ? formatDate(o.lastActivityAt) : "Chưa có"],
+                    ["Yêu cầu máu đã tạo", String(o.requestsCreated)], ["Báo cáo nhắm vào người này", `${o.reportsAgainst} (đang mở: ${o.openReportsAgainst})`],
+                    ...(d ? [
+                      ["Nhóm máu", d.bloodType ?? "Chưa cập nhật"], ["Khu vực", [d.district, d.city].filter(Boolean).join(", ") || "Chưa cập nhật"],
+                      ["Trạng thái sẵn sàng", d.availability === "AVAILABLE" ? "Đang sẵn sàng" : "Đang tắt"], ["Lần hiến gần nhất", d.lastDonationDate ? formatDate(d.lastDonationDate) : "Chưa có"],
+                      ["Lần hiến đã ghi nhận", `${d.totalDonations} (được xác nhận: ${d.verifiedDonations})`],
+                      ["Được ghép / nhận lời / hoàn tất", `${d.matchesTotal} / ${d.matchesAccepted} / ${d.matchesCompleted}`], ["Từ chối / hết hạn", `${d.matchesRejected} / ${d.matchesExpired}`],
+                    ] as [string, string][] : []),
+                  ];
+                  return (
+                    <>
+                      <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">{rows.map(([k, v]) => <div key={k} className="flex gap-4"><dt className="w-44 shrink-0 text-muted-foreground">{k}</dt><dd className="min-w-0 flex-1 break-words font-medium">{v}</dd></div>)}</dl>
+                      <p className="mt-4 text-xs text-muted-foreground">Chỉ hiển thị thành phố và quận, không có vị trí chính xác. Mỗi lần xem hồ sơ được ghi vào nhật ký hoạt động.</p>
+                    </>
+                  );
+                })()}
             </CardContent>
           </Card>
 

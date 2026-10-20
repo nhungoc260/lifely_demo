@@ -485,3 +485,15 @@ export interface OrgDonorEntry {
   lastVisit: string | null;
   phone: string | null;
 }
+
+/** Hồ sơ tóm tắt của người dùng cho admin (chỉ thành phố/quận, không có tọa độ). */
+export interface AdminDonorInfo {
+  bloodType: string | null; city: string | null; district: string | null; availability: string;
+  lastDonationDate: string | null; totalDonations: number; verifiedDonations: number;
+  matchesTotal: number; matchesAccepted: number; matchesCompleted: number; matchesRejected: number; matchesExpired: number;
+}
+export interface AdminUserOverview {
+  userId: string; fullName: string; email: string; phone: string | null; status: string; avatarUrl: string | null;
+  createdAt: string; lastActivityAt: string | null; requestsCreated: number; reportsAgainst: number; openReportsAgainst: number;
+  donor: AdminDonorInfo | null;
+}

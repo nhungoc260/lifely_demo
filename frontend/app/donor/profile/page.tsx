@@ -7,6 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AvatarEditor } from "@/components/shell/avatar";
 import { AppProfile } from "@/components/app/profile-menu";
 import { useAppMode } from "@/hooks/use-app-mode";
 import { AccountDataCard } from "@/components/account/account-data-card";
@@ -149,6 +150,7 @@ export default function DonorProfilePage() {
   return (
     <>
       <PageHeader title="Hồ sơ" description="Hãy giữ thông tin luôn cập nhật để LIFELY kết nối chính xác cho bạn." />
+      <Card className="mb-5"><CardContent className="pt-6"><AvatarEditor /></CardContent></Card>
       <DonorProfileHub />
       <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:hidden">Thông tin hồ sơ</h2>
       {profile.error ? <ErrorState message={profile.error.message} onRetry={profile.reload} />

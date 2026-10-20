@@ -69,7 +69,7 @@ export default function DonorDashboard() {
   const open = (matches.data ?? []).filter((m) => (m.status === "CONTACTED" || m.status === "PENDING")
     && new Date(m.deadline).getTime() > now && ACTIVE.includes(m.requestStatus));
 
-  if (appMode) return <DonorAppHome greet={greet} name={user?.fullName} available={isAvailable} saving={saving || dash.initialLoading} onToggle={toggle} loading={dash.initialLoading} bloodType={dash.data?.bloodType} donations={dash.data?.confirmedDonations} nearby={dash.data?.nearbyRequests} matches={open} />;
+  if (appMode) return <DonorAppHome greet={greet} name={user?.fullName} avatarUrl={user?.avatarUrl} available={isAvailable} saving={saving || dash.initialLoading} onToggle={toggle} loading={dash.initialLoading} bloodType={dash.data?.bloodType} donations={dash.data?.confirmedDonations} nearby={dash.data?.nearbyRequests} matches={open} />;
 
   return (
     <>
