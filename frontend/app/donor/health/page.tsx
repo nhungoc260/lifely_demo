@@ -111,6 +111,16 @@ export default function DonorHealth() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="size-4" aria-hidden />Kiểm tra nhanh</CardTitle></CardHeader>
             <CardContent className="space-y-4">
+              <details className="group rounded-2xl bg-muted/50 p-3.5 text-sm ring-1 ring-border/60">
+                <summary className="cursor-pointer font-medium text-primary">Điền thế nào?</summary>
+                <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted-foreground">
+                  <li>Không bắt buộc điền đủ 4 ô. Có số nào thì điền số đó, ô nào chưa đo thì để trống.</li>
+                  <li><span className="font-medium text-foreground">Nhịp tim:</span> số lần tim đập trong 1 phút, đo khi đã ngồi nghỉ vài phút (từ đồng hồ thông minh, máy đo huyết áp hoặc tự đếm mạch cổ tay).{s ? ` Ngưỡng tham khảo: ${s.rules.heartRateMin}–${s.rules.heartRateMax} lần/phút.` : ""}</li>
+                  <li><span className="font-medium text-foreground">Huyết áp:</span> máy đo cho 2 số, ví dụ 120/80. Số lớn là <span className="font-medium text-foreground">Tâm thu</span> (120), số nhỏ là <span className="font-medium text-foreground">Tâm trương</span> (80).{s ? ` Ngưỡng tham khảo: tâm thu từ ${s.rules.systolicMin} đến dưới ${s.rules.systolicMaxExclusive}, tâm trương từ ${s.rules.diastolicMin} đến dưới ${s.rules.diastolicMaxExclusive} mmHg.` : ""}</li>
+                  <li><span className="font-medium text-foreground">Cân nặng:</span> cân bằng cân sức khỏe, tính theo kg (ví dụ 56.5).{s ? ` Tối thiểu để hiến máu: ${s.rules.weightMinFemale} kg với nữ, ${s.rules.weightMinOther} kg với các trường hợp còn lại.` : ""}</li>
+                  <li>Đây chỉ là sàng lọc sơ bộ, không phải chẩn đoán. Cơ sở y tế vẫn kiểm tra lại và quyết định cuối cùng khi bạn đến hiến.</li>
+                </ul>
+              </details>
               <div className="grid grid-cols-2 gap-2.5">
                 <MetricInput id="hr" icon={HeartPulse} tint="rose" label="Nhịp tim" unit="lần/phút" mode="numeric" value={f.hr} onChange={(v) => setF({ ...f, hr: v })} />
                 <MetricInput id="kg" icon={Weight} tint="amber" label="Cân nặng" unit="kg" mode="decimal" value={f.kg} onChange={(v) => setF({ ...f, kg: v })} />
