@@ -2,7 +2,7 @@
 
 import { LocateFixed } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { MapContainerLazy } from "@/components/map/map-dynamic";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { useQuery } from "@/hooks/use-query";
 import { locateUser } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,9 @@ export function EmergencyMap({ embedded = false }: { embedded?: boolean }) {
   const [urgency, setUrgency] = useState("");
   const [radius, setRadius] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const dragY = useRef<number | null>(null);
+  const appMode = useAppMode();
   const narrow = useSyncExternalStore(subscribeNarrow, () => window.matchMedia("(max-width: 767px)").matches, () => false);
   const mapH = narrow ? 400 : 560;
 
@@ -51,6 +55,43 @@ export function EmergencyMap({ embedded = false }: { embedded?: boolean }) {
       setMe([p.lat, p.lng]);
       setCenter([p.lat, p.lng]);
     } catch (e) { toast.error((e as Error).message); }
+  }
+
+  if (appMode && embedded) {
+    const items = reqs.data?.items ?? [];
+    return (
+      <div className="-mx-4">
+        <div className="relative">
+          <MapContainerLazy center={center} zoom={12} requests={reqs.data?.items ?? []} hospitals={orgs.data ?? []} approxArea={approx} radius={radius && approx ? { center: approx.center, km: Number(radius) } : undefined} onSelectRequest={setSelected} height={440} />
+          <button type="button" onClick={locate} aria-label="Vị trí gần tôi" className="press absolute right-3 top-3 z-10 grid size-11 place-items-center rounded-full bg-card shadow-lg"><LocateFixed className="size-5 text-primary" /></button>
+        </div>
+        <div className="relative z-10 -mt-6 rounded-t-3xl bg-surface px-4 pb-4 pt-2 shadow-[0_-8px_24px_rgba(0,0,0,.12)]">
+          <button type="button" onClick={() => setSheetOpen((v) => !v)} aria-expanded={sheetOpen} aria-label={sheetOpen ? "Thu gọn danh sách" : "Mở rộng danh sách"}
+            onTouchStart={(e) => { dragY.current = e.touches[0].clientY; }}
+            onTouchEnd={(e) => { if (dragY.current === null) return; const dy = e.changedTouches[0].clientY - dragY.current; dragY.current = null; if (dy < -30) setSheetOpen(true); else if (dy > 30) setSheetOpen(false); }}
+            className="mx-auto -mt-2 mb-1 flex h-8 w-full items-center justify-center"><span className="block h-1.5 w-12 rounded-full bg-border" /></button>
+          <MapSearch onFound={(lat, lng) => setCenter([lat, lng])} />
+          <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
+            <select aria-label="Nhóm máu" className="h-9 shrink-0 rounded-full border border-border bg-card px-3 text-sm" value={bloodType} onChange={(e) => setBloodType(e.target.value)}><option value="">Nhóm máu</option>{BLOOD_TYPES.map((b) => <option key={b}>{b}</option>)}</select>
+            <select aria-label="Mức khẩn cấp" className="h-9 shrink-0 rounded-full border border-border bg-card px-3 text-sm" value={urgency} onChange={(e) => setUrgency(e.target.value)}><option value="">Khẩn cấp</option><option value="CRITICAL">NGUY KỊCH</option><option value="URGENT">KHẨN</option><option value="NORMAL">BÌNH THƯỜNG</option></select>
+            <select aria-label="Bán kính" className="h-9 shrink-0 rounded-full border border-border bg-card px-3 text-sm" value={radius} onChange={(e) => setRadius(e.target.value)}><option value="">Bán kính</option><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km</option><option value="50">50 km</option></select>
+          </div>
+          <p className="mb-2 mt-3 text-sm font-semibold">{reqs.data ? `${items.length} yêu cầu quanh đây` : "Đang tải…"}</p>
+          <div className="space-y-3">
+            {reqs.initialLoading ? <Skeleton className="h-24" />
+              : reqs.error && !reqs.data ? <ErrorState message={reqs.error.message} onRetry={reqs.reload} />
+              : items.length === 0 ? <EmptyState title="Không có yêu cầu phù hợp" description="Thử mở rộng bán kính hoặc bỏ bớt bộ lọc." />
+              : (sheetOpen ? items : items.slice(0, 1)).map((r) => (
+                <Link key={r.id} href={`/requests/${r.id}`} className={cn("press block rounded-2xl border border-border bg-card p-4", selected === r.id && "ring-2 ring-primary")}>
+                  <div className="flex items-center justify-between"><UrgencyBadge urgency={r.urgency} /><BloodChip type={r.bloodType} /></div>
+                  <p className="mt-2 font-medium">{r.unitsNeeded} đơn vị · {r.hospitalName}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{r.distanceKm != null ? `Cách ${r.distanceKm.toFixed(1)} km · ` : ""}{r.unitsConfirmed}/{r.unitsRequired} đã xác nhận</p>
+                </Link>))}
+            {!sheetOpen && items.length > 1 && <button type="button" onClick={() => setSheetOpen(true)} className="press w-full rounded-2xl bg-muted py-3 text-sm font-medium text-primary">Xem thêm {items.length - 1} yêu cầu</button>}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

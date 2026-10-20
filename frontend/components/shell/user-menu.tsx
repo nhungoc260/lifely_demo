@@ -4,6 +4,7 @@ import { Home, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ModeSwitchRow } from "@/components/shell/mode-switch";
 import { initialsOf, type NavItem } from "@/components/shell/nav";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export function UserMenu({ fullName, email, roleLabel, items, onSignOut }: { ful
               <i.icon className="size-4 text-muted-foreground" aria-hidden />{i.label}
             </Link>
           ))}
+          <ModeSwitchRow className={row} />
           <Link href="/" role="menuitem" onClick={() => setOpen(false)} className={row}>
             <Home className="size-4 text-muted-foreground" aria-hidden />Trang giới thiệu LIFELY
           </Link>

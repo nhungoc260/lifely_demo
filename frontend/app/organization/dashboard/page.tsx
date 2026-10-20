@@ -3,6 +3,8 @@
 import { Activity, AlertOctagon, BadgeCheck, CheckCircle2, Percent } from "lucide-react";
 import Link from "next/link";
 
+import { RequesterAppHome } from "@/components/app/requester-home";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { RequesterRequestCard } from "@/components/requests/requester-request-card";
 import { PageHeader } from "@/components/shell/page-header";
 import { OrgStatusBadge } from "@/components/ui/badges";
@@ -23,6 +25,8 @@ export default function OrganizationDashboard() {
   const verified = me.data?.verificationStatus === "VERIFIED";
   const recent = useQuery(me.data ? `org-recent:${version}` : null, () => requestApi.list({ size: 10 }));
   const { open, closed } = splitRequests(recent.data?.items ?? []);
+  const appMode = useAppMode();
+  if (appMode && me.data && verified) return <RequesterAppHome base="/organization" name={me.data.name} canCreate loading={dash.initialLoading || recent.initialLoading} open={open} stats={[{ label: "Đang hoạt động", value: dash.data?.activeRequests }, { label: "Nguy kịch", value: dash.data?.criticalRequests }, { label: "Hoàn tất", value: dash.data?.completedRequests }]} />;
 
   return (
     <>

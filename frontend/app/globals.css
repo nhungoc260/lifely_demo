@@ -128,3 +128,9 @@ a, button, [role="tab"], label { touch-action: manipulation; }
 /* Cuộn ngang gọn, không hiện thanh cuộn. */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Giao diện app (mobile): ô nhập cỡ chữ 16px để iOS không tự phóng to khi chạm vào; nút nhỏ cao hơn cho dễ chạm. */
+[data-app-mode] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+[data-app-mode] select,
+[data-app-mode] textarea { font-size: 16px; }
+[data-app-mode] button.h-9 { min-height: 2.5rem; }

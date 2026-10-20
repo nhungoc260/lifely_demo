@@ -4,6 +4,8 @@ import { Droplets, Info, Minus, Plus, TriangleAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { StickyActions } from "@/components/app/sticky-actions";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,6 +30,7 @@ export default function OrganizationInventory() {
   const res = useQuery(me.data ? "org-inventory" : null, orgApi.inventory);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [saving, setSaving] = useState(false);
+  const appMode = useAppMode();
   const [step, setStep] = useState(1);
   const settings = useQuery(me.data ? "org-inventory-settings" : null, orgApi.inventorySettings);
   const [savingSetting, setSavingSetting] = useState(false);
@@ -81,7 +84,7 @@ export default function OrganizationInventory() {
       <PageHeader
         title="Kho máu"
         description="Theo dõi số đơn vị máu đang có trong kho của cơ sở, nhóm nào sắp hết sẽ được cảnh báo."
-        actions={dirty ? <><Button variant="outline" onClick={() => setEdits({})} disabled={saving}>Hoàn tác</Button><Button onClick={save} disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button></> : undefined}
+        actions={dirty && !appMode ? <><Button variant="outline" onClick={() => setEdits({})} disabled={saving}>Hoàn tác</Button><Button onClick={save} disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button></> : undefined}
       />
       {me.data === null ? <ErrorState message="Hãy hoàn tất hồ sơ tổ chức trước khi quản lý kho máu." />
         : res.error && !res.data ? <ErrorState message={res.error.message} onRetry={res.reload} />
@@ -111,7 +114,7 @@ export default function OrganizationInventory() {
               ))}
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <StatCard label="Tổng đơn vị" value={total} icon={Droplets} accent />
               <StatCard label="Nhóm sắp hết" value={lowCount} icon={TriangleAlert} hint="Còn ít hơn ngưỡng cảnh báo" />
               <StatCard label="Nhóm hết máu" value={emptyCount} icon={TriangleAlert} />
@@ -124,6 +127,12 @@ export default function OrganizationInventory() {
                 </li>
               ))}
             </ul>
+            {appMode && dirty && (
+              <StickyActions>
+                <Button variant="outline" onClick={() => setEdits({})} disabled={saving}>Hoàn tác</Button>
+                <Button onClick={save} disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button>
+              </StickyActions>
+            )}
             <p className="mt-4 text-xs text-muted-foreground">Số liệu do cơ sở tự cập nhật. LIFELY không tự trừ đơn vị máu; chỉ tự cộng khi bạn bật tuỳ chọn ở trên.</p>
           </>
         )}

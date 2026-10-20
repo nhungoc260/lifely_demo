@@ -7,6 +7,9 @@ import { Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { AdminAppHome } from "@/components/app/admin-home";
+import { useAppMode } from "@/hooks/use-app-mode";
+import { useAuth } from "@/providers/auth-provider";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +33,9 @@ export default function AdminDashboard() {
   const d = q.data;
   const k = d?.kpi;
   const L = q.initialLoading;
+  const appMode = useAppMode();
+  const { user } = useAuth();
+  if (appMode && !(q.error && !d)) return <AdminAppHome kpi={k} loading={L} name={user?.fullName} />;
 
   return (
     <>

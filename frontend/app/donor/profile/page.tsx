@@ -7,6 +7,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AppProfile } from "@/components/app/profile-menu";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { AccountDataCard } from "@/components/account/account-data-card";
 import { DonorProfileHub } from "@/components/donor/profile-hub";
 import { ReadinessCard } from "@/components/donor/readiness-card";
@@ -138,6 +140,12 @@ function ProfileForm({ profile, privacy }: { profile: DonorProfile; privacy: Pri
 export default function DonorProfilePage() {
   const profile = useQuery("donor-profile", donorApi.me);
   const privacy = useQuery("donor-privacy", donorApi.privacy);
+  const appMode = useAppMode();
+  if (appMode) {
+    if (profile.error) return <ErrorState message={profile.error.message} onRetry={profile.reload} />;
+    if (!profile.data || !privacy.data) return <div className="space-y-3 pt-4"><Skeleton className="h-8 w-32" /><Skeleton className="h-20" /><Skeleton className="h-48" /></div>;
+    return <AppProfile profile={profile.data} editor={<ProfileForm profile={profile.data} privacy={privacy.data} />} />;
+  }
   return (
     <>
       <PageHeader title="Hồ sơ" description="Hãy giữ thông tin luôn cập nhật để LIFELY kết nối chính xác cho bạn." />

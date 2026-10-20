@@ -4,6 +4,7 @@ import { CalendarCheck, CalendarX2, Loader2, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { apptPayload, QrCode } from "@/components/appointments/qr-code";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,6 +95,12 @@ export default function DonorAppointments() {
                           <p className="font-medium">{formatDateTime(a.startsAt)}</p>
                           <p className="text-xs text-muted-foreground">{a.organizationName}{a.address ? ` · ${a.address}` : ""}</p>
                           <p className="mt-1 text-xs">{APPOINTMENT_STATUS_LABEL[a.status]}</p>
+                          {(a.status === "BOOKED" || a.status === "CHECKED_IN") && (
+                            <details className="mt-2 rounded-xl bg-card px-3 py-2 ring-1 ring-border/60">
+                              <summary className="cursor-pointer text-xs font-medium text-primary">Mã QR check-in</summary>
+                              <div className="mt-2 flex flex-col items-center gap-1"><QrCode value={apptPayload(a.id)} label="Mã QR check-in lịch hẹn" /><p className="text-center text-xs text-muted-foreground">Đưa mã này cho nhân viên cơ sở khi đến hiến máu.</p></div>
+                            </details>
+                          )}
                           {a.status === "BOOKED" && (
                             <div className="mt-2 flex items-center gap-3">
                               <Button size="sm" variant="outline" onClick={() => cancel(a.id)} disabled={!a.canCancel || busy === a.id}>

@@ -473,3 +473,15 @@ export interface AdminOperations {
   appointmentNoShows: number;
   failedDeliveries: { channel: string; purpose: string; errorCode: string | null; attempts: number; at: string }[];
 }
+
+/** Người hiến có liên quan đến cơ sở (đã đặt lịch hoặc đã được cơ sở xác nhận hiến). Số điện thoại chỉ có khi còn lịch hẹn hiệu lực. */
+export interface OrgDonorEntry {
+  donorId: string;
+  fullName: string;
+  bloodType: string | null;
+  donations: number;
+  noShows: number;
+  upcoming: number;
+  lastVisit: string | null;
+  phone: string | null;
+}

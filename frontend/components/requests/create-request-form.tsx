@@ -8,6 +8,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { StickyActions } from "@/components/app/sticky-actions";
 import { LocationPicker } from "@/components/map/location-picker";
 import { CoveragePanel } from "@/components/requests/coverage-panel";
 import { PageHeader } from "@/components/shell/page-header";
@@ -129,10 +130,10 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
             <div className="mt-6"><CoveragePanel bloodType={p.bloodType} latitude={p.latitude} longitude={p.longitude} /></div>
             <p className="mt-6 flex gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0" aria-hidden />Yêu cầu được xác minh trước khi liên hệ người hiến máu. Không ghi tên bệnh nhân hay thông tin y tế. Số điện thoại của bạn chỉ hiển thị với người hiến máu đã nhận lời.</p>
             {formError && <p role="alert" className="mt-4 text-sm text-critical">{formError}</p>}
-            <div className="mt-6 flex flex-wrap justify-between gap-3">
+            <StickyActions className="mt-6 flex flex-wrap justify-between gap-3">
               <Button variant="outline" onClick={() => setPreview(null)} disabled={submitting}><ArrowLeft /> Chỉnh sửa</Button>
               <Button size="lg" onClick={() => submit(p)} disabled={submitting}>{submitting && <Loader2 className="animate-spin" />} {submitting ? "Đang tạo yêu cầu…" : "Tạo yêu cầu khẩn cấp"}</Button>
-            </div>
+            </StickyActions>
           </CardContent>
         </Card>
       </>
@@ -217,7 +218,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
           </CardContent>
         </Card>
 
-        <div className="flex justify-end"><Button type="submit" size="lg">Xem lại yêu cầu</Button></div>
+        <StickyActions className="flex justify-end"><Button type="submit" size="lg">Xem lại yêu cầu</Button></StickyActions>
       </form>
     </>
   );

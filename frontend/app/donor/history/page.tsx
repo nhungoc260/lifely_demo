@@ -1,6 +1,7 @@
 "use client";
 
 import { BadgeCheck, Loader2, Plus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -66,7 +67,7 @@ export default function DonorHistory() {
                   {q.data?.map((d) => {
                     const dt = new Date(d.donatedOn);
                     return (
-                      <div key={d.id} className="flex items-center gap-3 px-4 py-3.5">
+                      <Link key={d.id} href={`/donor/history/${d.id}`} className="press flex items-center gap-3 px-4 py-3.5">
                         <span className="grid size-12 shrink-0 place-content-center rounded-2xl bg-rose-500/10 text-center text-rose-600 dark:text-rose-400">
                           <span className="text-lg font-bold leading-none tabular-nums">{String(dt.getUTCDate()).padStart(2, "0")}</span>
                           <span className="mt-0.5 text-[10px] font-semibold uppercase">Th{dt.getUTCMonth() + 1}</span>
@@ -76,7 +77,7 @@ export default function DonorHistory() {
                           <p className="text-xs text-muted-foreground">{formatDate(d.donatedOn)}{d.source === "LIFELY_MATCH" ? " · Qua LIFELY" : ""}</p>
                           <div className="mt-1"><VerificationBadge level={d.verificationLevel} by={d.confirmedByOrganization} /></div>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </ListGroup>
@@ -88,6 +89,7 @@ export default function DonorHistory() {
                     <p className="text-sm">Đã ghi nhận lần hiến máu</p>
                     <p className="text-xs text-muted-foreground">{d.location ?? "Chưa cung cấp địa điểm"}{d.source === "LIFELY_MATCH" ? " · Qua LIFELY" : ""}</p>
                     <div className="mt-1"><VerificationBadge level={d.verificationLevel} by={d.confirmedByOrganization} /></div>
+                    <Link href={`/donor/history/${d.id}`} className="mt-1 inline-block text-xs font-medium text-primary hover:underline">Xem chi tiết</Link>
                   </li>
                 ))}
               </ol>

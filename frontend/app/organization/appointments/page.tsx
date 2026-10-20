@@ -4,6 +4,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { QrCheckIn } from "@/components/appointments/qr-checkin";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,7 @@ export default function OrgAppointments() {
   const [capacity, setCapacity] = useState(5);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -86,6 +88,7 @@ export default function OrgAppointments() {
   return (
     <>
       <PageHeader title="Lịch hiến máu của cơ sở" description="Mở khung giờ, theo dõi người đã đặt và ghi nhận kết quả tiếp nhận. Kho máu chỉ tăng khi bạn xác nhận người hiến đã hiến thực tế." />
+      <QrCheckIn onDone={() => { setTick((t) => t + 1); slots.reload(); }} />
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-4">
           {slots.initialLoading ? <Skeleton className="h-64" />
@@ -102,7 +105,7 @@ export default function OrgAppointments() {
                     <Button size="sm" variant="outline" onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? "Ẩn danh sách" : "Xem người đặt"}</Button>
                     {s.status === "ACTIVE" && <Button size="sm" variant="ghost" onClick={() => close(s.id)}>Đóng khung giờ</Button>}
                   </div>
-                  {open === s.id && <SlotAppointments slot={s} onChanged={slots.reload} />}
+                  {open === s.id && <SlotAppointments key={`${s.id}:${tick}`} slot={s} onChanged={slots.reload} />}
                 </CardContent>
               </Card>
             ))}

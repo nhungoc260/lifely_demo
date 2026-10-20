@@ -11,6 +11,8 @@ import { InstallButton } from "@/components/pwa/install-button";
 import { isActive, NAV, ROLE_META, TOPNAV_ROLES } from "@/components/shell/nav";
 import { MoreSheet } from "@/components/shell/more-sheet";
 import { LiveDot, UnreadBadge } from "@/components/shell/parts";
+import { AppModeShell } from "@/components/app/app-shell";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { TopNavShell } from "@/components/shell/top-nav-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -172,6 +174,7 @@ export function RoleShell({ role, children }: { role: Role; children: React.Reac
   const { status, user, role: current } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const appMode = useAppMode();
 
   const mustOnboard = role === "DONOR" && !!user && !user.onboardingCompleted && user.onboardingStep <= 1 && !pathname.startsWith("/onboarding");
 
@@ -194,7 +197,7 @@ export function RoleShell({ role, children }: { role: Role; children: React.Reac
   }
   return (
     <NotificationsProvider>
-      {TOPNAV_ROLES.includes(role) ? <TopNavShell role={role}>{children}</TopNavShell> : <SidebarShell role={role}>{children}</SidebarShell>}
+      {appMode ? <AppModeShell role={role}>{children}</AppModeShell> : TOPNAV_ROLES.includes(role) ? <TopNavShell role={role}>{children}</TopNavShell> : <SidebarShell role={role}>{children}</SidebarShell>}
     </NotificationsProvider>
   );
 }

@@ -4,6 +4,8 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useAppMode } from "@/hooks/use-app-mode";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shell/page-header";
 import { BloodChip, StatusBadge, UrgencyBadge } from "@/components/ui/badges";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,12 +24,21 @@ import type { RequestStatus } from "@/types/domain";
 export function RequestsListView({ basePath }: { basePath: "/requester" | "/organization" }) {
   const [status, setStatus] = useState<RequestStatus | "">("");
   const [page, setPage] = useState(0);
+  const appMode = useAppMode();
   const fetcher = basePath === "/organization" ? orgApi.requests : requestApi.list;
   const q = useQuery(`${basePath}:requests:${status}:${page}`, () => fetcher({ status: status || undefined, page, size: 10 }));
 
   return (
     <>
-      <PageHeader title="Yêu cầu của tôi" description="Theo dõi mọi yêu cầu bạn đã tạo." actions={<Link href={`${basePath}/requests/create`} className={buttonVariants()}><Plus /> Yêu cầu mới</Link>} />
+      <PageHeader title="Yêu cầu của tôi" description="Theo dõi mọi yêu cầu bạn đã tạo." actions={appMode ? undefined : <Link href={`${basePath}/requests/create`} className={buttonVariants()}><Plus /> Yêu cầu mới</Link>} />
+      {appMode ? (
+        <div role="group" aria-label="Lọc theo trạng thái" className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
+          {[["", "Tất cả"], ...Object.entries(STATUS_LABEL)].map(([k, v]) => (
+            <button key={k} type="button" aria-pressed={status === k} onClick={() => { setStatus(k as RequestStatus | ""); setPage(0); }}
+              className={cn("press shrink-0 rounded-full border px-4 py-2 text-sm font-medium", status === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card")}>{v}</button>
+          ))}
+        </div>
+      ) : (
       <div className="mb-5 max-w-xs">
         <label htmlFor="status-filter" className="sr-only">Lọc theo trạng thái</label>
         <Select id="status-filter" value={status} onChange={(e) => { setStatus(e.target.value as RequestStatus | ""); setPage(0); }}>
@@ -35,6 +46,7 @@ export function RequestsListView({ basePath }: { basePath: "/requester" | "/orga
           {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
       </div>
+      )}
       {q.initialLoading ? <div className="space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28" />)}</div>
         : q.error && !q.data ? <ErrorState message={q.error.message} onRetry={q.reload} />
         : q.data && q.data.items.length === 0 ? <EmptyState title="Chưa có yêu cầu nào" description="Hãy tạo yêu cầu, LIFELY sẽ bắt đầu tìm người hiến máu ngay khi yêu cầu được xác minh." action={<Link href={`${basePath}/requests/create`} className={buttonVariants()}>Tạo yêu cầu</Link>} />
@@ -59,6 +71,7 @@ export function RequestsListView({ basePath }: { basePath: "/requester" | "/orga
             {q.data && <Pagination page={q.data} onChange={setPage} />}
           </>
         )}
+      {appMode && <Link href={`${basePath}/requests/create`} aria-label="Yêu cầu mới" className="press fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="size-6" /></Link>}
     </>
   );
 }

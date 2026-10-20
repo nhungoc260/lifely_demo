@@ -1,5 +1,5 @@
 import {
-  Activity, BarChart3, Bell, CalendarDays, ClipboardList, Droplets, FilePlus2, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
+  Activity, BarChart3, Bell, CalendarDays, ClipboardList, Droplets, FilePlus2, HeartHandshake, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert,
   Building2, HandHelping, MessageSquare, ShieldCheck, UserRound, Users, type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +49,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/organization/requests/create", label: "Yêu cầu mới", icon: FilePlus2 },
     { href: "/organization/appointments", label: "Lịch hiến", icon: CalendarDays },
     { href: "/organization/inventory", label: "Kho máu", icon: Droplets },
+    { href: "/organization/donors", label: "Người hiến", icon: HeartHandshake },
     { href: "/organization/donations", label: "Lịch sử hiến", icon: HeartPulse },
     { href: "/organization/stats", label: "Thống kê", icon: BarChart3 },
     { href: "/organization/map", label: "Bản đồ", icon: Map, mobile: true },

@@ -1,6 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -54,7 +55,7 @@ export default function AdminUsers() {
         : res.data && (
           <>
             <DataTable caption="Người dùng" rows={res.data.items} rowKey={(u) => u.id} columns={[
-              { key: "name", header: "Tên", cell: (u) => <span className="font-medium">{u.fullName}</span> },
+              { key: "name", header: "Tên", cell: (u) => <Link href={`/admin/users/${u.id}`} className="font-medium text-primary hover:underline">{u.fullName}</Link> },
               { key: "email", header: "Email", cell: (u) => u.email },
               { key: "role", header: "Vai trò", cell: (u) => <Pill t="slate">{u.roles.map((r) => ROLE_LABEL[r]).join(", ")}</Pill> },
               { key: "created", header: "Ngày tham gia", cell: (u) => <span className="whitespace-nowrap">{formatDate(u.createdAt)}</span> },

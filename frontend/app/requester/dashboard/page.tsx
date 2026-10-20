@@ -3,6 +3,8 @@
 import { CheckCircle2, ClipboardList, MessageSquareReply, UsersRound } from "lucide-react";
 import Link from "next/link";
 
+import { RequesterAppHome } from "@/components/app/requester-home";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { HowItWorks } from "@/components/requests/how-it-works";
 import { RequesterRequestCard } from "@/components/requests/requester-request-card";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,6 +24,8 @@ export default function RequesterDashboard() {
   const recent = useQuery(`req-recent:${version}`, () => requestApi.list({ size: 10 }));
   const { open, closed } = splitRequests(recent.data?.items ?? []);
   const active = dash.data?.activeRequests;
+  const appMode = useAppMode();
+  if (appMode) return <RequesterAppHome name={user?.fullName} loading={dash.initialLoading || recent.initialLoading} active={active} confirmed={dash.data?.confirmedDonors} completed={dash.data?.completedRequests} open={open} />;
 
   return (
     <>

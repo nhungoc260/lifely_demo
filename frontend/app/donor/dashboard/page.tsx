@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { DonorAppHome } from "@/components/app/donor-home";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { MatchCard, MatchRow } from "@/components/donor/match-card";
 import { DonorStatusBanner } from "@/components/donor/status-banner";
 import { JourneyCard } from "@/components/donor/journey-card";
@@ -32,6 +34,7 @@ export default function DonorDashboard() {
   const { user } = useAuth();
   const { version } = useNotifications();
   const now = useNow();
+  const appMode = useAppMode();
   const dash = useQuery(`donor-dash:${version}`, donorApi.dashboard);
   const profile = useQuery("donor-dash-profile", donorApi.me);
   const matches = useQuery(`donor-open-matches:${version}`, () => donorApi.matches());
@@ -65,6 +68,8 @@ export default function DonorDashboard() {
 
   const open = (matches.data ?? []).filter((m) => (m.status === "CONTACTED" || m.status === "PENDING")
     && new Date(m.deadline).getTime() > now && ACTIVE.includes(m.requestStatus));
+
+  if (appMode) return <DonorAppHome greet={greet} name={user?.fullName} available={isAvailable} saving={saving || dash.initialLoading} onToggle={toggle} loading={dash.initialLoading} bloodType={dash.data?.bloodType} donations={dash.data?.confirmedDonations} nearby={dash.data?.nearbyRequests} matches={open} />;
 
   return (
     <>
