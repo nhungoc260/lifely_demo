@@ -130,7 +130,7 @@ export default function OrgAppointments() {
     <>
       <PageHeader title="Lịch hiến máu của cơ sở" description="Mở khung giờ, theo dõi người đã đặt và ghi nhận kết quả tiếp nhận. Kho máu chỉ tăng khi bạn xác nhận người hiến đã hiến thực tế." />
       <QrCheckIn onDone={() => { setTick((t) => t + 1); slots.reload(); }} />
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-4">
           {slots.initialLoading ? <Skeleton className="h-64" />
             : slots.error && !slots.data ? <ErrorState message={slots.error.message} onRetry={slots.reload} />

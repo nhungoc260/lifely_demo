@@ -45,8 +45,8 @@ export default function DonorAppointments() {
   return (
     <>
       <PageHeader title="Lịch hiến máu" description="Đặt lịch trước tại cơ sở y tế đã xác minh. Lịch hẹn chỉ giữ chỗ cho bạn, chưa phải xác nhận đủ điều kiện hiến máu và chưa được tính vào kho máu." />
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <Card className="min-w-0">
           <CardHeader><CardTitle>Khung giờ còn nhận lịch</CardTitle></CardHeader>
           <CardContent>
             {slots.initialLoading ? <Skeleton className="h-48" />
@@ -64,7 +64,8 @@ export default function DonorAppointments() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold">{formatSlotRange(s.startsAt, s.endsAt)}</p>
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{s.organizationName}{s.address ? ` · ${s.address}` : s.city ? `, ${s.city}` : ""}</span></p>
+                          <p className="truncate text-xs font-medium">{s.organizationName}</p>
+                          {(s.address || s.city) && <p className="flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 size-3 shrink-0" aria-hidden /><span className="line-clamp-2 min-w-0 break-words">{s.address ?? s.city}</span></p>}
                           <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
                             {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
                           </p>
@@ -80,7 +81,7 @@ export default function DonorAppointments() {
           </CardContent>
         </Card>
 
-        <Card className="max-lg:order-first">
+        <Card className="min-w-0 max-lg:order-first">
           <CardHeader><CardTitle>Lịch của tôi</CardTitle></CardHeader>
           <CardContent>
             {mine.initialLoading ? <Skeleton className="h-32" />
