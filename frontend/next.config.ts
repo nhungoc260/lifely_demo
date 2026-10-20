@@ -24,8 +24,8 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // geolocation chỉ dùng khi người dùng bấm "Use my location"; các quyền khác tắt hẳn
-          { key: "Permissions-Policy", value: "geolocation=(self), camera=(), microphone=(), payment=()" },
+          // geolocation (định vị) và camera (quét QR check-in) chỉ cho chính trang này; các quyền khác tắt hẳn
+          { key: "Permissions-Policy", value: "geolocation=(self), camera=(self), microphone=(), payment=()" },
         ],
       },
     ];

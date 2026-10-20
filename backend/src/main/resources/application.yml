@@ -35,6 +35,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # Demo: không chặn khởi động vì checksum lệch / migration đã áp dụng nhưng không còn file (FlywayRepairConfig đã repair trước).
+    validate-on-migrate: false
+    ignore-migration-patterns: "*:missing,*:future"
   autoconfigure:
     exclude:
       # Không dùng user mặc định do Spring tự sinh; xác thực JWT làm ở Phase 4.
