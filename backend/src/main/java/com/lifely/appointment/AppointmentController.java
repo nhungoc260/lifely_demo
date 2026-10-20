@@ -1,7 +1,9 @@
 package com.lifely.appointment;
 
 import com.lifely.appointment.AppointmentDtos.AppointmentDto;
+import com.lifely.appointment.AppointmentDtos.ChangeLocationRequest;
 import com.lifely.appointment.AppointmentDtos.CreateSlotRequest;
+import com.lifely.appointment.AppointmentDtos.LocationChangeResult;
 import com.lifely.appointment.AppointmentDtos.OrgAppointmentDto;
 import com.lifely.appointment.AppointmentDtos.SlotDto;
 import com.lifely.appointment.AppointmentDtos.StatusRequest;
@@ -77,6 +79,14 @@ public class AppointmentController {
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ApiResponse<SlotDto> closeSlot(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
         return ApiResponse.ok("Đã đóng khung giờ", service.closeSlot(user, id));
+    }
+
+    /** Đổi địa điểm hiến máu của một khung giờ (hoặc mọi khung giờ sắp tới); người đã đặt lịch được thông báo. */
+    @PostMapping("/api/organizations/me/slots/{id}/location")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<LocationChangeResult> changeLocation(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                            @Valid @RequestBody ChangeLocationRequest req) {
+        return ApiResponse.ok("Đã đổi địa điểm hiến máu", service.changeLocation(user, id, req));
     }
 
     @GetMapping("/api/organizations/me/slots/{id}/appointments")

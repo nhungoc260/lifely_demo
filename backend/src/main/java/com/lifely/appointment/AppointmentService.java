@@ -2,12 +2,15 @@ package com.lifely.appointment;
 
 import com.lifely.appointment.AppointmentDtos.Action;
 import com.lifely.appointment.AppointmentDtos.AppointmentDto;
+import com.lifely.appointment.AppointmentDtos.ChangeLocationRequest;
 import com.lifely.appointment.AppointmentDtos.CreateSlotRequest;
+import com.lifely.appointment.AppointmentDtos.LocationChangeResult;
 import com.lifely.appointment.AppointmentDtos.OrgAppointmentDto;
 import com.lifely.appointment.AppointmentDtos.SlotDto;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
 import com.lifely.common.AppException;
+import com.lifely.common.Sanitizer;
 import com.lifely.donor.DonorProfile;
 import com.lifely.donor.DonorProfileRepository;
 import com.lifely.inventory.InventoryService;
@@ -47,6 +50,7 @@ public class AppointmentService {
     public static final Duration CANCEL_CUTOFF = Duration.ofHours(2);
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final DateTimeFormatter WHEN = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy").withZone(ZONE);
+    private static final String PURPOSE_LOCATION = "APPT_LOCATION";
     private static final String ACTIVE_APPT = "('BOOKED','CHECKED_IN','SCREENED')";
 
     private final JdbcTemplate jdbc;
@@ -79,7 +83,7 @@ public class AppointmentService {
     public List<SlotDto> openSlots(UUID organizationId, int days) {
         int range = Math.min(Math.max(days, 1), 90);
         StringBuilder sql = new StringBuilder("""
-                SELECT s.id, s.organization_id, o.name, o.address, o.city, s.starts_at, s.ends_at,
+                SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
                        s.capacity, s.booked_count, s.status
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE s.status = 'ACTIVE' AND s.starts_at > now()
@@ -100,7 +104,7 @@ public class AppointmentService {
         DonorProfile donor = donors.findByUserId(user.getId())
                 .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
         List<SlotDto> found = jdbc.query("""
-                SELECT s.id, s.organization_id, o.name, o.address, o.city, s.starts_at, s.ends_at,
+                SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
                        s.capacity, s.booked_count, s.status
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE s.id = ? AND o.verification_status = 'VERIFIED'
@@ -212,17 +216,20 @@ public class AppointmentService {
         if (Duration.between(req.startsAt(), req.endsAt()).compareTo(Duration.ofHours(8)) > 0) {
             throw AppException.badRequest("INVALID_SLOT_TIME", "Một khung giờ không dài quá 8 giờ");
         }
+        // Chụp địa điểm ngay lúc mở khung giờ: sau này đổi địa chỉ hồ sơ không làm đổi lịch đã mở.
+        String custom = Sanitizer.plain(req.location());
+        String location = custom != null ? custom : org.getAddress();
         UUID id;
         try {
             id = jdbc.queryForObject("""
-                    INSERT INTO donation_slots (organization_id, starts_at, ends_at, capacity, created_by)
-                    VALUES (?, ?, ?, ?, ?) RETURNING id
+                    INSERT INTO donation_slots (organization_id, starts_at, ends_at, capacity, created_by, location_address)
+                    VALUES (?, ?, ?, ?, ?, ?) RETURNING id
                     """, UUID.class, org.getId(), Timestamp.from(req.startsAt()), Timestamp.from(req.endsAt()),
-                    req.capacity(), user.getId());
+                    req.capacity(), user.getId(), location);
         } catch (DuplicateKeyException e) {
             throw AppException.conflict("SLOT_EXISTS", "Đã có khung giờ bắt đầu vào thời điểm này");
         }
-        audit.log(user.getId(), "SLOT_CREATED", "SLOT", id, Map.of("capacity", req.capacity()));
+        audit.log(user.getId(), "SLOT_CREATED", "SLOT", id, Map.of("capacity", req.capacity(), "location", String.valueOf(location)));
         return jdbc.query(slotSql("s.id = ?"), (rs, i) -> slot(rs), id).get(0);
     }
 
@@ -231,6 +238,72 @@ public class AppointmentService {
         Organization org = orgOf(user);
         return jdbc.query(slotSql("s.organization_id = ? AND s.starts_at > now() - interval '7 days'")
                 + " ORDER BY s.starts_at LIMIT 300", (rs, i) -> slot(rs), org.getId());
+    }
+
+    /**
+     * Đổi địa điểm hiến máu của một khung giờ (hoặc mọi khung giờ sắp tới còn mở của cơ sở).
+     * Mỗi người đang giữ lịch BOOKED trong các khung giờ đó nhận một thông báo (trong app + push + SMS nếu đã đồng ý)
+     * nêu địa điểm mới và cũ; họ vẫn hủy được lịch theo quy tắc thông thường nếu không đi được.
+     */
+    @Transactional
+    public LocationChangeResult changeLocation(AuthUser user, UUID slotId, ChangeLocationRequest req) {
+        Organization org = orgOf(user);
+        String location = Sanitizer.plain(req.location());
+        if (location == null || location.length() < 3) {
+            throw AppException.badRequest("INVALID_LOCATION", "Hãy nhập địa điểm hiến máu (ít nhất 3 ký tự)");
+        }
+        List<Object[]> targets = jdbc.query("""
+                SELECT s.id, s.starts_at, COALESCE(s.location_address, o.address) AS old_location
+                  FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
+                 WHERE s.organization_id = ? AND s.status = 'ACTIVE' AND s.starts_at > now()
+                   AND (s.id = ? OR ?)
+                 ORDER BY s.starts_at FOR UPDATE OF s
+                """, (rs, i) -> new Object[]{rs.getObject("id", UUID.class), rs.getTimestamp("starts_at").toInstant(),
+                rs.getString("old_location")}, org.getId(), slotId, req.allUpcoming());
+        boolean hasTarget = targets.stream().anyMatch(t -> slotId.equals(t[0]));
+        if (!hasTarget) {
+            throw AppException.notFound("SLOT_NOT_FOUND", "Không tìm thấy khung giờ sắp tới còn mở của cơ sở");
+        }
+        String tag = Integer.toHexString(location.hashCode());
+        int updated = 0;
+        int notified = 0;
+        for (Object[] t : targets) {
+            UUID id = (UUID) t[0];
+            Instant startsAt = (Instant) t[1];
+            String oldLocation = (String) t[2];
+            if (location.equals(oldLocation)) {
+                continue;   // không đổi gì thì không làm phiền người đã đặt lịch
+            }
+            jdbc.update("UPDATE donation_slots SET location_address = ? WHERE id = ?", location, id);
+            updated++;
+            String when = WHEN.format(startsAt);
+            List<Object[]> booked = jdbc.query("""
+                    SELECT a.id, dp.user_id FROM appointments a JOIN donor_profiles dp ON dp.id = a.donor_id
+                     WHERE a.slot_id = ? AND a.status = 'BOOKED'
+                    """, (rs, i) -> new Object[]{rs.getObject("id", UUID.class), rs.getObject("user_id", UUID.class)}, id);
+            for (Object[] b : booked) {
+                UUID apptId = (UUID) b[0];
+                UUID donorUser = (UUID) b[1];
+                // Cột notifications.message tối đa 500 ký tự: rút gọn địa điểm dài để không làm hỏng cả giao dịch.
+                String msg = "Lịch hiến máu của bạn lúc " + when + " tại " + brief(org.getName(), 80) + " đổi địa điểm. Địa điểm mới: "
+                        + brief(location, 140) + (oldLocation == null ? "" : " (trước đây: " + brief(oldLocation, 100) + ")")
+                        + ". Nếu không tiện đến địa điểm mới, bạn có thể hủy lịch trong mục Lịch hiến.";
+                notifications.notify(donorUser, NotificationType.SYSTEM, "Địa điểm hiến máu đã thay đổi",
+                        brief(msg, 500), "APPOINTMENT", apptId);
+                outbox.enqueuePush(donorUser, PURPOSE_LOCATION, "APPOINTMENT", apptId, "Địa điểm hiến máu đã thay đổi",
+                        "Lịch lúc " + when + " nay ở: " + brief(location, 140), "/donor/appointments",
+                        "PUSH:APPT_LOCATION:" + apptId + ":" + tag);
+                outbox.enqueue(donorUser, OutboxService.Channel.SMS, PURPOSE_LOCATION, "APPOINTMENT", apptId,
+                        "LIFELY: Lịch hiến máu lúc " + when + " đổi địa điểm. Địa điểm mới: " + brief(location, 140)
+                                + ". Xem hoặc hủy lịch trong ứng dụng.",
+                        "SMS:APPT_LOCATION:" + apptId + ":" + tag);
+                notified++;
+            }
+            audit.log(user.getId(), "SLOT_LOCATION_CHANGED", "SLOT", id,
+                    Map.of("to", location, "notified", booked.size()));
+        }
+        SlotDto slot = jdbc.query(slotSql("s.id = ?"), (rs, i) -> slot(rs), slotId).get(0);
+        return new LocationChangeResult(slot, updated, notified);
     }
 
     /** Đóng khung giờ: chặn đặt mới. Các lịch đã đặt vẫn được xử lý bình thường. */
@@ -414,7 +487,7 @@ public class AppointmentService {
 
     private static String mineSql(String where, String tail) {
         return """
-                SELECT a.id, a.slot_id, s.organization_id, o.name, o.address, s.starts_at, s.ends_at, a.status, a.created_at
+                SELECT a.id, a.slot_id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, s.starts_at, s.ends_at, a.status, a.created_at
                   FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
                   JOIN organizations o ON o.id = s.organization_id
                  WHERE\s""" + where + " " + tail;
@@ -422,7 +495,7 @@ public class AppointmentService {
 
     private static String slotSql(String where) {
         return """
-                SELECT s.id, s.organization_id, o.name, o.address, o.city, s.starts_at, s.ends_at,
+                SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
                        s.capacity, s.booked_count, s.status
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE\s""" + where;
@@ -444,6 +517,14 @@ public class AppointmentService {
         return new AppointmentDto(rs.getObject("id", UUID.class), rs.getObject("slot_id", UUID.class),
                 rs.getObject("organization_id", UUID.class), rs.getString("name"), rs.getString("address"), startsAt,
                 rs.getTimestamp("ends_at").toInstant(), status, canCancel, rs.getTimestamp("created_at").toInstant());
+    }
+
+    /** Cắt chuỗi dài, thêm dấu … khi bị cắt. */
+    private static String brief(String s, int max) {
+        if (s == null || s.length() <= max) {
+            return s;
+        }
+        return s.substring(0, Math.max(0, max - 1)).trim() + "…";
     }
 
     private static Instant instant(Timestamp t) {

@@ -64,7 +64,7 @@ export default function DonorAppointments() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold">{formatSlotRange(s.startsAt, s.endsAt)}</p>
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{s.organizationName}{s.city ? `, ${s.city}` : ""}</span></p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{s.organizationName}{s.address ? ` · ${s.address}` : s.city ? `, ${s.city}` : ""}</span></p>
                           <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
                             {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
                           </p>

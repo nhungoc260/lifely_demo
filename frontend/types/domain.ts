@@ -403,6 +403,7 @@ export interface DonationSlot {
   id: string; organizationId: string; organizationName: string; address: string | null; city: string | null;
   startsAt: string; endsAt: string; capacity: number; bookedCount: number; available: number; status: "ACTIVE" | "CLOSED";
 }
+export interface LocationChangeResult { slot: DonationSlot; updatedSlots: number; notifiedDonors: number }
 export type AppointmentStatus = "BOOKED" | "CHECKED_IN" | "SCREENED" | "DONATED" | "DEFERRED" | "NO_SHOW" | "CANCELLED";
 export interface Appointment {
   id: string; slotId: string; organizationId: string; organizationName: string; address: string | null;

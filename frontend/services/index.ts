@@ -5,7 +5,7 @@ import type {
   OrgDonorEntry, AdminUserOverview, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
-  Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, NotificationConsents, OrgAppointment,
+  Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, LocationChangeResult, NotificationConsents, OrgAppointment,
 } from "@/types/domain";
 
 // ---- auth
@@ -93,7 +93,8 @@ export const appointmentApi = {
   mine: () => get<Appointment[]>("/api/appointments/mine"),
   cancel: (id: string) => post<Appointment>(`/api/appointments/${id}/cancel`),
   orgSlots: () => get<DonationSlot[]>("/api/organizations/me/slots"),
-  createSlot: (b: { startsAt: string; endsAt: string; capacity: number }) => post<DonationSlot>("/api/organizations/me/slots", b),
+  createSlot: (b: { startsAt: string; endsAt: string; capacity: number; location?: string }) => post<DonationSlot>("/api/organizations/me/slots", b),
+  changeSlotLocation: (id: string, b: { location: string; allUpcoming: boolean }) => post<LocationChangeResult>(`/api/organizations/me/slots/${id}/location`, b),
   closeSlot: (id: string) => post<DonationSlot>(`/api/organizations/me/slots/${id}/close`),
   orgAppointments: (slotId: string) => get<OrgAppointment[]>(`/api/organizations/me/slots/${slotId}/appointments`),
   transition: (id: string, action: AppointmentAction) => post<OrgAppointment>(`/api/organizations/me/appointments/${id}/status`, { action }),

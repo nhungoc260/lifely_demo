@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, MapPin, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -59,6 +59,43 @@ function SlotAppointments({ slot, onChanged }: { slot: DonationSlot; onChanged: 
   );
 }
 
+/** Đổi địa điểm hiến máu của một khung giờ (hoặc mọi khung giờ sắp tới). Người đã đặt lịch được thông báo tự động. */
+function ChangeLocation({ slot, defaultPlace, onDone, onCancel }: { slot: DonationSlot; defaultPlace: string; onDone: () => void; onCancel: () => void }) {
+  const [loc, setLoc] = useState(slot.address ?? defaultPlace);
+  const [all, setAll] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const clean = loc.trim();
+  const unchanged = clean === (slot.address ?? "").trim();
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (clean.length < 3 || unchanged) return;
+    setBusy(true);
+    try {
+      const r = await appointmentApi.changeSlotLocation(slot.id, { location: clean, allUpcoming: all });
+      toast.success(`Đã đổi địa điểm cho ${r.updatedSlots} khung giờ${r.notifiedDonors > 0 ? `, đã thông báo ${r.notifiedDonors} người đã đặt lịch` : ""}.`);
+      onDone();
+    } catch (err) { toast.error(toApiError(err).message); } finally { setBusy(false); }
+  }
+
+  return (
+    <form onSubmit={save} className="mt-3 space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+      <Field label="Địa điểm hiến máu mới" htmlFor={`loc-${slot.id}`} hint="Ghi rõ số nhà, đường, quận để người hiến tìm đúng chỗ.">
+        <Input id={`loc-${slot.id}`} value={loc} onChange={(e) => setLoc(e.target.value)} maxLength={300} required minLength={3} />
+      </Field>
+      <label className="flex items-start gap-2 text-xs">
+        <input type="checkbox" className="mt-0.5" checked={all} onChange={(e) => setAll(e.target.checked)} />
+        <span>Áp dụng cho <strong>mọi khung giờ sắp tới</strong> còn mở của cơ sở (dùng khi cơ sở chuyển địa điểm).</span>
+      </label>
+      <p className="text-xs text-muted-foreground">Người đã đặt lịch sẽ nhận thông báo về địa điểm mới và vẫn hủy được lịch nếu không tiện đi.</p>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={busy || clean.length < 3 || unchanged}>{busy && <Loader2 className="animate-spin" />} Lưu và thông báo</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Hủy</Button>
+      </div>
+    </form>
+  );
+}
+
 export default function OrgAppointments() {
   const slots = useQuery("org-slots", appointmentApi.orgSlots);
   const me = useQuery("org-me", orgApi.me);
@@ -66,6 +103,8 @@ export default function OrgAppointments() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [capacity, setCapacity] = useState(5);
+  const [location, setLocation] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -75,7 +114,7 @@ export default function OrgAppointments() {
     if (!start || !end) return;
     setBusy(true);
     try {
-      await appointmentApi.createSlot({ startsAt: new Date(start).toISOString(), endsAt: new Date(end).toISOString(), capacity });
+      await appointmentApi.createSlot({ startsAt: new Date(start).toISOString(), endsAt: new Date(end).toISOString(), capacity, location: location.trim() || undefined });
       toast.success("Đã mở khung giờ");
       setStart(""); setEnd("");
       slots.reload();
@@ -103,11 +142,13 @@ export default function OrgAppointments() {
                     <p className="font-medium">{formatSlotRange(s.startsAt, s.endsAt)}</p>
                     <span className="text-xs text-muted-foreground">{s.status === "CLOSED" ? "Đã đóng · " : ""}{s.bookedCount} / {s.capacity} chỗ đã đặt</span>
                   </div>
-                  {(s.address || s.city) && <p className="text-xs text-muted-foreground">Địa điểm: {[s.address, s.city].filter(Boolean).join(", ")}</p>}
-                  <div className="flex gap-2 pt-1">
+                  {(s.address || s.city) && <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" aria-hidden />Địa điểm: {s.address ?? s.city}</p>}
+                  <div className="flex flex-wrap gap-2 pt-1">
                     <Button size="sm" variant="outline" onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? "Ẩn danh sách" : "Xem người đặt"}</Button>
+                    {s.status === "ACTIVE" && new Date(s.startsAt) > new Date() && <Button size="sm" variant="outline" onClick={() => setEditing(editing === s.id ? null : s.id)}>Đổi địa điểm</Button>}
                     {s.status === "ACTIVE" && <Button size="sm" variant="ghost" onClick={() => close(s.id)}>Đóng khung giờ</Button>}
                   </div>
+                  {editing === s.id && <ChangeLocation slot={s} defaultPlace={me.data?.address ?? ""} onCancel={() => setEditing(null)} onDone={() => { setEditing(null); slots.reload(); }} />}
                   {open === s.id && <SlotAppointments key={`${s.id}:${tick}`} slot={s} onChanged={slots.reload} />}
                 </CardContent>
               </Card>
@@ -117,7 +158,9 @@ export default function OrgAppointments() {
           <CardHeader><CardTitle>Mở khung giờ mới</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={create} className="space-y-4">
-              {place && <p className="rounded-xl bg-muted p-3 text-sm"><span className="font-medium">Địa điểm hiến máu:</span> {place}<span className="block text-xs text-muted-foreground">Là địa chỉ của cơ sở; người hiến sẽ thấy khi đặt lịch.</span></p>}
+              <Field label="Địa điểm hiến máu" htmlFor="slot-loc" hint="Để trống để dùng địa chỉ của cơ sở. Nhập địa chỉ khác nếu khung giờ này diễn ra ở nơi khác (chi nhánh, điểm hiến lưu động). Người hiến thấy địa điểm này khi đặt lịch.">
+                <Input id="slot-loc" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={300} placeholder={place || "Địa chỉ của cơ sở"} />
+              </Field>
               <Field label="Bắt đầu" htmlFor="slot-start"><Input id="slot-start" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
               <Field label="Kết thúc" htmlFor="slot-end"><Input id="slot-end" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
               <Field label="Sức chứa (số người)" htmlFor="slot-cap" hint="Hệ thống không bao giờ nhận quá số chỗ này, kể cả khi nhiều người đặt cùng lúc."><Input id="slot-cap" type="number" min={1} max={500} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required /></Field>
