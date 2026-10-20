@@ -65,7 +65,7 @@ export function AppProfile({ profile, editor }: { profile: DonorProfile; editor:
       </div>
       <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
         <Row icon={Activity} tone="bg-rose-100 text-rose-700" title="Sức khỏe của tôi" hint="Nhịp tim, huyết áp, khả năng hiến lại" href="/donor/health" />
-        <Row icon={CalendarDays} tone="bg-sky-100 text-sky-700" title="Đặt lịch hiến" href="/donor/appointments" />
+        <Row icon={CalendarDays} tone="bg-sky-100 text-sky-700" title="Lịch hiến" hint="Chọn khung giờ bệnh viện đang mở" href="/donor/appointments" />
         <Row icon={History} tone="bg-emerald-100 text-emerald-700" title="Lịch sử hiến máu" href="/donor/history" />
         <div className="flex items-center gap-3 px-4 py-3.5"><span className="grid size-10 place-items-center rounded-xl bg-violet-100 text-violet-700"><Moon className="size-5" aria-hidden /></span><span className="flex-1 font-medium">Giao diện</span><ThemeToggle /></div>
       </div>

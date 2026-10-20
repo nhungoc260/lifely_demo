@@ -15,7 +15,7 @@ type RowProps = React.ComponentProps<typeof MatchRow>;
 const TILES = [
   { href: "/donor/requests", label: "Yêu cầu", icon: HeartPulse, tone: "bg-rose-100 text-rose-700" },
   { href: "/donor/map", label: "Bản đồ", icon: Map, tone: "bg-amber-100 text-amber-700" },
-  { href: "/donor/appointments", label: "Đặt lịch", icon: CalendarDays, tone: "bg-sky-100 text-sky-700" },
+  { href: "/donor/appointments", label: "Lịch hiến", icon: CalendarDays, tone: "bg-sky-100 text-sky-700" },
   { href: "/donor/history", label: "Lịch sử", icon: History, tone: "bg-emerald-100 text-emerald-700" },
   { href: "/donor/health", label: "Sức khỏe", icon: Activity, tone: "bg-violet-100 text-violet-700" },
   { href: "/donor/profile", label: "Hồ sơ", icon: UserRound, tone: "bg-slate-100 text-slate-700" },

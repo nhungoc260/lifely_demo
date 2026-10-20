@@ -44,14 +44,14 @@ export default function DonorAppointments() {
 
   return (
     <>
-      <PageHeader title="Lịch hiến máu" description="Đặt lịch trước tại cơ sở y tế đã xác minh. Lịch hẹn chỉ giữ chỗ cho bạn, chưa phải xác nhận đủ điều kiện hiến máu và chưa được tính vào kho máu." />
+      <PageHeader title="Lịch hiến máu" description="Cơ sở y tế đã xác minh mở các khung giờ hiến máu, bạn chọn một khung giờ còn chỗ để giữ chỗ. Lịch hẹn chỉ giữ chỗ cho bạn, chưa phải xác nhận đủ điều kiện hiến máu và chưa được tính vào kho máu." />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
         <Card className="min-w-0">
-          <CardHeader><CardTitle>Khung giờ còn nhận lịch</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Khung giờ bệnh viện đang mở</CardTitle></CardHeader>
           <CardContent>
             {slots.initialLoading ? <Skeleton className="h-48" />
               : slots.error && !slots.data ? <ErrorState message={slots.error.message} onRetry={slots.reload} />
-              : slots.data && slots.data.length === 0 ? <EmptyState title="Chưa có khung giờ nào" description="Các cơ sở sẽ mở thêm lịch. Bạn vẫn có thể phản hồi các yêu cầu máu khẩn cấp gần bạn." />
+              : slots.data && slots.data.length === 0 ? <EmptyState title="Chưa có khung giờ nào" description="Bệnh viện chưa mở lịch hiến. Khi có khung giờ mới, bạn chọn và giữ chỗ tại đây. Bạn vẫn có thể phản hồi các yêu cầu máu khẩn cấp gần bạn." />
               : (
                 <ul className="-mx-1 divide-y divide-border/60">
                   {slots.data?.map((s) => {
@@ -86,7 +86,7 @@ export default function DonorAppointments() {
           <CardContent>
             {mine.initialLoading ? <Skeleton className="h-32" />
               : mine.error && !mine.data ? <ErrorState message={mine.error.message} onRetry={mine.reload} />
-              : upcoming.length === 0 && past.length === 0 ? <EmptyState title="Bạn chưa đặt lịch nào" description="Chọn một khung giờ ở bên cạnh để đặt lịch." />
+              : upcoming.length === 0 && past.length === 0 ? <EmptyState title="Bạn chưa đặt lịch nào" description="Chọn một khung giờ trong danh sách khung giờ bệnh viện đang mở để giữ chỗ." />
               : (
                 <div className="space-y-5">
                   {upcoming.length > 0 && (

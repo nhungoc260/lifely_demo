@@ -29,7 +29,7 @@ export function DonorProfileHub() {
 
       <ListGroup>
         <ListRow icon={Activity} tint="rose" label="Sức khỏe của tôi" hint="Nhịp tim, huyết áp, khả năng hiến lại" href="/donor/health" />
-        <ListRow icon={CalendarDays} tint="sky" label="Đặt lịch hiến" href="/donor/appointments" />
+        <ListRow icon={CalendarDays} tint="sky" label="Lịch hiến" href="/donor/appointments" />
         <ListRow icon={History} tint="emerald" label="Lịch sử hiến máu" href="/donor/history" />
       </ListGroup>
 

@@ -32,7 +32,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/donor/notifications", label: "Thông báo", icon: Bell, mobile: true, badge: "unread" },
     { href: "/donor/profile", label: "Hồ sơ", icon: UserRound, mobile: true },
     { href: "/donor/health", label: "Sức khỏe của tôi", icon: Activity },
-    { href: "/donor/appointments", label: "Đặt lịch hiến", icon: CalendarDays },
+    { href: "/donor/appointments", label: "Lịch hiến", icon: CalendarDays },
     { href: "/donor/history", label: "Lịch sử", icon: History },
   ],
   REQUESTER: [
@@ -97,7 +97,7 @@ export const TOPNAV: Partial<Record<Role, TopNav>> = {
     menu: [
       { href: "/donor/profile", label: "Hồ sơ của tôi", icon: UserRound },
       { href: "/donor/health", label: "Sức khỏe của tôi", icon: Activity },
-      { href: "/donor/appointments", label: "Đặt lịch hiến", icon: CalendarDays },
+      { href: "/donor/appointments", label: "Lịch hiến", icon: CalendarDays },
     ],
   },
   REQUESTER: {
