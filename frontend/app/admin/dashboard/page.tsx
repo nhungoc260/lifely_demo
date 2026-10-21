@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const L = q.initialLoading;
   const appMode = useAppMode();
   const { user } = useAuth();
-  if (appMode && !(q.error && !d)) return <AdminAppHome kpi={k} loading={L} name={user?.fullName} />;
+  if (appMode && !(q.error && !d)) return <AdminAppHome data={d} loading={L} name={user?.fullName} onEmailReport={emailReport} sending={sending} />;
 
   return (
     <>

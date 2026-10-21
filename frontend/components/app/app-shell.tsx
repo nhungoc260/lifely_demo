@@ -1,11 +1,13 @@
 "use client";
 
-import { Bell, ChevronLeft } from "lucide-react";
+import { Bell, ChevronLeft, Ellipsis } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/shell/avatar";
-import { isActive, NAV } from "@/components/shell/nav";
+import { MoreSheet } from "@/components/shell/more-sheet";
+import { isActive, NAV, ROLE_META } from "@/components/shell/nav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import { useNotifications } from "@/providers/notifications-provider";
@@ -18,10 +20,16 @@ const PROFILE_HREF: Partial<Record<Role, string>> = { DONOR: "/donor/profile", R
 export function AppModeShell({ role, children }: { role: Role; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { unread } = useNotifications();
+  const [moreOpen, setMoreOpen] = useState(false);
   const items = NAV[role];
-  const tabs = (items.filter((i) => i.mobile).length >= 3 ? items.filter((i) => i.mobile) : items).slice(0, 5);
+  // Quản trị có nhiều mục: 4 tab chính + "Thêm" (mở danh sách phần còn lại, cài đặt và đăng xuất). Các vai trò khác giữ nguyên 5 tab.
+  const hasMore = role === "ADMIN";
+  const tabs = (items.filter((i) => i.mobile).length >= 3 ? items.filter((i) => i.mobile) : items).slice(0, hasMore ? 4 : 5);
+  const more = hasMore ? items.filter((i) => !tabs.includes(i)) : [];
+  const moreActive = more.some((i) => isActive(pathname, i, items));
+  const logout = () => { signOut(); router.replace("/login"); };
   const notif = items.find((i) => i.badge === "unread")?.href;
   const isHome = pathname === tabs[0]?.href;
   const isRoot = items.some((i) => i.href === pathname);
@@ -45,7 +53,7 @@ export function AppModeShell({ role, children }: { role: Role; children: React.R
       </header>
       <main key={pathname} className="page-in mx-auto w-full max-w-lg px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">{children}</main>
       <nav aria-label="Chính" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)]">
-        <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${tabs.length + (hasMore ? 1 : 0)}, minmax(0, 1fr))` }}>
           {tabs.map((t) => {
             const on = isActive(pathname, t, items);
             return (
@@ -55,8 +63,17 @@ export function AppModeShell({ role, children }: { role: Role; children: React.R
               </Link></li>
             );
           })}
+          {hasMore && (
+            <li>
+              <button type="button" onClick={() => setMoreOpen(true)} aria-haspopup="dialog" className={cn("press relative flex h-[58px] w-full flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground", (moreOpen || moreActive) && "text-primary")}>
+                {moreActive && <span className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-primary" aria-hidden />}
+                <Ellipsis className="size-6" strokeWidth={moreActive ? 2.4 : 1.8} aria-hidden /><span>Thêm</span>
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
+      {hasMore && <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} items={more} unread={unread} user={user} roleTitle={ROLE_META[role].title} onSignOut={logout} />}
     </div>
   );
 }
