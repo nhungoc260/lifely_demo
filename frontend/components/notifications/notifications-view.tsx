@@ -45,7 +45,7 @@ export function NotificationsView() {
       if (role === "REQUESTER") return `/requester/requests/${n.referenceId}`;
       if (role === "ORGANIZATION") return `/organization/requests/${n.referenceId}`;
     }
-    if (n.referenceType === "APPOINTMENT" && role === "DONOR") return "/donor/appointments";
+    if ((n.referenceType === "APPOINTMENT" || n.referenceType === "SLOT") && role === "DONOR") return "/donor/appointments";
     if (n.referenceType === "HEALTH" && role === "DONOR") return "/donor/health";
     if (n.referenceType === "ORGANIZATION" && role === "ORGANIZATION") return "/organization/profile";
     if (role === "ADMIN") {

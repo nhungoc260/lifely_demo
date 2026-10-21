@@ -12,7 +12,7 @@ import { useNotifications } from "@/providers/notifications-provider";
 import type { Role } from "@/types/domain";
 
 /** Trang hồ sơ của từng vai trò (bấm vào ảnh đại diện trên thanh trên). Admin chưa có trang hồ sơ riêng. */
-const PROFILE_HREF: Partial<Record<Role, string>> = { DONOR: "/donor/profile", REQUESTER: "/requester/account", ORGANIZATION: "/organization/profile" };
+const PROFILE_HREF: Partial<Record<Role, string>> = { DONOR: "/donor/profile", REQUESTER: "/requester/account", ORGANIZATION: "/organization/profile", ADMIN: "/admin/profile" };
 
 /** Khung giao diện app (mobile): thanh trên đậm màu, thanh tab dưới, trang con có nút quay lại. Chỉ dùng khi useAppMode() = true. */
 export function AppModeShell({ role, children }: { role: Role; children: React.ReactNode }) {

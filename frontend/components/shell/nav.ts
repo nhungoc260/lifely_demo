@@ -69,6 +69,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/operations", label: "Thống kê vận hành", icon: BarChart3 },
     { href: "/admin/notifications", label: "Thông báo", icon: Bell, badge: "unread" },
     { href: "/admin/audit", label: "Nhật ký hoạt động", icon: ScrollText },
+    { href: "/admin/profile", label: "Hồ sơ của tôi", short: "Hồ sơ", icon: UserRound },
   ],
 };
 

@@ -2,7 +2,7 @@ import { get, post, put, qs, apiFetch, authFetch, toApiError } from "@/lib/api";
 import type {
   AdminAppointments, AdminDashboard, AdminInventory, AdminOperations, AdminRequestRow, ContactMessage, ContactStatus, CoverageRing, AdminUser, AppNotification, AuditLogEntry, AuthResponse, BloodRequest, GoogleAuthResult,
   DonationEntry, DonorDashboard, DonorMatch, DonorProfile, DonationLogEntry,
-  OrgDonorEntry, AdminUserOverview, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
+  OrgDonorEntry, AdminUserOverview, DonationJourney, HistoryEntry, InventoryItem, InventorySettings, MatchStatus, StaffOverview, Organization, OrgDashboard,
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
   Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, LocationChangeResult, NotificationConsents, OrgAppointment,
@@ -43,6 +43,7 @@ export const donorApi = {
   privacy: () => get<Privacy>("/api/donors/me/privacy"),
   updatePrivacy: (b: Privacy) => put<Privacy>("/api/donors/me/privacy", b),
   history: () => get<DonationEntry[]>("/api/donors/me/history"),
+  donationJourney: (id: string) => get<DonationJourney>(`/api/donors/me/history/${id}/journey`),
   verification: () => get<DonorVerification>("/api/donors/me/verification"),
   addDonation: (b: { donatedOn: string; location?: string }) => post<DonationEntry>("/api/donors/me/history", b),
   dashboard: () => get<DonorDashboard>("/api/donors/me/dashboard"),

@@ -498,3 +498,6 @@ export interface AdminUserOverview {
   createdAt: string; lastActivityAt: string | null; requestsCreated: number; reportsAgainst: number; openReportsAgainst: number;
   donor: AdminDonorInfo | null;
 }
+
+/** Mốc nhập kho của một lần hiến (hệ thống chưa theo dõi xuất kho từng đơn vị). */
+export interface DonationJourney { addedToInventory: boolean; addedAt: string | null; organizationName: string | null }

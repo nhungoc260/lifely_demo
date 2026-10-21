@@ -18,12 +18,15 @@ export default function DonationDetail() {
   const { id } = useParams<{ id: string }>();
   const q = useQuery("donor-history", donorApi.history);
   const d = q.data?.find((x) => x.id === id);
+  const journey = useQuery(d ? `donor-journey:${id}` : null, () => donorApi.donationJourney(id));
   const confirmed = d?.verificationLevel === "ORG_VERIFIED" || d?.verificationLevel === "REQUESTER_CONFIRMED";
 
   const steps = d ? [
     { done: true, title: "Hiến máu", line: formatDate(d.donatedOn), sub: d.location ?? "Chưa cung cấp địa điểm" },
     { done: d.source === "LIFELY_MATCH", title: "Kết nối qua LIFELY", line: d.source === "LIFELY_MATCH" ? "Bạn đã nhận lời một yêu cầu trên LIFELY" : "Tự ghi lại, không qua yêu cầu LIFELY", sub: undefined },
     { done: confirmed, title: "Xác nhận", line: d.verificationLevel === "ORG_VERIFIED" ? `Cơ sở y tế xác nhận${d.confirmedByOrganization ? `: ${d.confirmedByOrganization}` : ""}` : d.verificationLevel === "REQUESTER_CONFIRMED" ? "Người nhà bệnh nhân xác nhận" : "Chưa được xác nhận", sub: undefined },
+    ...(journey.data ? [{ done: journey.data.addedToInventory, title: "Nhập kho",
+      line: journey.data.addedToInventory ? `Đã nhập kho${journey.data.organizationName ? ` của ${journey.data.organizationName}` : ""}${journey.data.addedAt ? ` ngày ${formatDate(journey.data.addedAt)}` : ""}` : "Chưa nhập kho (cơ sở chưa xác nhận hoặc không bật tự động cộng kho)", sub: undefined as string | undefined }] : []),
   ] : [];
 
   return (
@@ -52,7 +55,7 @@ export default function DonationDetail() {
                   </li>
                 ))}
               </ol>
-              <p className="mt-5 text-xs text-muted-foreground">Hệ thống chưa theo dõi từng đơn vị máu sau khi nhập kho, nên chưa có mốc nhập kho hay xuất kho.</p>
+              <p className="mt-5 text-xs text-muted-foreground">Hệ thống chưa theo dõi từng đơn vị máu sau khi nhập kho, nên chưa có mốc xuất kho.</p>
             </section>
           </div>
         )}

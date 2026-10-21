@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { LocationPicker } from "@/components/map/location-picker";
+import { AvatarEditor } from "@/components/shell/avatar";
 import { PageHeader } from "@/components/shell/page-header";
 import { OrgStatusBadge } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,7 @@ export default function OrganizationProfilePage() {
   return (
     <>
       <PageHeader title="Tổ chức" description="Hồ sơ và trạng thái xác minh của bạn." />
+      <div className="mb-5 max-w-2xl rounded-2xl border border-border bg-card p-5"><AvatarEditor /></div>
       {q.error ? <ErrorState message={q.error.message} onRetry={q.reload} /> : q.data !== undefined ? <OrgForm key={q.data?.id ?? "new"} org={q.data} reload={q.reload} /> : <Skeleton className="h-96" />}
     </>
   );

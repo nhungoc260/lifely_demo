@@ -230,7 +230,44 @@ public class AppointmentService {
             throw AppException.conflict("SLOT_EXISTS", "Đã có khung giờ bắt đầu vào thời điểm này");
         }
         audit.log(user.getId(), "SLOT_CREATED", "SLOT", id, Map.of("capacity", req.capacity(), "location", String.valueOf(location)));
+        notifyDonorsOfNewSlot(org, id, req.startsAt(), location);
         return jdbc.query(slotSql("s.id = ?"), (rs, i) -> slot(rs), id).get(0);
+    }
+
+    private static final double SLOT_NOTIFY_RADIUS_KM = 20;
+    private static final int SLOT_NOTIFY_MAX = 100;
+
+    /**
+     * Báo cho người hiến đang sẵn sàng quanh cơ sở (trong 20 km, tối đa 100 người gần nhất) biết có khung giờ mới.
+     * Mỗi người nhận tối đa 1 thông báo loại này trong 12 giờ để không bị làm phiền.
+     */
+    private void notifyDonorsOfNewSlot(Organization org, UUID slotId, Instant startsAt, String location) {
+        if (org.getLatitude() == null || org.getLongitude() == null) return;
+        double lat = org.getLatitude().doubleValue();
+        double lng = org.getLongitude().doubleValue();
+        List<UUID> targets = jdbc.query("""
+                SELECT t.user_id FROM (
+                    SELECT dp.user_id,
+                           6371 * acos(LEAST(1.0, cos(radians(?)) * cos(radians(dp.latitude)) * cos(radians(dp.longitude) - radians(?))
+                                                  + sin(radians(?)) * sin(radians(dp.latitude)))) AS km
+                      FROM donor_profiles dp
+                      JOIN users u ON u.id = dp.user_id
+                     WHERE u.status = 'ACTIVE' AND dp.availability_status = 'AVAILABLE'
+                       AND dp.latitude IS NOT NULL AND dp.longitude IS NOT NULL
+                       AND NOT EXISTS (SELECT 1 FROM notifications n
+                                        WHERE n.user_id = dp.user_id AND n.reference_type = 'SLOT'
+                                          AND n.created_at > now() - interval '12 hours')
+                ) t
+                WHERE t.km <= ? ORDER BY t.km LIMIT ?
+                """, (rs, i) -> rs.getObject("user_id", UUID.class), lat, lng, lat, SLOT_NOTIFY_RADIUS_KM, SLOT_NOTIFY_MAX);
+        if (targets.isEmpty()) return;
+        String when = DateTimeFormatter.ofPattern("HH:mm dd/MM").withZone(ZONE).format(startsAt);
+        String place = location == null ? "" : (location.length() > 150 ? location.substring(0, 150) + "…" : location);
+        String name = org.getName() == null ? "Cơ sở y tế" : (org.getName().length() > 100 ? org.getName().substring(0, 100) + "…" : org.getName());
+        String message = name + " mở khung giờ hiến máu lúc " + when + (place.isBlank() ? "" : " tại " + place) + ". Vào mục Lịch hiến để giữ chỗ.";
+        for (UUID donorUser : targets) {
+            notifications.notify(donorUser, NotificationType.SYSTEM, "Có lịch hiến máu mới gần bạn", message, "SLOT", slotId);
+        }
     }
 
     @Transactional(readOnly = true)
