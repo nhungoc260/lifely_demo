@@ -13,6 +13,8 @@ export function RequesterAppHome(p: {
   name?: string; loading: boolean; active?: number; confirmed?: number; completed?: number; open: BloodRequest[];
   /** Tiền tố đường dẫn theo vai trò (mặc định người cần máu). */
   base?: string; canCreate?: boolean; stats?: { label: string; value?: number }[];
+  /** Phần bổ sung đặt dưới thẻ số liệu (ví dụ lối tắt quản lý của tổ chức). */
+  extra?: React.ReactNode;
 }) {
   const base = p.base ?? "/requester";
   const ICONS = [ClipboardList, UsersRound, CheckCircle2];
@@ -30,6 +32,8 @@ export function RequesterAppHome(p: {
           <div key={s.label} className="flex flex-col items-center gap-0.5"><Ic className="size-5 text-primary" aria-hidden />{p.loading ? <Skeleton className="h-7 w-10" /> : <span className="text-2xl font-extrabold">{s.value ?? 0}</span>}<span className="text-xs text-muted-foreground">{s.label}</span></div>
         ); })}
       </section>
+
+      {p.extra}
 
       <ModeSwitchBanner hint="Bạn muốn đi hiến máu?" />
 

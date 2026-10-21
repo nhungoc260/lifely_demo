@@ -24,8 +24,8 @@ export function AppModeShell({ role, children }: { role: Role; children: React.R
   const { unread } = useNotifications();
   const [moreOpen, setMoreOpen] = useState(false);
   const items = NAV[role];
-  // Quản trị có nhiều mục: 4 tab chính + "Thêm" (mở danh sách phần còn lại, cài đặt và đăng xuất). Các vai trò khác giữ nguyên 5 tab.
-  const hasMore = role === "ADMIN";
+  // Quản trị và tổ chức y tế có nhiều mục: 4 tab chính + "Thêm" (mở danh sách phần còn lại, cài đặt và đăng xuất). Các vai trò khác giữ nguyên.
+  const hasMore = role === "ADMIN" || role === "ORGANIZATION";
   const tabs = (items.filter((i) => i.mobile).length >= 3 ? items.filter((i) => i.mobile) : items).slice(0, hasMore ? 4 : 5);
   const more = hasMore ? items.filter((i) => !tabs.includes(i)) : [];
   const moreActive = more.some((i) => isActive(pathname, i, items));

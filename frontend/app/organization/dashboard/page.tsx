@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, AlertOctagon, BadgeCheck, CheckCircle2, Percent } from "lucide-react";
+import { Activity, AlertOctagon, BadgeCheck, BarChart3, CalendarDays, CheckCircle2, Droplets, HeartHandshake, HeartPulse, Percent, Users } from "lucide-react";
 import Link from "next/link";
 
 import { RequesterAppHome } from "@/components/app/requester-home";
@@ -11,6 +11,7 @@ import { OrgStatusBadge } from "@/components/ui/badges";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
+import { ListGroup, ListRow } from "@/components/ui/mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
@@ -26,7 +27,21 @@ export default function OrganizationDashboard() {
   const recent = useQuery(me.data ? `org-recent:${version}` : null, () => requestApi.list({ size: 10 }));
   const { open, closed } = splitRequests(recent.data?.items ?? []);
   const appMode = useAppMode();
-  if (appMode && me.data && verified) return <RequesterAppHome base="/organization" name={me.data.name} canCreate loading={dash.initialLoading || recent.initialLoading} open={open} stats={[{ label: "Đang hoạt động", value: dash.data?.activeRequests }, { label: "Nguy kịch", value: dash.data?.criticalRequests }, { label: "Hoàn tất", value: dash.data?.completedRequests }]} />;
+  if (appMode && me.data && verified) return <RequesterAppHome base="/organization" name={me.data.name} canCreate loading={dash.initialLoading || recent.initialLoading} open={open} stats={[{ label: "Đang hoạt động", value: dash.data?.activeRequests }, { label: "Nguy kịch", value: dash.data?.criticalRequests }, { label: "Hoàn tất", value: dash.data?.completedRequests }]} extra={(
+    <div className="mt-4 space-y-5">
+      <ListGroup>
+        <ListRow icon={Percent} tint="emerald" label="Tỷ lệ phản hồi" hint="Người hiến được liên hệ đã trả lời" value={`${dash.data?.responseRate ?? 0}%`} />
+      </ListGroup>
+      <ListGroup title="Quản lý">
+        <ListRow icon={CalendarDays} tint="sky" href="/organization/appointments" label="Lịch hiến" hint="Khung giờ và lượt đặt hẹn" />
+        <ListRow icon={Droplets} tint="rose" href="/organization/inventory" label="Kho máu" hint="Tồn kho theo nhóm máu" />
+        <ListRow icon={HeartHandshake} tint="amber" href="/organization/donors" label="Người hiến" />
+        <ListRow icon={HeartPulse} tint="emerald" href="/organization/donations" label="Lịch sử hiến" />
+        <ListRow icon={BarChart3} tint="violet" href="/organization/stats" label="Thống kê" />
+        <ListRow icon={Users} tint="slate" href="/organization/staff" label="Nhân viên" />
+      </ListGroup>
+    </div>
+  )} />;
 
   return (
     <>
