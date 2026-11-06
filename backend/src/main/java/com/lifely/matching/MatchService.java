@@ -86,6 +86,12 @@ public class MatchService {
                 .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
         entityManager.refresh(first);   // đọc lại match sau khi có khóa, tránh dữ liệu cũ
         Match m = first;
+        applyAcceptance(m, r, user.getId());
+        return toDonorResponse(m, r, donorOf(m));
+    }
+
+    /** Ghi nhận một lượt nhận lời (người hiến tự bấm, hoặc cơ sở xác nhận qua điện thoại). Gọi khi đã giữ khóa dòng yêu cầu. */
+    private void applyAcceptance(Match m, BloodRequest r, UUID actorId) {
         if (!MatchStatus.AWAITING_RESPONSE.contains(m.getStatus())) {
             throw AppException.conflict("MATCH_ALREADY_RESPONDED", "Bạn đã phản hồi yêu cầu này rồi");
         }
@@ -109,10 +115,10 @@ public class MatchService {
         // khi đủ số đơn vị đã được cơ sở/bên điều phối xác nhận hiến thực tế (xem complete / countReceived).
         String note = confirmed >= required ? progress + " – đã đủ người nhận lời, chờ xác nhận hiến máu thực tế" : progress;
         if (r.getStatus() != RequestStatus.PARTIALLY_FULFILLED) {
-            lifecycle.transition(r, RequestStatus.PARTIALLY_FULFILLED, note, user.getId());
+            lifecycle.transition(r, RequestStatus.PARTIALLY_FULFILLED, note, actorId);
         } else {
             requestRepository.save(r);
-            lifecycle.note(r, note, user.getId());
+            lifecycle.note(r, note, actorId);
             lifecycle.publish(r);
         }
         if (confirmed >= required) {
@@ -123,9 +129,9 @@ public class MatchService {
                 "Yêu cầu " + r.getBloodType().getCode() + " của bạn hiện có " + progress
                         + ". Đây là số người nhận lời, chưa phải lượng máu đã hiến.", "REQUEST", r.getId());
         staffAlerts.notifyDonorResponded(r, confirmed);
-        audit.log(user.getId(), AuditAction.MATCH_ACCEPTED, "MATCH", m.getId(), Map.of("requestId", r.getId().toString()));
-        return toDonorResponse(m, r, donorOf(m));
+        audit.log(actorId, AuditAction.MATCH_ACCEPTED, "MATCH", m.getId(), Map.of("requestId", r.getId().toString()));
     }
+
 
     @Transactional
     public DonorMatchResponse reject(AuthUser user, UUID matchId) {
@@ -253,6 +259,10 @@ public class MatchService {
         entityManager.refresh(first);
         if (!contactable(first.getStatus())) {
             throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ ghi nhận liên hệ với người hiến đang tham gia yêu cầu");
+        }
+        if (result == ContactResult.CONFIRMED_CAN_JOIN && MatchStatus.AWAITING_RESPONSE.contains(first.getStatus())) {
+            // Cơ sở đã gọi và người hiến xác nhận tham gia: tính như người hiến nhận lời để tiến độ yêu cầu được cập nhật.
+            applyAcceptance(first, r, user.getId());
         }
         first.setContactResult(result);
         first.setContactResultAt(result == ContactResult.NOT_CONTACTED ? null : Instant.now());

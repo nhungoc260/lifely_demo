@@ -146,7 +146,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                                   <ShieldCheck className="size-3" aria-hidden />Đã được {m.verifiedByName ?? "cơ sở y tế"} xác nhận hiến máu
                                 </p>
                               )}
-                              <CallDonor m={m} onChanged={matches.reload} />
+                              <CallDonor m={m} onChanged={() => { matches.reload(); req.reload(); hist.reload(); }} />
                             </div>
                             <div className="flex items-center gap-2">
                               <MatchBadge status={m.status} />
