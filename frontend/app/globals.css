@@ -20,6 +20,9 @@
   --primary-foreground: #ffffff;
   --secondary: #fde9ed;
   --secondary-foreground: #8f1636;
+  --hero-from: #b51f45;
+  --hero-to: #5e1f5a;
+  --hero-line: transparent;
   --success: #16a779;
   --warning: #f0a33a;
   --critical: #dc3545;
@@ -34,12 +37,15 @@
   --muted-foreground: #b7aeb2;
   --border: #372c32;
   --ring: #e84d70;
-  --primary: #e84d70;
-  --primary-deep: #c93a5c;
-  --accent: #f07a95;
+  --primary: #d6405f;
+  --primary-deep: #a62a46;
+  --accent: #ee7a94;
   --primary-foreground: #ffffff;
   --secondary: #3a1f28;
   --secondary-foreground: #fcd5de;
+  --hero-from: #35192a;
+  --hero-to: #221a33;
+  --hero-line: rgba(238,122,148,0.22);
   --success: #3ccf9f;
   --warning: #f5b85f;
   --critical: #f0707c;
@@ -144,9 +150,10 @@ a, button, [role="tab"], label { touch-action: manipulation; }
 
 /* ===== Nhận diện LIFELY: đỏ ruby làm điểm nhấn, nền thoáng, rất ít gradient ===== */
 .bg-brand { background-color: var(--primary); color: #fff; }
+.dark .bg-brand { background-color: var(--primary-deep); }
 .shadow-brand { box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--primary) 55%, transparent); }
 /* Khối hero duy nhất của màn hình: đỏ đặc, chỉ chuyển nhẹ sang đỏ đậm, kèm họa tiết giọt máu mờ */
-.hero-brand { position: relative; isolation: isolate; overflow: hidden; color: #fff; background: linear-gradient(160deg, var(--primary) 0%, var(--primary-deep) 100%); }
+.hero-brand { position: relative; isolation: isolate; overflow: hidden; color: #fff; background: linear-gradient(160deg, var(--hero-from) 0%, var(--hero-to) 100%); box-shadow: inset 0 0 0 1px var(--hero-line); }
 .hero-brand::before { content: ""; position: absolute; z-index: -1; right: -36px; top: -24px; width: 200px; height: 250px; opacity: 0.08; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='white' d='M16 3C14.2 7.6 7.6 12 7.6 18.6 7.6 23.3 11.4 27.4 16 27.4S24.4 23.3 24.4 18.6C24.4 12 17.8 7.6 16 3Z'/></svg>"); transform: rotate(14deg); }
 .glass { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22); }
 .text-brand-gradient { color: var(--primary); }

@@ -3,16 +3,17 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TONES, type Tone } from "@/components/ui/tones";
 import { cn } from "@/lib/utils";
 
 export function StatCard({
-  label, value, icon: Icon, loading, accent, hint, href,
-}: { label: string; value: React.ReactNode; icon?: LucideIcon; loading?: boolean; accent?: boolean; hint?: string; href?: string }) {
+  label, value, icon: Icon, loading, accent, hint, href, tone,
+}: { label: string; value: React.ReactNode; icon?: LucideIcon; loading?: boolean; accent?: boolean; hint?: string; href?: string; tone?: Tone }) {
   const card = (
     <Card className={cn("card-lift relative overflow-hidden p-4 md:p-5", accent && "border-primary/20", href && "press")}>
       <div className="flex items-center justify-between">
         <p className="text-[13px] leading-tight text-muted-foreground md:text-sm">{label}</p>
-        {Icon && <span className={cn("grid size-9 place-items-center rounded-xl", accent ? "bg-primary text-primary-foreground" : "bg-secondary text-primary")}><Icon className="size-[18px]" aria-hidden /></span>}
+        {Icon && <span className={cn("grid size-9 place-items-center rounded-xl", (tone ? TONES[tone] : "bg-secondary text-primary"))}><Icon className="size-[18px]" aria-hidden /></span>}
       </div>
       {loading ? (
         <Skeleton className="mt-3 h-9 w-20" />

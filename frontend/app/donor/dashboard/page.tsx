@@ -91,9 +91,9 @@ export default function DonorDashboard() {
               <MiniStat icon={CheckCircle2} tint="emerald" label="Lần hiến" value={dash.data?.confirmedDonations ?? 0} loading={dash.initialLoading} />
             </div>
             <div className="hidden grid-cols-3 gap-4 md:grid">
-              <StatCard label="Nhóm máu của bạn" value={dash.data?.bloodType ?? "–"} icon={Droplets} accent loading={dash.initialLoading} />
-              <StatCard label="Yêu cầu ở gần bạn" value={dash.data?.nearbyRequests ?? 0} icon={HeartPulse} loading={dash.initialLoading} hint="Đang mở trong khu vực của bạn" />
-              <StatCard label="Lần hiến đã ghi nhận" value={dash.data?.confirmedDonations ?? 0} icon={CheckCircle2} loading={dash.initialLoading} />
+              <StatCard label="Nhóm máu của bạn" value={dash.data?.bloodType ?? "–"} icon={Droplets} accent tone="rose" loading={dash.initialLoading} />
+              <StatCard label="Yêu cầu ở gần bạn" value={dash.data?.nearbyRequests ?? 0} icon={HeartPulse} tone="amber" loading={dash.initialLoading} hint="Đang mở trong khu vực của bạn" />
+              <StatCard label="Lần hiến đã ghi nhận" value={dash.data?.confirmedDonations ?? 0} icon={CheckCircle2} tone="teal" loading={dash.initialLoading} />
             </div>
           </>
         )}

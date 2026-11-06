@@ -8,17 +8,18 @@ import { MatchRow } from "@/components/donor/match-card";
 import { ListGroup } from "@/components/ui/mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/shell/avatar";
+import { TONES } from "@/components/ui/tones";
 import { cn } from "@/lib/utils";
 
 type RowProps = React.ComponentProps<typeof MatchRow>;
 
 const TILES = [
-  { href: "/donor/requests", label: "Yêu cầu", icon: HeartPulse, tone: "bg-secondary text-primary" },
-  { href: "/donor/map", label: "Bản đồ", icon: Map, tone: "bg-secondary text-primary" },
-  { href: "/donor/appointments", label: "Lịch hiến", icon: CalendarDays, tone: "bg-secondary text-primary" },
-  { href: "/donor/history", label: "Lịch sử", icon: History, tone: "bg-secondary text-primary" },
-  { href: "/donor/health", label: "Sức khỏe", icon: Activity, tone: "bg-secondary text-primary" },
-  { href: "/donor/profile", label: "Hồ sơ", icon: UserRound, tone: "bg-secondary text-primary" },
+  { href: "/donor/requests", label: "Yêu cầu", icon: HeartPulse, tone: TONES.rose },
+  { href: "/donor/map", label: "Bản đồ", icon: Map, tone: TONES.teal },
+  { href: "/donor/appointments", label: "Lịch hiến", icon: CalendarDays, tone: TONES.indigo },
+  { href: "/donor/history", label: "Lịch sử", icon: History, tone: TONES.amber },
+  { href: "/donor/health", label: "Sức khỏe", icon: Activity, tone: TONES.emerald },
+  { href: "/donor/profile", label: "Hồ sơ", icon: UserRound, tone: TONES.violet },
 ];
 
 /** Trang chủ người hiến kiểu app: hero đỏ + công tắc sẵn sàng, thẻ người hiến, lưới tiện ích, danh sách cần phản hồi. Dữ liệu do trang dashboard truyền vào (cùng hook với web). */
@@ -39,9 +40,9 @@ export function DonorAppHome(p: {
         </button>
       </section>
 
-      <section aria-label="Thẻ người hiến" className="-mt-7 grid grid-cols-3 divide-x divide-border rounded-3xl border border-border bg-card py-4 shadow-[0_12px_28px_-18px_rgba(181,31,69,0.5)]">
-        {[{ i: Droplets, v: p.bloodType ?? "–", l: "Nhóm máu" }, { i: CheckCircle2, v: p.donations ?? 0, l: "Lần hiến" }, { i: HeartPulse, v: p.nearby ?? 0, l: "Gần bạn" }].map((s) => (
-          <div key={s.l} className="flex flex-col items-center gap-0.5"><span className="grid size-9 place-items-center rounded-xl bg-secondary"><s.i className="size-5 text-primary" aria-hidden /></span>{p.loading ? <Skeleton className="h-7 w-10" /> : <span className="text-brand-gradient text-3xl font-black tabular-nums leading-tight">{s.v}</span>}<span className="text-xs text-muted-foreground">{s.l}</span></div>
+      <section aria-label="Thẻ người hiến" className="relative z-10 -mt-8 grid grid-cols-3 divide-x divide-border rounded-3xl border border-border bg-card py-4 shadow-[0_12px_28px_-18px_rgba(181,31,69,0.5)]">
+        {[{ i: Droplets, t: TONES.rose, v: p.bloodType ?? "–", l: "Nhóm máu" }, { i: CheckCircle2, t: TONES.teal, v: p.donations ?? 0, l: "Lần hiến" }, { i: HeartPulse, t: TONES.amber, v: p.nearby ?? 0, l: "Gần bạn" }].map((s) => (
+          <div key={s.l} className="flex flex-col items-center gap-0.5"><span className={cn("grid size-9 place-items-center rounded-xl", s.t)}><s.i className="size-5" aria-hidden /></span>{p.loading ? <Skeleton className="h-7 w-10" /> : <span className="text-foreground text-3xl font-black tabular-nums leading-tight">{s.v}</span>}<span className="text-xs text-muted-foreground">{s.l}</span></div>
         ))}
       </section>
 
@@ -52,7 +53,7 @@ export function DonorAppHome(p: {
       <ModeSwitchBanner hint="Người nhà cần máu?" />
 
       <section className="mt-6" aria-label="Cần bạn phản hồi">
-        <div className="mb-2 flex items-end justify-between"><h3 className="flex items-center gap-2 text-lg font-extrabold"><span className="h-5 w-1 rounded-full bg-brand" aria-hidden />Cần bạn phản hồi</h3><Link href="/donor/requests" className="text-sm font-medium text-primary">Xem tất cả</Link></div>
+        <div className="mb-2 flex items-end justify-between"><h3 className="flex items-center gap-2 text-lg font-extrabold">Cần bạn phản hồi</h3><Link href="/donor/requests" className="text-sm font-medium text-primary">Xem tất cả</Link></div>
         {p.matches.length === 0
           ? <p className="rounded-2xl border border-border bg-card px-4 py-5 text-center text-sm text-muted-foreground">Chưa có yêu cầu nào đang chờ bạn. LIFELY sẽ báo ngay khi có yêu cầu phù hợp.</p>
           : <ListGroup>{p.matches.slice(0, 3).map((m) => <MatchRow key={m.matchId} m={m} />)}</ListGroup>}
