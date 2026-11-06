@@ -47,7 +47,7 @@ export function CallDonor({ m, onChanged }: { m: RequestMatchEntry; onChanged: (
     <div className="mt-2 space-y-2">
       {href ? (
         <a href={href} aria-label={`Gọi người hiến ${m.donorName ?? ""}`.trim()}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-success px-4 py-2 text-sm font-semibold text-white hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-600/30 bg-teal-600/10 px-4 py-2 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-600/20 dark:border-teal-400/30 dark:bg-teal-400/10 dark:text-teal-300 dark:hover:bg-teal-400/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
           <Phone className="size-4" aria-hidden />Gọi người hiến
           <span className="font-normal opacity-90">{m.donorPhone}</span>
         </a>

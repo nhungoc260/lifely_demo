@@ -170,3 +170,4 @@ h1, h2, h3, h4 { line-height: 1.28; letter-spacing: -0.005em; }
 .leading-tight, .leading-none { line-height: 1.28; }
 .tabular-nums { font-variant-numeric: tabular-nums lining-nums; }
 .leaflet-container, .leaflet-popup-content { font-family: var(--font-sans), system-ui, sans-serif; }
+.dark .bg-success { background-color: #0f766e; }
