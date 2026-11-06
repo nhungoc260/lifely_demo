@@ -41,7 +41,7 @@ function NetworkVisual() {
       <path d="M240 197c-3.4 4.8-8 8.8-8 13.6a8 8 0 0 0 16 0c0-4.8-4.6-8.8-8-13.6Z" fill="#fff" />
       <text x="240" y="256" fontSize="13" fontWeight="600" letterSpacing="2" textAnchor="middle" fill="var(--foreground)">LIFELY</text>
       {/* hospital */}
-      <rect x="366" y="304" width="36" height="36" rx="10" fill="var(--secondary-foreground)" />
+      <rect x="366" y="304" width="36" height="36" rx="10" fill="#0d9488" />
       <g transform="translate(375 313) scale(.75)" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 7v4" /><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M14 9h-4"/><path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2"/><path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/></g>
       <text x="384" y="360" fontSize="12" textAnchor="middle" fill="var(--muted-foreground)">Bệnh viện</text>
     </svg>

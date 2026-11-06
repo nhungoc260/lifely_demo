@@ -20,8 +20,8 @@
   --primary-foreground: #ffffff;
   --secondary: #fde9ed;
   --secondary-foreground: #8f1636;
-  --hero-from: #b51f45;
-  --hero-to: #5e1f5a;
+  --hero-from: #9a1f3f;
+  --hero-to: #4e0d22;
   --hero-line: transparent;
   --success: #16a779;
   --warning: #f0a33a;
@@ -38,14 +38,14 @@
   --border: #372c32;
   --ring: #e84d70;
   --primary: #d6405f;
-  --primary-deep: #a62a46;
+  --primary-deep: #94203f;
   --accent: #ee7a94;
   --primary-foreground: #ffffff;
   --secondary: #3a1f28;
   --secondary-foreground: #fcd5de;
-  --hero-from: #35192a;
-  --hero-to: #221a33;
-  --hero-line: rgba(238,122,148,0.22);
+  --hero-from: #5c1a2e;
+  --hero-to: #2e0e19;
+  --hero-line: rgba(232,110,138,0.28);
   --success: #3ccf9f;
   --warning: #f5b85f;
   --critical: #f0707c;
@@ -93,7 +93,10 @@ select optgroup {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -159,3 +162,11 @@ a, button, [role="tab"], label { touch-action: manipulation; }
 .text-brand-gradient { color: var(--primary); }
 .card-lift { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
 .card-lift:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--primary) 45%, transparent); border-color: color-mix(in srgb, var(--primary) 28%, var(--border)); }
+
+/* ===== Chữ: đồng bộ độ đậm, giãn chữ và dãn dòng để dấu tiếng Việt không bị dính ===== */
+h1, h2, h3, h4 { line-height: 1.28; letter-spacing: -0.005em; }
+.tracking-tight { letter-spacing: -0.005em; }
+.font-black, .font-extrabold { font-weight: 700; }
+.leading-tight, .leading-none { line-height: 1.28; }
+.tabular-nums { font-variant-numeric: tabular-nums lining-nums; }
+.leaflet-container, .leaflet-popup-content { font-family: var(--font-sans), system-ui, sans-serif; }
