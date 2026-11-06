@@ -27,9 +27,14 @@ describe("nút Gọi người hiến", () => {
       expect(out).toContain("chưa có số điện thoại hợp lệ");
     }
   });
-  it("người chưa nhận lời: không hiển thị gì (máy chủ cũng không trả số)", () => {
-    for (const status of ["PENDING", "CONTACTED", "REJECTED", "CANCELLED"] as const) {
+  it("người đã từ chối hoặc lượt đã hủy: không hiển thị gì (máy chủ cũng không trả số)", () => {
+    for (const status of ["REJECTED", "CANCELLED", "EXPIRED"] as const) {
       expect(html({ status })).toBe("");
+    }
+  });
+  it("người hiến phù hợp đang chờ hoặc đã được mời: hiện nút gọi", () => {
+    for (const status of ["PENDING", "CONTACTED"] as const) {
+      expect(html({ status })).toContain("tel:0901234567");
     }
   });
   it("lượt đã hoàn thành vẫn cho ghi nhận liên hệ", () => {

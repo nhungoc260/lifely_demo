@@ -31,7 +31,7 @@ const ORDER: ContactResult[] = ["NOT_CONTACTED", "CONTACTED", "UNREACHABLE", "CO
 export function CallDonor({ m, onChanged }: { m: RequestMatchEntry; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
   const href = telHref(m.donorPhone);
-  const callable = m.status === "ACCEPTED" || m.status === "COMPLETED";
+  const callable = m.status === "PENDING" || m.status === "CONTACTED" || m.status === "ACCEPTED" || m.status === "COMPLETED";
   if (!callable) return null;
 
   async function record(result: ContactResult) {

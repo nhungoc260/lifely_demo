@@ -51,7 +51,7 @@ export function donorStatus(input: {
   return {
     kind: "READY",
     title: "Bạn đang sẵn sàng hiến máu",
-    description: "LIFELY sẽ liên hệ bạn khi có yêu cầu đã xác minh phù hợp ở gần. Việc bạn có đủ điều kiện hiến máu hay không do nhân viên y tế quyết định.",
+    description: "LIFELY sẽ liên hệ bạn khi có yêu cầu đã xác minh phù hợp ở gần; bệnh viện hoặc người cần máu đã xác minh có thể thấy tên và số điện thoại của bạn để gọi trực tiếp. Việc bạn có đủ điều kiện hiến máu hay không do nhân viên y tế quyết định.",
     tone: "success",
   };
 }

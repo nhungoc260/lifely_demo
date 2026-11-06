@@ -251,8 +251,8 @@ public class MatchService {
             throw AppException.notFound("MATCH_NOT_FOUND", "Không tìm thấy lượt kết nối");
         }
         entityManager.refresh(first);
-        if (first.getStatus() != MatchStatus.ACCEPTED && first.getStatus() != MatchStatus.COMPLETED) {
-            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ ghi nhận liên hệ với người hiến đã nhận lời");
+        if (!contactable(first.getStatus())) {
+            throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ ghi nhận liên hệ với người hiến đang tham gia yêu cầu");
         }
         first.setContactResult(result);
         first.setContactResultAt(result == ContactResult.NOT_CONTACTED ? null : Instant.now());
@@ -368,6 +368,10 @@ public class MatchService {
         return m;
     }
 
+    private static boolean contactable(MatchStatus st) {
+        return st == MatchStatus.PENDING || st == MatchStatus.CONTACTED || st == MatchStatus.ACCEPTED || st == MatchStatus.COMPLETED;
+    }
+
     private DonorProfile donorOf(Match m) {
         return donorRepository.findById(m.getDonorId())
                 .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
@@ -387,7 +391,8 @@ public class MatchService {
     }
 
     private RequestMatchEntry requesterEntry(Match m, int rank) {
-        boolean reveal = m.getStatus() == MatchStatus.ACCEPTED || m.getStatus() == MatchStatus.COMPLETED;
+        // Người hiến đang hoạt động trong yêu cầu (chờ, đã mời, đã nhận lời, đã hiến) đã đồng ý cho bên có quyền xem liên hệ trực tiếp.
+        boolean reveal = contactable(m.getStatus());
         String name = null;
         String phone = null;
         if (reveal) {
