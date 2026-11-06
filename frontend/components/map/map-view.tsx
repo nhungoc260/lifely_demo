@@ -28,7 +28,7 @@ export interface MapViewProps {
   className?: string;
 }
 
-const COLORS = { CRITICAL: "#dc2626", URGENT: "#d97706", NORMAL: "#64748b" } as const;
+const COLORS = { CRITICAL: "#dc3545", URGENT: "#f0a33a", NORMAL: "#64748b" } as const;
 
 function requestIcon(r: PublicRequest) {
   const c = COLORS[r.urgency];
@@ -42,16 +42,16 @@ function requestIcon(r: PublicRequest) {
 
 const hospitalIcon = L.divIcon({
   className: "",
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
-  html: `<div style="width:26px;height:26px;border-radius:8px;background:#0f172a;color:#fff;display:grid;place-items:center;font:700 15px/1 system-ui;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)" aria-label="Hospital">+</div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  html: `<div style="width:30px;height:30px;border-radius:9px;background:#0f172a;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)" aria-label="Bệnh viện"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M14 9h-4"/><path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2"/><path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/></svg></div>`,
 });
 
 const pickIcon = L.divIcon({
   className: "",
   iconSize: [22, 22],
   iconAnchor: [11, 11],
-  html: `<div style="width:22px;height:22px;border-radius:50%;background:#9f1239;border:4px solid #fff;box-shadow:0 0 0 2px #9f1239,0 2px 8px rgba(0,0,0,.35)"></div>`,
+  html: `<div style="width:22px;height:22px;border-radius:50%;background:#b51f45;border:4px solid #fff;box-shadow:0 0 0 2px #b51f45,0 2px 8px rgba(0,0,0,.35)"></div>`,
 });
 
 const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -132,7 +132,7 @@ export default function MapView({
         <BaseTiles />
         <Recenter center={center} zoom={zoom} />
         <Clicks onPick={onPick} />
-        {radius && <Circle center={radius.center} radius={radius.km * 1000} pathOptions={{ color: "#9f1239", weight: 1.5, fillOpacity: 0.05, dashArray: "6 6" }} />}
+        {radius && <Circle center={radius.center} radius={radius.km * 1000} pathOptions={{ color: "#b51f45", weight: 1.5, fillOpacity: 0.05, dashArray: "6 6" }} />}
         {approxArea && <Circle center={approxArea.center} radius={approxArea.km * 1000} pathOptions={{ color: "#2563eb", weight: 1, fillOpacity: 0.12 }} />}
         {hospitals.map((h) => (
           <Marker key={h.id} position={[h.latitude, h.longitude]} icon={hospitalIcon}>

@@ -68,7 +68,7 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
-                className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active && "bg-secondary text-secondary-foreground", collapsed && "justify-center px-0")}
+                className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active && "bg-secondary font-semibold text-primary", collapsed && "justify-center px-0")}
               >
                 <item.icon className="size-[18px] shrink-0" aria-hidden />
                 {!collapsed && <span>{item.label}</span>}
@@ -146,7 +146,7 @@ function SidebarShell({ role, children }: { role: Role; children: React.ReactNod
             const active = isActive(pathname, item, items);
             return (
               <li key={item.href}>
-                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("press relative flex h-[58px] flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("press relative flex h-[58px] flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-muted-foreground aria-[current=page]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", active && "text-primary")}>
                   {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b-full bg-primary" aria-hidden />}
                   <item.icon className="size-[22px]" strokeWidth={active ? 2.4 : 1.8} aria-hidden />
                   <span className="max-w-full truncate">{item.short ?? item.label}</span>

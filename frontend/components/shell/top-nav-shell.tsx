@@ -37,8 +37,8 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
 
   return (
     <div data-role={role} className="flex min-h-dvh flex-col bg-surface">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="hidden h-0.5 w-full bg-[var(--role-line)] lg:block" aria-hidden />
+      <header className="sticky top-0 z-40 border-b border-primary/10 bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className="h-1 w-full bg-brand" aria-hidden />
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-8 lg:h-16">
           <Logo href={cfg.links[0].href} />
           <span className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground 2xl:inline-flex">
@@ -48,7 +48,7 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
             {cfg.links.map((l) => {
               const active = isActive(pathname, l, all);
               return (
-                <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={cn(LINK, active && "bg-secondary text-secondary-foreground")}>
+                <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={cn(LINK, active && "bg-brand text-white shadow-brand hover:text-white")}>
                   {l === cfg.links[0] && <Home className="size-4" aria-hidden />}{l.label}
                 </Link>
               );
@@ -79,7 +79,7 @@ export function TopNavShell({ role, children }: { role: Role; children: React.Re
       <footer className="hidden border-t border-border bg-background/60 lg:block">
         <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-6 px-8 py-6 text-xs text-muted-foreground">
           <div className="max-w-xl space-y-1.5">
-            <p className="font-medium text-foreground">LIFELY · Connect. Donate. Save a Life.</p>
+            <p className="font-medium text-foreground">LIFELY · Give Blood. Give Life.</p>
             <p>LIFELY là nền tảng điều phối, không cung cấp chẩn đoán, chỉ định truyền máu hay quyết định đủ điều kiện hiến máu. Quyết định cuối cùng thuộc về nhân viên y tế có chuyên môn.</p>
           </div>
           <nav aria-label="Liên kết" className="flex gap-4">

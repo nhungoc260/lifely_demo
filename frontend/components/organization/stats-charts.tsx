@@ -15,7 +15,7 @@ export function WeeklyRequestsChart({ data }: { data: { label: string; total: nu
         <Tooltip contentStyle={TIP} cursor={{ fill: "var(--muted)" }} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <Bar dataKey="total" name="Tất cả yêu cầu" fill="#64748b" radius={[8, 8, 0, 0]} />
-        <Bar dataKey="critical" name="Nguy kịch" fill="#dc2626" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="critical" name="Nguy kịch" fill="#dc3545" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -29,7 +29,7 @@ export function BloodGroupRequestsChart({ data }: { data: { bloodType: string; r
         <XAxis dataKey="bloodType" tick={AXIS} tickLine={false} axisLine={false} />
         <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TIP} cursor={{ fill: "var(--muted)" }} />
-        <Bar dataKey="requests" name="Số yêu cầu" fill="#9f1239" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="requests" name="Số yêu cầu" fill="#b51f45" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

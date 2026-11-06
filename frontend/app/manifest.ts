@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#fbf9f8",
-    theme_color: "#be123c",
+    background_color: "#ffffff",
+    theme_color: "#b51f45",
     categories: ["health", "medical"],
     shortcuts: [
       { name: "Bản đồ", short_name: "Bản đồ", url: "/map", icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }] },

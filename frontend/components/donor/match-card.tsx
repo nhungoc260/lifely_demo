@@ -20,7 +20,7 @@ export function MatchScore({ value, className }: { value: number; className?: st
 export function MatchCard({ m }: { m: DonorMatch }) {
   const open = m.status === "CONTACTED" || m.status === "PENDING";
   return (
-    <Card className={cn("flex flex-col p-5", open && m.urgency === "CRITICAL" && "border-critical/30")}>
+    <Card className={cn("flex flex-col p-5", open && m.urgency === "CRITICAL" && "border-l-4 border-l-critical", open && m.urgency === "URGENT" && "border-l-4 border-l-warning")}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2"><UrgencyBadge urgency={m.urgency} />{!open && <MatchBadge status={m.status} />}</div>
         <MatchScore value={m.matchingScore} />

@@ -10,7 +10,7 @@ import type { PublicRequest } from "@/types/domain";
 
 export function RequestCard({ r, href, cta = "Xem yêu cầu" }: { r: PublicRequest; href: string; cta?: string }) {
   return (
-    <Card className={cn("flex flex-col p-5 transition-shadow hover:shadow-md", r.urgency === "CRITICAL" && "border-critical/30")}>
+    <Card className={cn("flex flex-col p-5 transition-shadow hover:shadow-md", r.urgency === "CRITICAL" && "border-l-4 border-l-critical", r.urgency === "URGENT" && "border-l-4 border-l-warning")}>
       <div className="flex items-center justify-between">
         <UrgencyBadge urgency={r.urgency} />
         <BloodChip type={r.bloodType} />

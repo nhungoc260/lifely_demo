@@ -41,8 +41,8 @@ function NetworkVisual() {
       <path d="M240 197c-3.4 4.8-8 8.8-8 13.6a8 8 0 0 0 16 0c0-4.8-4.6-8.8-8-13.6Z" fill="#fff" />
       <text x="240" y="256" fontSize="13" fontWeight="600" letterSpacing="2" textAnchor="middle" fill="var(--foreground)">LIFELY</text>
       {/* hospital */}
-      <rect x="366" y="304" width="36" height="36" rx="10" fill="#0f172a" />
-      <path d="M384 313v18M375 322h18" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+      <rect x="366" y="304" width="36" height="36" rx="10" fill="var(--secondary-foreground)" />
+      <g transform="translate(375 313) scale(.75)" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 7v4" /><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M14 9h-4"/><path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2"/><path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16"/></g>
       <text x="384" y="360" fontSize="12" textAnchor="middle" fill="var(--muted-foreground)">Bệnh viện</text>
     </svg>
   );
@@ -54,21 +54,20 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute -top-40 right-[-10%] size-[38rem] rounded-full bg-primary/10 blur-3xl" />
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 lg:grid-cols-[1.05fr_0.95fr] lg:pb-28 lg:pt-24">
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium" role="status">
             <span className="relative flex size-2"><span className={cn("absolute inline-flex size-full rounded-full opacity-60", s ? "animate-ping bg-success" : "bg-muted-foreground")} /><span className={cn("relative inline-flex size-2 rounded-full", s ? "bg-success" : "bg-muted-foreground")} /></span>
             {s ? "MẠNG LƯỚI LIFELY ĐANG HOẠT ĐỘNG" : stats.error ? "KHÔNG LẤY ĐƯỢC TRẠNG THÁI MẠNG LƯỚI" : "ĐANG KẾT NỐI MẠNG LƯỚI…"}
           </p>
-          <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
             Khi từng giây đều quý giá, <span className="text-primary">sự kết nối</span> càng quan trọng.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
             LIFELY giúp kết nối người cần máu với người hiến máu ở gần và điều phối phản hồi trên một nền tảng đáng tin cậy.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <CtaLink intent="NEED_BLOOD" className={cn(buttonVariants({ size: "lg" }), "shadow-lg shadow-primary/25")}>
+            <CtaLink intent="NEED_BLOOD" className={cn(buttonVariants({ size: "lg" }), "shadow-brand")}>
               <Droplets /> TÔI CẦN MÁU
             </CtaLink>
             <CtaLink intent="DONATE" className={buttonVariants({ variant: "outline", size: "lg" })}>

@@ -9,15 +9,15 @@ export function StatCard({
   label, value, icon: Icon, loading, accent, hint, href,
 }: { label: string; value: React.ReactNode; icon?: LucideIcon; loading?: boolean; accent?: boolean; hint?: string; href?: string }) {
   const card = (
-    <Card className={cn("p-4 md:p-5", href && "press transition hover:ring-2 hover:ring-primary/40")}>
+    <Card className={cn("card-lift relative overflow-hidden p-4 md:p-5", accent && "border-primary/20", href && "press")}>
       <div className="flex items-center justify-between">
         <p className="text-[13px] leading-tight text-muted-foreground md:text-sm">{label}</p>
-        {Icon && <Icon className={cn("size-4", accent ? "text-primary" : "text-muted-foreground")} aria-hidden />}
+        {Icon && <span className={cn("grid size-9 place-items-center rounded-xl", accent ? "bg-primary text-primary-foreground" : "bg-secondary text-primary")}><Icon className="size-[18px]" aria-hidden /></span>}
       </div>
       {loading ? (
         <Skeleton className="mt-3 h-9 w-20" />
       ) : (
-        <p className={cn("mt-2 text-[26px] font-bold tabular-nums tracking-tight md:text-3xl md:font-semibold", accent && "text-primary")}>{value}</p>
+        <p className={cn("mt-2 text-[26px] font-bold tabular-nums tracking-tight md:text-3xl md:font-semibold", accent ? "text-brand-gradient" : "text-foreground", "md:text-4xl md:font-extrabold")}>{value}</p>
       )}
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       {href && <p className="mt-2 text-xs font-medium text-primary">Xem chi tiết →</p>}

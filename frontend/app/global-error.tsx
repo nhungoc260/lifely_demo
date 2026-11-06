@@ -8,7 +8,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
         <div style={{ maxWidth: 420, textAlign: "center", padding: 24 }}>
           <h1>LIFELY tạm thời không khả dụng</h1>
           <p>Vui lòng thử lại sau ít phút.</p>
-          <button onClick={reset} style={{ padding: "10px 18px", borderRadius: 12, border: 0, background: "#9f1239", color: "#fff", cursor: "pointer" }}>Thử lại</button>
+          <button onClick={reset} style={{ padding: "10px 18px", borderRadius: 12, border: 0, background: "#b51f45", color: "#fff", cursor: "pointer" }}>Thử lại</button>
         </div>
       </body>
     </html>

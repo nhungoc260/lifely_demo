@@ -8,8 +8,8 @@ export function PageHeader({ title, description, actions }: { title: string; des
   if (appMode) return actions ? <div className="flex flex-wrap items-center justify-end gap-2 pt-3">{actions}</div> : null;
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight md:text-3xl md:font-semibold">{title}</h1>
+      <div className="border-l-4 border-primary pl-3">
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight md:text-3xl">{title}</h1>
         {description && <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground md:line-clamp-none md:text-sm">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
