@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { InstallButton } from "@/components/pwa/install-button";
-import { isAndroidDevice, isInAppBrowser, isIosDevice, isIosSafari, isStandaloneDisplay } from "@/lib/pwa";
+import { isAndroidDevice, isInAppBrowser, isIosChrome, isIosDevice, isIosSafari, isStandaloneDisplay } from "@/lib/pwa";
 
 describe("isIosDevice", () => {
   it("nhận iPhone, iPad, iPod", () => {
@@ -52,5 +52,9 @@ describe("nhận diện trình duyệt để hướng dẫn cài", () => {
   it("isAndroidDevice", () => {
     expect(isAndroidDevice("Mozilla/5.0 (Linux; Android 14; Pixel 8)")).toBe(true);
     expect(isAndroidDevice(safari)).toBe(false);
+  });
+  it("isIosChrome nhận Chrome iOS, không nhận Safari", () => {
+    expect(isIosChrome(chromeIos)).toBe(true);
+    expect(isIosChrome(safari)).toBe(false);
   });
 });

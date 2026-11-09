@@ -24,3 +24,8 @@ export function isAndroidDevice(userAgent: string): boolean {
 export function isIosSafari(userAgent: string): boolean {
   return /Safari/i.test(userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//i.test(userAgent) && !isInAppBrowser(userAgent);
 }
+
+/** Chrome trên iPhone/iPad (iOS 16.4+ cũng thêm được vào Màn hình chính từ menu Chia sẻ). */
+export function isIosChrome(userAgent: string): boolean {
+  return /CriOS/i.test(userAgent) && !isInAppBrowser(userAgent);
+}

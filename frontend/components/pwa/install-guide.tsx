@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { Logo } from "@/components/layout/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { canPromptFrom, getInstallSnapshot, getServerInstallSnapshot, installedFrom, promptInstall, subscribeInstall } from "@/lib/pwa-install";
-import { isAndroidDevice, isInAppBrowser, isIosDevice, isIosSafari, isStandaloneDisplay } from "@/lib/pwa";
+import { isAndroidDevice, isInAppBrowser, isIosChrome, isIosDevice, isIosSafari, isStandaloneDisplay } from "@/lib/pwa";
 import { cn } from "@/lib/utils";
 
-type Platform = "ssr" | "installed" | "in-app" | "ios-safari" | "ios-other" | "android" | "desktop";
+type Platform = "ssr" | "installed" | "in-app" | "ios-safari" | "ios-chrome" | "ios-other" | "android" | "desktop";
 
 const noopSubscribe = () => () => {};
 const platformNow = (): Platform => {
@@ -22,7 +22,7 @@ const platformNow = (): Platform => {
   );
   if (standalone) return "installed";
   if (isInAppBrowser(ua)) return "in-app";
-  if (isIosDevice(ua, navigator.platform, navigator.maxTouchPoints ?? 0)) return isIosSafari(ua) ? "ios-safari" : "ios-other";
+  if (isIosDevice(ua, navigator.platform, navigator.maxTouchPoints ?? 0)) return isIosSafari(ua) ? "ios-safari" : isIosChrome(ua) ? "ios-chrome" : "ios-other";
   if (isAndroidDevice(ua)) return "android";
   return "desktop";
 };
@@ -98,9 +98,22 @@ export function InstallGuide() {
 
       {!installed && platform === "ios-other" && (
         <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
-          <p className="font-medium">Trên iPhone/iPad, hãy mở trang này bằng <strong>Safari</strong> để cài.</p>
+          <p className="font-medium">Trình duyệt này chưa hỗ trợ cài trên iPhone/iPad. Hãy mở trang bằng <strong>Safari</strong> hoặc <strong>Chrome</strong>.</p>
           <CopyLink />
           <p className="text-sm text-muted-foreground">Sao chép xong, mở Safari, dán vào thanh địa chỉ rồi làm theo 3 bước hiện ra.</p>
+        </section>
+      )}
+
+      {!installed && platform === "ios-chrome" && (
+        <section className="space-y-5 rounded-2xl border border-border bg-card p-5">
+          <p className="font-medium">Cài ngay trên Chrome, chỉ với 3 chạm:</p>
+          <ol className="space-y-4">
+            <Step n={1}>Bấm nút <Share className="inline size-5 align-text-bottom text-primary" aria-hidden /> <strong>Chia sẻ</strong> ở thanh địa chỉ phía trên (góc phải).</Step>
+            <Step n={2}>Kéo xuống, chọn <PlusSquare className="inline size-5 align-text-bottom text-primary" aria-hidden /> <strong>Thêm vào Màn hình chính</strong>.</Step>
+            <Step n={3}>Bấm <strong>Thêm</strong>.</Step>
+          </ol>
+          <p className="text-sm text-muted-foreground">Không thấy mục đó? Cập nhật iOS lên 16.4 trở lên, hoặc sao chép liên kết rồi mở bằng Safari.</p>
+          <CopyLink />
         </section>
       )}
 
