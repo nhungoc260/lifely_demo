@@ -9,6 +9,7 @@ const base: RequestMatchEntry = {
   matchId: "m1", label: "Người hiến #1", distanceKm: 2, matchingScore: 90, status: "ACCEPTED",
   respondedAt: null, donorName: "Nguyễn A", donorPhone: "0901234567", facilityVerified: false,
   verifiedByName: null, contactResult: "NOT_CONTACTED", contactResultAt: null,
+  invitedAt: null, lastRemindedAt: null, remindCount: 0,
 };
 const html = (m: Partial<RequestMatchEntry>) => renderToStaticMarkup(createElement(CallDonor, { m: { ...base, ...m }, onChanged: () => {} }));
 
