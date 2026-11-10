@@ -128,19 +128,18 @@ public class RequestService {
         r.setDescription(Sanitizer.plain(dto.description()));
 
         // Liên kết tổ chức: dùng tọa độ/tên của tổ chức ĐÃ XÁC MINH để không thể giả vị trí bệnh viện.
-        Organization org = null;
-        if (user.hasRole(Role.ORGANIZATION)) {
-            org = organizationRepository.findForUser(user.getId()).filter(Organization::isVerified).orElse(null);
-            // Tài khoản tổ chức chỉ tạo yêu cầu cho cơ sở của mình; không để dữ liệu cơ sở khác bị ghi đè âm thầm.
-            if (org != null && dto.organizationId() != null && !dto.organizationId().equals(org.getId())) {
-                throw AppException.badRequest("INVALID_ORGANIZATION",
-                        "Tài khoản tổ chức chỉ tạo yêu cầu cho cơ sở của mình");
-            }
-        } else if (dto.organizationId() != null) {
+        // Cơ sở của chính tài khoản tổ chức (nếu có và đã xác minh).
+        Organization ownOrg = user.hasRole(Role.ORGANIZATION)
+                ? organizationRepository.findForUser(user.getId()).filter(Organization::isVerified).orElse(null) : null;
+        // Cơ sở được chọn trong biểu mẫu (khẩn cấp có thể chọn bệnh viện gần đó); không chọn thì dùng cơ sở của mình.
+        Organization org = ownOrg;
+        if (dto.organizationId() != null) {
             org = organizationRepository.findById(dto.organizationId()).filter(Organization::isVerified)
                     .orElseThrow(() -> AppException.badRequest("INVALID_ORGANIZATION",
                             "Hãy chọn bệnh viện đã xác minh trong danh sách"));
         }
+        // Chỉ khi là cơ sở của chính mình mới được tin cậy ngay; bệnh viện khác phải chờ cơ sở đó xác nhận.
+        boolean ownFacility = ownOrg != null && org != null && ownOrg.getId().equals(org.getId());
         if (org != null) {
             r.setOrganizationId(org.getId());
             if (dto.organizationId() != null || org.getLatitude() == null) {
@@ -161,14 +160,14 @@ public class RequestService {
                     "Bạn vừa tạo một yêu cầu giống hệt (cùng nhóm máu, cùng cơ sở). Hãy theo dõi yêu cầu đó hoặc hủy nó trước khi tạo lại.");
         }
         r.setIdempotencyKey(key);
-        r.setFacilityReview(org == null ? "NONE" : (user.hasRole(Role.ORGANIZATION) ? "CONFIRMED" : "PENDING"));
+        r.setFacilityReview(org == null ? "NONE" : (ownFacility ? "CONFIRMED" : "PENDING"));
         r = requestRepository.save(r);
         lifecycle.transition(r, RequestStatus.CREATED, "Đã tạo yêu cầu", user.getId());
         audit.log(user.getId(), AuditAction.REQUEST_CREATED, "REQUEST", r.getId(),
                 Map.of("bloodType", dto.bloodType(), "units", dto.unitsRequired(), "urgency", dto.urgency().name()));
 
         // Tổ chức đã xác minh: yêu cầu được tin cậy ngay và vào điều phối luôn. Còn lại chờ admin xác minh.
-        boolean autoVerified = user.hasRole(Role.ORGANIZATION) && org != null;
+        boolean autoVerified = ownFacility;
         lifecycle.transition(r, RequestStatus.PENDING_VERIFICATION, "Đã gửi để xác minh", user.getId());
         if (autoVerified) {
             markVerified(r, user.getId(), "Tự động xác minh: yêu cầu từ tổ chức đã xác minh");

@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, LocateFixed, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -58,6 +58,14 @@ function toLocalInput(ms: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const rad = (x: number) => (x * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+}
+
 export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/organization" }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -80,30 +88,55 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
   const lng = useWatch({ control, name: "longitude" });
   const bt = useWatch({ control, name: "bloodType" });
 
-  function pickHospital(id: string) {
+  function pickHospital(id: string, known?: { name: string; city: string; district: string | null; latitude: number | null; longitude: number | null }) {
     setValue("organizationId", id);
-    const o = orgs.data?.find((x) => x.id === id);
+    const o = known ?? orgs.data?.find((x) => x.id === id);
     if (o) {
       setValue("hospitalName", o.name, { shouldValidate: true });
       setValue("city", o.city, { shouldValidate: true });
       setValue("district", o.district ?? "");
-      setValue("latitude", o.latitude, { shouldValidate: true });
-      setValue("longitude", o.longitude, { shouldValidate: true });
+      if (o.latitude != null && o.longitude != null) {
+        setValue("latitude", o.latitude, { shouldValidate: true });
+        setValue("longitude", o.longitude, { shouldValidate: true });
+      }
     }
   }
 
+  // Tổ chức: mặc định điền cơ sở của mình (chỉ một lần), sau đó vẫn có thể chọn bệnh viện gần đó khi khẩn cấp.
+  const prefilled = useRef(false);
   useEffect(() => {
     const o = myOrg.data;
-    if (!isOrg || !o || !o.verificationStatus || o.verificationStatus !== "VERIFIED") return;
-    setValue("organizationId", o.id);
-    setValue("hospitalName", o.name, { shouldValidate: true });
-    setValue("city", o.city, { shouldValidate: true });
-    setValue("district", o.district ?? "");
-    if (o.latitude != null && o.longitude != null) {
-      setValue("latitude", o.latitude, { shouldValidate: true });
-      setValue("longitude", o.longitude, { shouldValidate: true });
-    }
-  }, [isOrg, myOrg.data, setValue]);
+    if (!isOrg || prefilled.current || !o || o.verificationStatus !== "VERIFIED") return;
+    prefilled.current = true;
+    pickHospital(o.id, o);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOrg, myOrg.data]);
+
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
+  function locateMe() {
+    if (!navigator.geolocation) { toast.error("Trình duyệt không hỗ trợ định vị"); return; }
+    setGeoBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoBusy(false); },
+      () => { setGeoBusy(false); toast.error("Không lấy được vị trí. Hãy cho phép định vị hoặc chọn bệnh viện trong danh sách."); },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+  const refPoint = useMemo(() => {
+    if (geo) return geo;
+    const o = myOrg.data;
+    if (isOrg && o?.latitude != null && o?.longitude != null) return { lat: o.latitude, lng: o.longitude };
+    return null;
+  }, [geo, isOrg, myOrg.data]);
+  const nearby = useMemo(() => {
+    if (!refPoint || !orgs.data) return [];
+    return orgs.data
+      .map((o) => ({ o, km: distanceKm(refPoint, { lat: o.latitude, lng: o.longitude }) }))
+      .sort((x, y) => x.km - y.km)
+      .slice(0, 5);
+  }, [refPoint, orgs.data]);
+  const isOtherFacility = isOrg && !!orgId && !!myOrg.data && orgId !== myOrg.data.id;
 
   async function submit(v: Values) {
     setSubmitting(true);
@@ -197,16 +230,47 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         <Card>
           <CardHeader><CardTitle>Bệnh viện / địa điểm</CardTitle></CardHeader>
           <CardContent className="space-y-5">
-            {isOrg && orgId ? (
-              <p className="text-sm text-muted-foreground">Yêu cầu sẽ được tạo cho cơ sở của bạn: <span className="font-medium text-foreground">{myOrg.data?.name}</span>.</p>
-            ) : (
-              <Field label="Bệnh viện đã xác minh" htmlFor="org" hint="Chọn bệnh viện đã xác minh sẽ đặt đúng vị trí cho bạn và có thể giúp xác minh nhanh hơn.">
-                <Select id="org" value={orgId} onChange={(e) => pickHospital(e.target.value)}>
-                  <option value="">Địa điểm khác (nhập thủ công)</option>
-                  {orgs.data?.map((o) => <option key={o.id} value={o.id}>{o.name}{o.district ? ` – ${o.district}` : ""}</option>)}
-                </Select>
-              </Field>
-            )}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">Gợi ý bệnh viện gần đây</p>
+                <Button type="button" variant="outline" size="sm" onClick={locateMe} loading={geoBusy}>
+                  <LocateFixed /> Dùng vị trí hiện tại
+                </Button>
+              </div>
+              {nearby.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {nearby.map(({ o, km }) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => pickHospital(o.id)}
+                      aria-pressed={orgId === o.id}
+                      className={cn(
+                        "rounded-xl border px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
+                        orgId === o.id ? "border-primary bg-primary/10" : "border-border",
+                      )}
+                    >
+                      <span className="block font-medium">{o.name}</span>
+                      <span className="block text-xs text-muted-foreground">{[o.district, o.city].filter(Boolean).join(", ")} · {km.toFixed(1)} km</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Bấm “Dùng vị trí hiện tại” để xem các bệnh viện đã xác minh gần bạn nhất.</p>
+              )}
+              {isOtherFacility && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <span>Bạn đang tạo yêu cầu tại bệnh viện khác với cơ sở của mình. Bệnh viện đó sẽ được báo để xác nhận.</span>
+                  {myOrg.data && <button type="button" className="font-medium text-foreground underline" onClick={() => pickHospital(myOrg.data!.id, myOrg.data!)}>Dùng cơ sở của tôi</button>}
+                </div>
+              )}
+            </div>
+            <Field label="Bệnh viện đã xác minh" htmlFor="org" hint="Chọn bệnh viện đã xác minh sẽ đặt đúng vị trí cho bạn và có thể giúp xác minh nhanh hơn.">
+              <Select id="org" value={orgId} onChange={(e) => pickHospital(e.target.value)}>
+                <option value="">Địa điểm khác (nhập thủ công)</option>
+                {orgs.data?.map((o) => <option key={o.id} value={o.id}>{o.name}{o.district ? ` – ${o.district}` : ""}</option>)}
+              </Select>
+            </Field>
             <Field label="Tên bệnh viện / địa điểm" htmlFor="hospitalName" error={errors.hospitalName?.message}><Input id="hospitalName" readOnly={!!orgId} {...register("hospitalName")} aria-invalid={!!errors.hospitalName} /></Field>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" readOnly={!!orgId} {...register("city")} /></Field>
