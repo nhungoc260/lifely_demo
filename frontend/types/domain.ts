@@ -423,9 +423,14 @@ export interface NotificationConsents {
 }
 // Lưu ý: "VOICE" chỉ còn trong dữ liệu cũ; hệ thống không còn gọi điện tự động.
 export interface DeliverySummary {
-  outbox: { channel: "SMS" | "PUSH" | "VOICE"; status: "PENDING" | "SENDING" | "SENT" | "FAILED" | "CANCELLED"; total: number }[];
+  outbox: { channel: "SMS" | "PUSH" | "VOICE"; status: "PENDING" | "SENDING" | "SENT" | "FAILED" | "CANCELLED"; reason: string | null; total: number }[];
   responses: Record<string, number>;
   failed: number;
+  /** Số người đã nhận thông báo trong ứng dụng (kênh luôn hoạt động). */
+  inApp: number;
+  smsEnabled: boolean;
+  pushEnabled: boolean;
+  smsMock: boolean;
 }
 export interface InventoryMovement {
   bloodType: string; delta: number; unitsAfter: number; reason: string; referenceType: string | null; createdAt: string;

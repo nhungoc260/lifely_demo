@@ -162,7 +162,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
               </Card>
             </div>
 
-            <DeliveryCard requestId={r.id} canRetry={isOrg} />
+            <DeliveryCard requestId={r.id} canRetry={isOrg} canRemind={["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"].includes(r.status)} />
 
             <ShareRequest r={r} />
 

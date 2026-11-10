@@ -134,6 +134,7 @@ public class OutboxWorker {
             return;
         }
         if ("REQUEST".equals(c.referenceType()) && (OutboxService.PURPOSE_INVITE.equals(c.purpose())
+                || OutboxService.PURPOSE_REMIND.equals(c.purpose())
                 || OutboxService.PURPOSE_STAFF_ALERT.equals(c.purpose()))) {
             Integer open = jdbc.queryForObject("""
                     SELECT count(*) FROM blood_requests
@@ -186,7 +187,8 @@ public class OutboxWorker {
             cancel(c, "NO_SUBSCRIPTION");
             return null;
         }
-        String urgency = OutboxService.PURPOSE_INVITE.equals(c.purpose()) || OutboxService.PURPOSE_STAFF_ALERT.equals(c.purpose())
+        String urgency = OutboxService.PURPOSE_INVITE.equals(c.purpose()) || OutboxService.PURPOSE_REMIND.equals(c.purpose())
+                || OutboxService.PURPOSE_STAFF_ALERT.equals(c.purpose())
                 ? "high" : "normal";
         int ok = 0;
         int retry = 0;

@@ -34,4 +34,10 @@ public class DeliveryController {
     public ApiResponse<Map<String, Integer>> retry(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
         return ApiResponse.ok("Đã xếp lại các thông báo lỗi", Map.of("requeued", service.retryFailed(user.getId(), id)));
     }
+
+    @PostMapping("/api/requests/{id}/delivery/remind")
+    @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
+    public ApiResponse<Map<String, Integer>> remind(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
+        return ApiResponse.ok("Đã nhắc lại người hiến chưa phản hồi", Map.of("reminded", service.remindAwaiting(user.getId(), id)));
+    }
 }

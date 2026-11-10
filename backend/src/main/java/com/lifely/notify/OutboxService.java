@@ -18,6 +18,7 @@ public class OutboxService {
     public enum Channel { SMS, PUSH }
 
     public static final String PURPOSE_INVITE = "REQUEST_INVITE";
+    public static final String PURPOSE_REMIND = "REQUEST_REMIND";
     public static final String PURPOSE_STAFF_ALERT = "STAFF_ALERT";
     public static final String PURPOSE_APPT_CONFIRM = "APPT_CONFIRM";
     public static final String PURPOSE_APPT_REMINDER = "APPT_REMINDER";
@@ -137,6 +138,11 @@ public class OutboxService {
 
     public String inviteSms(String bloodCode, String hospital) {
         return "LIFELY: Cần máu " + bloodCode + " tại " + hospital + ". Mở ứng dụng để phản hồi: "
+                + frontendUrl + "/donor/requests." + DISCLAIMER;
+    }
+
+    public String remindSms(String bloodCode, String hospital) {
+        return "LIFELY: Nhắc lại - vẫn cần máu " + bloodCode + " tại " + hospital + ". Mở ứng dụng để phản hồi: "
                 + frontendUrl + "/donor/requests." + DISCLAIMER;
     }
 

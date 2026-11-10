@@ -258,6 +258,40 @@ public class MatchingService {
         return chosen.size();
     }
 
+    /**
+     * Nhắc lại những người hiến ĐÃ được mời nhưng chưa phản hồi (CONTACTED/PENDING): thông báo trong ứng dụng + SMS/push
+     * (chỉ khi kênh bật và người hiến đã đồng ý). Không mời thêm người mới. Trả số người được nhắc.
+     * Dedupe theo cửa sổ thời gian để bấm đúp không gửi trùng; giới hạn tần suất do DeliveryService kiểm soát.
+     */
+    @Transactional
+    public int remindAwaiting(BloodRequest r) {
+        long bucket = Instant.now().getEpochSecond() / 600;
+        String blood = r.getBloodType().getCode();
+        int reminded = 0;
+        for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE)) {
+            DonorProfile d = donorRepository.findById(m.getDonorId()).orElse(null);
+            if (d == null) {
+                continue;
+            }
+            boolean wantsNotifications = privacyRepository.findById(d.getUserId())
+                    .map(p -> p.isReceiveEmergencyNotifications()).orElse(true);
+            if (!wantsNotifications) {
+                continue;
+            }
+            notifications.notify(d.getUserId(), NotificationType.NEW_MATCH, "Nhắc lại: vẫn cần máu gần bạn",
+                    "Cần máu " + blood + " tại " + r.getHospitalName() + ". Hãy phản hồi nếu bạn có thể giúp.",
+                    "MATCH", m.getId());
+            outbox.enqueue(d.getUserId(), OutboxService.Channel.SMS, OutboxService.PURPOSE_REMIND, "REQUEST", r.getId(),
+                    outbox.remindSms(blood, r.getHospitalName()), "SMS:REMIND:" + m.getId() + ":" + bucket);
+            outbox.enqueuePush(d.getUserId(), OutboxService.PURPOSE_REMIND, "REQUEST", r.getId(),
+                    "Vẫn cần máu gần bạn", "Nhóm " + blood + " tại " + r.getHospitalName()
+                            + ". Mở LIFELY để xem và phản hồi.", "/donor/requests", "PUSH:REMIND:" + m.getId() + ":" + bucket);
+            event(m.getId(), "REMINDED", null);
+            reminded++;
+        }
+        return reminded;
+    }
+
     // ------------------------------------------------------------------ closing matches
 
     /** Hủy mọi match chưa kết thúc (kể cả đã accept) khi request bị hủy. */
