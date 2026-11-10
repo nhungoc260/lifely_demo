@@ -37,8 +37,8 @@ public class DeliveryService {
     private final MatchingService matchingService;
     private final NotifyProperties props;
 
-    /** Khoảng cách tối thiểu giữa hai lần nhắc của cùng một yêu cầu (tránh làm phiền người hiến). */
-    static final int REMIND_COOLDOWN_MINUTES = 10;
+    /** Mỗi người hiến chỉ được nhắc lại tối đa một lần trong khoảng này (tránh làm phiền). */
+    public static final int REMIND_COOLDOWN_MINUTES = 30;
 
     public DeliveryService(JdbcTemplate jdbc, RequestAccess access, MatchingService matchingService,
                            NotifyProperties props) {
@@ -87,26 +87,22 @@ public class DeliveryService {
     private static final java.util.Set<RequestStatus> REMINDABLE = java.util.EnumSet.of(
             RequestStatus.VERIFIED, RequestStatus.MATCHING, RequestStatus.DONORS_CONTACTED, RequestStatus.PARTIALLY_FULFILLED);
 
-    /** Nhắc lại người hiến đã được mời nhưng chưa phản hồi. Chỉ khi yêu cầu còn mở; tối đa 1 lần / 10 phút. Trả số người được nhắc. */
+    /**
+     * Nhắc lại người hiến đã được mời nhưng chưa phản hồi (matchId = null: tất cả; có matchId: đúng người đó).
+     * Chỉ khi yêu cầu còn mở. Người vừa được nhắc trong 30 phút qua bị bỏ qua. Trả số người được nhắc.
+     */
     @Transactional
-    public int remindAwaiting(UUID userId, UUID requestId) {
+    public int remindAwaiting(UUID userId, UUID requestId, UUID matchId) {
         BloodRequest r = access.requireViewable(userId, requestId);
         if (!REMINDABLE.contains(r.getStatus()) || !r.getDeadline().isAfter(Instant.now())) {
             throw AppException.badRequest("REQUEST_NOT_OPEN", "Yêu cầu không còn mở nên không thể nhắc lại");
         }
-        Integer recent = jdbc.queryForObject("""
-                SELECT count(*) FROM notification_outbox
-                 WHERE reference_type = 'REQUEST' AND reference_id = ? AND purpose = ?
-                   AND created_at > now() - make_interval(mins => ?)
-                """, Integer.class, requestId, OutboxService.PURPOSE_REMIND, REMIND_COOLDOWN_MINUTES);
-        Integer recentInApp = jdbc.queryForObject("""
-                SELECT count(*) FROM match_events e JOIN matches m ON m.id = e.match_id
-                 WHERE m.request_id = ? AND e.event_type = 'REMINDED' AND e.created_at > now() - make_interval(mins => ?)
-                """, Integer.class, requestId, REMIND_COOLDOWN_MINUTES);
-        if ((recent != null && recent > 0) || (recentInApp != null && recentInApp > 0)) {
-            throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "REMIND_TOO_SOON",
-                    "Bạn vừa nhắc xong. Vui lòng đợi " + REMIND_COOLDOWN_MINUTES + " phút rồi nhắc lại.");
+        int n = matchingService.remindAwaiting(r, matchId, java.time.Duration.ofMinutes(REMIND_COOLDOWN_MINUTES));
+        if (n == 0) {
+            throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "REMIND_TOO_SOON", matchId != null
+                    ? "Người này vừa được nhắc hoặc đã phản hồi. Vui lòng đợi " + REMIND_COOLDOWN_MINUTES + " phút rồi nhắc lại."
+                    : "Những người chưa phản hồi đều vừa được nhắc. Vui lòng đợi " + REMIND_COOLDOWN_MINUTES + " phút rồi nhắc lại.");
         }
-        return matchingService.remindAwaiting(r);
+        return n;
     }
 }

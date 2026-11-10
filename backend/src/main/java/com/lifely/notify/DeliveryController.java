@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -37,7 +38,9 @@ public class DeliveryController {
 
     @PostMapping("/api/requests/{id}/delivery/remind")
     @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
-    public ApiResponse<Map<String, Integer>> remind(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
-        return ApiResponse.ok("Đã nhắc lại người hiến chưa phản hồi", Map.of("reminded", service.remindAwaiting(user.getId(), id)));
+    public ApiResponse<Map<String, Integer>> remind(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                    @RequestParam(required = false) UUID matchId) {
+        return ApiResponse.ok("Đã nhắc lại người hiến chưa phản hồi",
+                Map.of("reminded", service.remindAwaiting(user.getId(), id, matchId)));
     }
 }

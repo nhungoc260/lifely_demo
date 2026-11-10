@@ -10,5 +10,6 @@ import java.util.UUID;
 public record RequestMatchEntry(UUID matchId, String label, double distanceKm, double matchingScore,
                                 MatchStatus status, Instant respondedAt, String donorName, String donorPhone,
                                 boolean facilityVerified, String verifiedByName,
-                                ContactResult contactResult, Instant contactResultAt) {
+                                ContactResult contactResult, Instant contactResultAt,
+                                Instant invitedAt, Instant lastRemindedAt, int remindCount) {
 }

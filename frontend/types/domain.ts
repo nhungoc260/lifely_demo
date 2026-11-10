@@ -224,6 +224,9 @@ export interface RequestMatchEntry {
   verifiedByName: string | null;
   contactResult: ContactResult;
   contactResultAt: string | null;
+  invitedAt: string | null;
+  lastRemindedAt: string | null;
+  remindCount: number;
 }
 
 export interface RequesterDashboard {

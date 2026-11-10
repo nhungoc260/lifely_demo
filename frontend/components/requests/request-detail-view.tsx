@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Radio, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BellRing, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Radio, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -23,10 +23,12 @@ import { toApiError } from "@/lib/api";
 import { formatDateTime, STATUS_LABEL, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-import { orgApi, requestApi } from "@/services";
+import { deliveryApi, orgApi, requestApi } from "@/services";
 import type { RequestChangedEvent, RequestStatus } from "@/types/domain";
 
 const FLOW: RequestStatus[] = ["CREATED", "PENDING_VERIFICATION", "VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED", "FULFILLED"];
+const REMINDABLE: RequestStatus[] = ["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"];
+const REMIND_COOLDOWN_MS = 30 * 60 * 1000;   // khớp backend: mỗi người chỉ được nhắc 1 lần / 30 phút
 const CANCELLABLE: RequestStatus[] = ["CREATED", "PENDING_VERIFICATION", "VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"];
 
 function Lifecycle({ status }: { status: RequestStatus }) {
@@ -57,6 +59,16 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
   const matches = useQuery(`req-matches:${id}`, () => requestApi.matches(id));
   const [cancelOpen, setCancelOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+  async function remindOne(matchId: string) {
+    setRemindingId(matchId);
+    try {
+      await deliveryApi.remind(id, matchId);
+      toast.success("Đã nhắc người hiến này");
+      matches.reload();
+    } catch (e) { toast.error(toApiError(e).message); }
+    finally { setRemindingId(null); }
+  }
   const { user } = useAuth();
   const isOrg = user?.roles.includes("ORGANIZATION") ?? false;
   const r = req.data;
@@ -141,6 +153,11 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                             <div>
                               <p className="font-medium">{m.donorName ?? m.label}</p>
                               <p className="text-xs text-muted-foreground">{m.distanceKm.toFixed(1)} km · {Math.round(m.matchingScore)}%{m.respondedAt ? ` · ${timeAgo(m.respondedAt)}` : ""}</p>
+                              {(m.status === "CONTACTED" || m.status === "PENDING") && (
+                                <p className="text-xs text-amber-700 dark:text-amber-300">
+                                  Chưa phản hồi{m.invitedAt ? ` · mời ${timeAgo(m.invitedAt)}` : ""}{m.remindCount > 0 && m.lastRemindedAt ? ` · đã nhắc ${m.remindCount} lần (gần nhất ${timeAgo(m.lastRemindedAt)})` : ""}
+                                </p>
+                              )}
                               {m.facilityVerified && (
                                 <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                                   <ShieldCheck className="size-3" aria-hidden />Đã được {m.verifiedByName ?? "cơ sở y tế"} xác nhận hiến máu
@@ -150,6 +167,15 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                             </div>
                             <div className="flex items-center gap-2">
                               <MatchBadge status={m.status} />
+                              {(m.status === "CONTACTED" || m.status === "PENDING") && REMINDABLE.includes(r.status) && (() => {
+                                const recently = !!m.lastRemindedAt && Date.now() - new Date(m.lastRemindedAt).getTime() < REMIND_COOLDOWN_MS;
+                                return (
+                                  <Button size="sm" variant="outline" onClick={() => remindOne(m.matchId)} disabled={recently || remindingId === m.matchId}
+                                    title={recently ? "Vừa được nhắc, chờ 30 phút để nhắc lại" : "Gửi lại thông báo cho người này"}>
+                                    {remindingId === m.matchId ? <Loader2 className="animate-spin" /> : <BellRing />} {recently ? "Đã nhắc" : "Nhắc"}
+                                  </Button>
+                                );
+                              })()}
                               {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} {isOrg ? "Xác nhận đã hiến (cơ sở y tế)" : "Đánh dấu đã hiến"}</Button>}
                               {m.status === "ACCEPTED" && <Button size="sm" variant="ghost" onClick={() => noShow(m.matchId)} disabled={busy === m.matchId}>Không đến</Button>}
                               {m.status === "COMPLETED" && isOrg && <Button size="sm" variant="ghost" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Xác nhận với tư cách cơ sở y tế</Button>}
@@ -162,7 +188,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
               </Card>
             </div>
 
-            <DeliveryCard requestId={r.id} canRetry={isOrg} canRemind={["VERIFIED", "MATCHING", "DONORS_CONTACTED", "PARTIALLY_FULFILLED"].includes(r.status)} />
+            <DeliveryCard requestId={r.id} canRetry={isOrg} canRemind={REMINDABLE.includes(r.status)} />
 
             <ShareRequest r={r} />
 

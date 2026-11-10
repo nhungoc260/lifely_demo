@@ -260,15 +260,29 @@ public class MatchingService {
 
     /**
      * Nhắc lại những người hiến ĐÃ được mời nhưng chưa phản hồi (CONTACTED/PENDING): thông báo trong ứng dụng + SMS/push
-     * (chỉ khi kênh bật và người hiến đã đồng ý). Không mời thêm người mới. Trả số người được nhắc.
-     * Dedupe theo cửa sổ thời gian để bấm đúp không gửi trùng; giới hạn tần suất do DeliveryService kiểm soát.
+     * (chỉ khi kênh bật và người hiến đã đồng ý). Không mời thêm người mới.
+     * onlyMatchId != null: chỉ nhắc đúng người đó. Người vừa được nhắc trong khoảng {@code cooldown} bị bỏ qua để không làm phiền.
+     * Trả số người thực sự được nhắc.
      */
     @Transactional
-    public int remindAwaiting(BloodRequest r) {
+    public int remindAwaiting(BloodRequest r, UUID onlyMatchId, Duration cooldown) {
         long bucket = Instant.now().getEpochSecond() / 600;
+        Instant cutoff = Instant.now().minus(cooldown);
         String blood = r.getBloodType().getCode();
+        List<Match> waiting = matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE).stream()
+                .filter(m -> onlyMatchId == null || m.getId().equals(onlyMatchId)).toList();
+        Map<UUID, Instant> last = new HashMap<>();
+        if (!waiting.isEmpty()) {
+            for (Object[] row : eventRepository.remindStats(waiting.stream().map(Match::getId).toList())) {
+                last.put((UUID) row[0], (Instant) row[2]);
+            }
+        }
         int reminded = 0;
-        for (Match m : matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE)) {
+        for (Match m : waiting) {
+            Instant lastAt = last.get(m.getId());
+            if (lastAt != null && lastAt.isAfter(cutoff)) {
+                continue;   // vừa được nhắc, không gửi nữa
+            }
             DonorProfile d = donorRepository.findById(m.getDonorId()).orElse(null);
             if (d == null) {
                 continue;

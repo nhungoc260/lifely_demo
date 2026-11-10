@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -358,8 +359,17 @@ public class MatchService {
         access.requireViewable(user.getId(), requestId);
         List<Match> matches = matchRepository.findByRequestIdOrderByMatchingScoreDesc(requestId);
         List<RequestMatchEntry> out = new ArrayList<>();
+        // Thống kê nhắc lại theo từng người (một truy vấn cho cả danh sách).
+        Map<UUID, Object[]> remind = new HashMap<>();
+        if (!matches.isEmpty()) {
+            for (Object[] row : eventRepository.remindStats(matches.stream().map(Match::getId).toList())) {
+                remind.put((UUID) row[0], row);
+            }
+        }
         for (int i = 0; i < matches.size(); i++) {
-            out.add(requesterEntry(matches.get(i), i + 1));
+            Match m = matches.get(i);
+            Object[] st = remind.get(m.getId());
+            out.add(requesterEntry(m, i + 1, st == null ? 0 : ((Number) st[1]).intValue(), st == null ? null : (Instant) st[2]));
         }
         return out;
     }
@@ -401,6 +411,10 @@ public class MatchService {
     }
 
     private RequestMatchEntry requesterEntry(Match m, int rank) {
+        return requesterEntry(m, rank, 0, null);
+    }
+
+    private RequestMatchEntry requesterEntry(Match m, int rank, int remindCount, Instant lastRemindedAt) {
         // Người hiến đang hoạt động trong yêu cầu (chờ, đã mời, đã nhận lời, đã hiến) đã đồng ý cho bên có quyền xem liên hệ trực tiếp.
         boolean reveal = contactable(m.getStatus());
         String name = null;
@@ -417,6 +431,6 @@ public class MatchService {
         return new RequestMatchEntry(m.getId(), rank > 0 ? "Người hiến #" + rank : "Người hiến", m.getDistanceKm().doubleValue(),
                 m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone,
                 badge.facilityVerified(), badge.verifiedByName(),
-                m.getContactResult(), m.getContactResultAt());
+                m.getContactResult(), m.getContactResultAt(), m.getContactedAt(), lastRemindedAt, remindCount);
     }
 }

@@ -81,7 +81,7 @@ export const requestApi = {
 export const deliveryApi = {
   summary: (id: string) => get<DeliverySummary>(`/api/requests/${id}/delivery`),
   retry: (id: string) => post<{ requeued: number }>(`/api/requests/${id}/delivery/retry`),
-  remind: (id: string) => post<{ reminded: number }>(`/api/requests/${id}/delivery/remind`),
+  remind: (id: string, matchId?: string) => post<{ reminded: number }>(`/api/requests/${id}/delivery/remind${matchId ? `?matchId=${matchId}` : ""}`),
 };
 
 export const consentApi = {

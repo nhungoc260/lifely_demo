@@ -139,7 +139,7 @@ export function DeliveryCard({ requestId, canRetry, canRemind = false }: { reque
               {canRemind && waiting > 0 && (
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <Button size="sm" onClick={remind} disabled={reminding}>{reminding ? <Loader2 className="animate-spin" /> : <BellRing />} Nhắc lại {waiting} người chưa phản hồi</Button>
-                  <span className="text-xs text-muted-foreground">Gửi lại thông báo cho người đã được mời. Có thể nhắc mỗi 10 phút một lần.</span>
+                  <span className="text-xs text-muted-foreground">Gửi lại thông báo cho người đã được mời. Người vừa được nhắc trong 30 phút qua sẽ được bỏ qua để không làm phiền.</span>
                 </div>
               )}
               {d.failed > 0 && canRetry && (
