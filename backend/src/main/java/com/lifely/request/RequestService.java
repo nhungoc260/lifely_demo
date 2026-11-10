@@ -131,6 +131,11 @@ public class RequestService {
         Organization org = null;
         if (user.hasRole(Role.ORGANIZATION)) {
             org = organizationRepository.findForUser(user.getId()).filter(Organization::isVerified).orElse(null);
+            // Tài khoản tổ chức chỉ tạo yêu cầu cho cơ sở của mình; không để dữ liệu cơ sở khác bị ghi đè âm thầm.
+            if (org != null && dto.organizationId() != null && !dto.organizationId().equals(org.getId())) {
+                throw AppException.badRequest("INVALID_ORGANIZATION",
+                        "Tài khoản tổ chức chỉ tạo yêu cầu cho cơ sở của mình");
+            }
         } else if (dto.organizationId() != null) {
             org = organizationRepository.findById(dto.organizationId()).filter(Organization::isVerified)
                     .orElseThrow(() -> AppException.badRequest("INVALID_ORGANIZATION",

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,7 +22,7 @@ import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
 import { URGENCY_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { publicApi, requestApi } from "@/services";
+import { orgApi, publicApi, requestApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
 import { BLOOD_TYPES } from "@/types/domain";
 
@@ -62,6 +62,9 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
   const router = useRouter();
   const { user } = useAuth();
   const orgs = useQuery("hospitals", publicApi.organizations);
+  // Tài khoản tổ chức: luôn dùng cơ sở của chính mình (backend cũng ép như vậy).
+  const isOrg = basePath === "/organization";
+  const myOrg = useQuery(isOrg ? "my-org-for-request" : null, orgApi.me);
   const [preview, setPreview] = useState<Values | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Một khóa cho mỗi lần mở biểu mẫu: bấm đúp, nhiều tab hay retry mạng không tạo yêu cầu thứ hai.
@@ -88,6 +91,19 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
       setValue("longitude", o.longitude, { shouldValidate: true });
     }
   }
+
+  useEffect(() => {
+    const o = myOrg.data;
+    if (!isOrg || !o || !o.verificationStatus || o.verificationStatus !== "VERIFIED") return;
+    setValue("organizationId", o.id);
+    setValue("hospitalName", o.name, { shouldValidate: true });
+    setValue("city", o.city, { shouldValidate: true });
+    setValue("district", o.district ?? "");
+    if (o.latitude != null && o.longitude != null) {
+      setValue("latitude", o.latitude, { shouldValidate: true });
+      setValue("longitude", o.longitude, { shouldValidate: true });
+    }
+  }, [isOrg, myOrg.data, setValue]);
 
   async function submit(v: Values) {
     setSubmitting(true);
@@ -181,12 +197,16 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         <Card>
           <CardHeader><CardTitle>Bệnh viện / địa điểm</CardTitle></CardHeader>
           <CardContent className="space-y-5">
-            <Field label="Bệnh viện đã xác minh" htmlFor="org" hint="Chọn bệnh viện đã xác minh sẽ đặt đúng vị trí cho bạn và có thể giúp xác minh nhanh hơn.">
-              <Select id="org" value={orgId} onChange={(e) => pickHospital(e.target.value)}>
-                <option value="">Địa điểm khác (nhập thủ công)</option>
-                {orgs.data?.map((o) => <option key={o.id} value={o.id}>{o.name}{o.district ? ` – ${o.district}` : ""}</option>)}
-              </Select>
-            </Field>
+            {isOrg && orgId ? (
+              <p className="text-sm text-muted-foreground">Yêu cầu sẽ được tạo cho cơ sở của bạn: <span className="font-medium text-foreground">{myOrg.data?.name}</span>.</p>
+            ) : (
+              <Field label="Bệnh viện đã xác minh" htmlFor="org" hint="Chọn bệnh viện đã xác minh sẽ đặt đúng vị trí cho bạn và có thể giúp xác minh nhanh hơn.">
+                <Select id="org" value={orgId} onChange={(e) => pickHospital(e.target.value)}>
+                  <option value="">Địa điểm khác (nhập thủ công)</option>
+                  {orgs.data?.map((o) => <option key={o.id} value={o.id}>{o.name}{o.district ? ` – ${o.district}` : ""}</option>)}
+                </Select>
+              </Field>
+            )}
             <Field label="Tên bệnh viện / địa điểm" htmlFor="hospitalName" error={errors.hospitalName?.message}><Input id="hospitalName" readOnly={!!orgId} {...register("hospitalName")} aria-invalid={!!errors.hospitalName} /></Field>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" readOnly={!!orgId} {...register("city")} /></Field>
