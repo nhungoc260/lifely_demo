@@ -75,7 +75,7 @@ export default function OrganizationStats() {
             </div>
           </>
         )}
-      <TravelSupportSummary />
+      <TravelSupportSummary onStats />
       </div>
     </>
   );

@@ -87,11 +87,17 @@ public class AbuseGuardService {
     /** Lý do không cho ghi nhận hỗ trợ cho lịch này (có cờ HIGH chưa xử lý), hoặc null nếu được phép. */
     @Transactional(readOnly = true)
     public String supportBlockReason(UUID appointmentId) {
+        return supportBlockReason("APPOINTMENT", appointmentId);
+    }
+
+    /** Như trên nhưng cho mọi loại đối tượng (APPOINTMENT: lịch hiến, MATCH: lượt hiến khẩn cấp). */
+    @Transactional(readOnly = true)
+    public String supportBlockReason(String subjectType, UUID subjectId) {
         List<String> rows = jdbc.queryForList("""
                 SELECT detail FROM abuse_flags
-                 WHERE subject_type = 'APPOINTMENT' AND subject_id = ? AND severity = 'HIGH' AND status = 'OPEN'
+                 WHERE subject_type = ? AND subject_id = ? AND severity = 'HIGH' AND status = 'OPEN'
                  ORDER BY created_at LIMIT 1
-                """, String.class, appointmentId);
+                """, String.class, subjectType, subjectId);
         return rows.isEmpty() ? null : rows.get(0);
     }
 

@@ -4,7 +4,7 @@ import type { AbuseAutoAction, AbuseSeverity } from "@/types/domain";
 export const ABUSE_RULE_CODES = [
   "PHONE_SHARED", "REQUEST_BURST", "REQUEST_FREQUENT", "REPEATED_CANCEL", "NEW_ACCOUNT_CRITICAL", "HIGH_UNITS",
   "HOME_FAR_FROM_HOSPITAL", "DONATION_TOO_SOON", "DONATED_BEFORE_START", "DONATED_TOO_FAST", "SUPPORT_OVER_LIMIT",
-  "ORG_SUPPORT_BURST",
+  "ORG_SUPPORT_BURST", "MATCH_COMPLETED_TOO_FAST",
 ] as const;
 
 export const RULE_LABEL: Record<(typeof ABUSE_RULE_CODES)[number], { title: string; why: string }> = {
@@ -19,6 +19,7 @@ export const RULE_LABEL: Record<(typeof ABUSE_RULE_CODES)[number], { title: stri
   DONATED_BEFORE_START: { title: "Xác nhận đã hiến trước giờ bắt đầu", why: "Không thể hiến trước khung giờ: nghi xác nhận khống." },
   DONATED_TOO_FAST: { title: "Xác nhận đã hiến quá nhanh", why: "Khám sàng lọc và lấy máu cần hơn 20 phút." },
   SUPPORT_OVER_LIMIT: { title: "Hỗ trợ đi lại vượt mức quy định", why: "Quy định tối đa 50.000đ mỗi lần hiến." },
+  MATCH_COMPLETED_TOO_FAST: { title: "Xác nhận đã hiến quá sớm sau khi nhận lời (khẩn cấp)", why: "Cần di chuyển, khám sàng lọc và lấy máu: dưới 5 phút là không thể, dưới 20 phút là đáng ngờ." },
   ORG_SUPPORT_BURST: { title: "Cơ sở ghi nhận hỗ trợ dồn dập", why: "Từ 20 lượt trong 1 giờ, cần đối chiếu sổ sách." },
 };
 
@@ -34,4 +35,4 @@ export const AUTO_ACTION_LABEL: Record<AbuseAutoAction, string> = {
 
 export const SEVERITY_LABEL: Record<AbuseSeverity, string> = { HIGH: "Cao", MEDIUM: "Cần xem" };
 
-export const SUBJECT_LABEL = { REQUEST: "Yêu cầu máu", APPOINTMENT: "Lịch hiến", ORGANIZATION: "Cơ sở" } as const;
+export const SUBJECT_LABEL = { REQUEST: "Yêu cầu máu", APPOINTMENT: "Lịch hiến", MATCH: "Lượt hiến khẩn cấp", ORGANIZATION: "Cơ sở" } as const;

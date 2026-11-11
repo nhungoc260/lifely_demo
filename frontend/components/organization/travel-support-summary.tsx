@@ -17,7 +17,7 @@ function monthLabel(ym: string): string {
 }
 
 /** Theo dõi chi phí hỗ trợ đi lại của cơ sở: số lượt đã chi, tổng tiền, theo tháng, số lượt chưa ghi nhận. */
-export function TravelSupportSummary() {
+export function TravelSupportSummary({ onStats = false }: { onStats?: boolean } = {}) {
   const q = useQuery("org-travel-support", orgApi.travelSupport);
   const d = q.data;
   const maxTotal = d ? Math.max(1, ...d.months.map((m) => m.totalVnd)) : 1;
@@ -30,10 +30,10 @@ export function TravelSupportSummary() {
         : d && (
           <>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <StatCard label="Lượt hiến đã xác nhận" value={d.donated} icon={Users} />
-              <StatCard label="Đã chi hỗ trợ" value={d.paid} icon={HandCoins} accent hint={d.policyVnd > 0 ? `Mức công bố ${formatVnd(d.policyVnd)}/lần` : "Chưa công bố mức hỗ trợ"} />
-              <StatCard label="Tổng tiền đã chi" value={formatVnd(d.paidTotalVnd)} icon={HandCoins} hint="Do cơ sở tự ghi nhận" />
-              <StatCard label="Chưa ghi nhận" value={d.unpaid} icon={CalendarDays} hint={d.unpaid > 0 && d.policyVnd > 0 ? "Vào Lịch hiến để ghi nhận" : undefined} />
+              <StatCard label="Lượt hiến đã xác nhận" value={d.donated} icon={Users} href="/organization/donations" />
+              <StatCard label="Đã chi hỗ trợ" value={d.paid} icon={HandCoins} accent hint={d.policyVnd > 0 ? `Mức công bố ${formatVnd(d.policyVnd)}/lần` : "Chưa công bố mức hỗ trợ"} href="/organization/appointments" />
+              <StatCard label="Tổng tiền đã chi" value={formatVnd(d.paidTotalVnd)} icon={HandCoins} hint="Do cơ sở tự ghi nhận" href={onStats ? undefined : "/organization/stats"} />
+              <StatCard label="Chưa ghi nhận" value={d.unpaid} icon={CalendarDays} hint={d.unpaid > 0 && d.policyVnd > 0 ? "Vào Lịch hiến để ghi nhận" : undefined} href="/organization/appointments" />
             </div>
             <Card className="mt-4">
               <CardHeader><CardTitle>Tiền hỗ trợ đã chi theo tháng (6 tháng gần nhất)</CardTitle></CardHeader>
@@ -49,7 +49,8 @@ export function TravelSupportSummary() {
                     ))}
                   </ul>
                 )}
-                <p className="mt-4 text-xs text-muted-foreground">Gửi xe máy tại cơ sở: {d.parkingFeeVnd == null ? "chưa cập nhật" : d.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(d.parkingFeeVnd)}. Chỉnh mức hỗ trợ và phí gửi xe ở <Link href="/organization/profile" className="font-medium text-primary underline">Hồ sơ tổ chức</Link>. LIFELY chỉ ghi nhận, không thu hay chuyển tiền.</p>
+                <p className="mt-4 text-sm">Trong đó theo <strong>yêu cầu máu khẩn cấp</strong>: {d.donatedUrgent} lượt hiến đã xác nhận, {d.paidUrgent} lượt đã chi hỗ trợ. Mở yêu cầu, ở danh sách người hiến đã hiến, bấm “Đã chi hỗ trợ đi lại”.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Gửi xe máy tại cơ sở: {d.parkingFeeVnd == null ? "chưa cập nhật" : d.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(d.parkingFeeVnd)}. Chỉnh mức hỗ trợ và phí gửi xe ở <Link href="/organization/profile" className="font-medium text-primary underline">Hồ sơ tổ chức</Link>. LIFELY chỉ ghi nhận, không thu hay chuyển tiền.</p>
               </CardContent>
             </Card>
           </>

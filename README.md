@@ -27,7 +27,7 @@ LIFELY không tự gọi điện, không thay thế bệnh viện và không quy
 - **Người hiến**: đặt/hủy lịch, nhắc lịch, theo dõi chỉ số sức khỏe tùy chọn, kiểm soát quyền riêng tư.
 - **Chi phí và hỗ trợ đi lại**:
   - Người hiến và người cần máu xem quãng đường, thời gian và chi phí tới bệnh viện bằng xe máy, Grab, Be, Xanh SM (giá ước tính, không phải giá chốt).
-  - Cơ sở y tế công bố mức hỗ trợ đi lại (mặc định 50.000đ/lần hiến) và phí gửi xe, rồi ghi nhận khi đã chi. LIFELY không thu hay chuyển tiền.
+  - Cơ sở y tế công bố mức hỗ trợ đi lại (mặc định 50.000đ/lần hiến) và phí gửi xe, rồi ghi nhận khi đã chi, cho cả lịch hiến đặt trước và yêu cầu máu khẩn cấp gắn cơ sở. Yêu cầu của gia đình (không gắn cơ sở) không có khoản này. LIFELY không thu hay chuyển tiền.
   - Admin theo dõi tổng hợp theo từng cơ sở. Hằng số giá và nguồn nằm ở `frontend/lib/travel-cost.ts`.
 - **Giám sát bất thường**: yêu cầu được duyệt tự động; ca đáng ngờ được đưa vào hàng đợi để admin xem (`/admin/abuse`).
 - **Bản đồ**: bệnh viện và yêu cầu gần bạn; không hiển thị vị trí người hiến.
@@ -40,7 +40,7 @@ LIFELY không tự gọi điện, không thay thế bệnh viện và không quy
 |---|---|
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, Leaflet (OpenStreetMap), Recharts, STOMP.js, PWA |
 | Backend | Java 21, Spring Boot 3.5, Spring Data JPA, Spring WebSocket (STOMP), Springdoc OpenAPI |
-| Cơ sở dữ liệu | PostgreSQL 16, Flyway (migration V1–V21) |
+| Cơ sở dữ liệu | PostgreSQL 16, Flyway (migration V1–V22) |
 | Triển khai | Docker, Render (backend), Vercel (frontend) |
 | Kiểm thử | JUnit, Spring Boot Test, Vitest |
 

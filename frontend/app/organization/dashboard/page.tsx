@@ -58,11 +58,11 @@ export default function OrganizationDashboard() {
             </Card>
           )}
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
-            <StatCard label="Xác minh" value={me.data ? <OrgStatusBadge status={me.data.verificationStatus} /> : "–"} icon={BadgeCheck} loading={me.initialLoading} />
-            <StatCard label="Yêu cầu đang hoạt động" value={dash.data?.activeRequests ?? 0} icon={Activity} accent loading={dash.initialLoading} />
-            <StatCard label="Yêu cầu nguy kịch" value={dash.data?.criticalRequests ?? 0} icon={AlertOctagon} loading={dash.initialLoading} />
-            <StatCard label="Yêu cầu đã hoàn tất" value={dash.data?.completedRequests ?? 0} icon={CheckCircle2} loading={dash.initialLoading} />
-            <StatCard label="Tỷ lệ phản hồi" value={`${dash.data?.responseRate ?? 0}%`} icon={Percent} loading={dash.initialLoading} hint="Người hiến máu được liên hệ đã trả lời" />
+            <StatCard label="Xác minh" value={me.data ? <OrgStatusBadge status={me.data.verificationStatus} /> : "–"} icon={BadgeCheck} loading={me.initialLoading} href="/organization/profile" />
+            <StatCard label="Yêu cầu đang hoạt động" value={dash.data?.activeRequests ?? 0} icon={Activity} accent loading={dash.initialLoading} href="/organization/requests" />
+            <StatCard label="Yêu cầu nguy kịch" value={dash.data?.criticalRequests ?? 0} icon={AlertOctagon} loading={dash.initialLoading} href="/organization/requests" />
+            <StatCard label="Yêu cầu đã hoàn tất" value={dash.data?.completedRequests ?? 0} icon={CheckCircle2} loading={dash.initialLoading} href="/organization/requests" />
+            <StatCard label="Tỷ lệ phản hồi" value={`${dash.data?.responseRate ?? 0}%`} icon={Percent} loading={dash.initialLoading} hint="Người hiến máu được liên hệ đã trả lời" href="/organization/stats" />
           </div>
 
           <section className="mt-7 md:mt-10" aria-labelledby="org-open">

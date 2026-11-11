@@ -11,5 +11,5 @@ public record RequestMatchEntry(UUID matchId, String label, double distanceKm, d
                                 MatchStatus status, Instant respondedAt, String donorName, String donorPhone,
                                 boolean facilityVerified, String verifiedByName,
                                 ContactResult contactResult, Instant contactResultAt,
-                                Instant invitedAt, Instant lastRemindedAt, int remindCount) {
+                                Instant invitedAt, Instant lastRemindedAt, int remindCount, Integer travelSupportPaidVnd) {
 }

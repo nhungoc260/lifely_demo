@@ -136,6 +136,11 @@ export interface DonorMatch {
   description: string | null;
   contactPhone: string | null;
   explanation: MatchExplanation | null;
+  /** Yêu cầu có gắn cơ sở y tế hay không; nếu không, người hiến tự chịu chi phí đi lại. */
+  facilityLinked: boolean;
+  facilityTravelSupportVnd: number | null;
+  facilityParkingFeeVnd: number | null;
+  travelSupportPaidVnd: number | null;
 }
 
 export interface BloodRequest {
@@ -227,6 +232,7 @@ export interface RequestMatchEntry {
   invitedAt: string | null;
   lastRemindedAt: string | null;
   remindCount: number;
+  travelSupportPaidVnd: number | null;
 }
 
 export interface RequesterDashboard {
@@ -421,11 +427,12 @@ export interface OrgAppointment {
   startsAt: string; handledAt: string | null; createdAt: string;
   travelSupportPaidVnd: number | null; travelSupportVnd: number;
 }
+export interface PayTravelSupportResult { matchId: string; amountVnd: number }
 export type AbuseSeverity = "MEDIUM" | "HIGH";
 export type AbuseAutoAction = "NONE" | "AUTO_CANCELLED" | "SUPPORT_BLOCKED";
 export type AbuseStatus = "OPEN" | "DISMISSED" | "CONFIRMED";
 export interface AbuseFlagRow {
-  id: string; subjectType: "REQUEST" | "APPOINTMENT" | "ORGANIZATION"; subjectId: string; subjectLabel: string | null;
+  id: string; subjectType: "REQUEST" | "APPOINTMENT" | "ORGANIZATION" | "MATCH"; subjectId: string; subjectLabel: string | null;
   ruleCode: string; severity: AbuseSeverity; autoAction: AbuseAutoAction; detail: string; status: AbuseStatus;
   createdAt: string; reviewedAt: string | null; reviewNote: string | null;
 }
@@ -433,13 +440,19 @@ export interface AbuseOverview { open: number; openHigh: number; autoActions: nu
 export interface TravelSupportRow {
   organizationId: string; organizationName: string; city: string | null; policyVnd: number; parkingFeeVnd: number | null;
   donated: number; paid: number; unpaid: number; paidTotalVnd: number;
+  /** Trong đó theo yêu cầu máu khẩn cấp (không phải lịch hiến đặt trước). */
+  donatedUrgent: number; paidUrgent: number;
 }
 export interface OrgTravelSupportMonth { month: string; paid: number; totalVnd: number }
 export interface OrgTravelSupport {
   policyVnd: number; parkingFeeVnd: number | null; donated: number; paid: number; unpaid: number; paidTotalVnd: number;
+  donatedUrgent: number; paidUrgent: number;
   months: OrgTravelSupportMonth[];
 }
-export interface TravelSupportReport { rows: TravelSupportRow[]; donated: number; paid: number; unpaid: number; paidTotalVnd: number }
+export interface TravelSupportReport {
+  rows: TravelSupportRow[]; donated: number; paid: number; unpaid: number; paidTotalVnd: number;
+  donatedUrgent: number; paidUrgent: number;
+}
 export type AppointmentAction = "CHECK_IN" | "SCREEN_PASS" | "DEFER" | "NO_SHOW" | "DONATED";
 
 // ---- Đồng ý nhận thông báo theo kênh & theo dõi phát thông báo

@@ -1,10 +1,12 @@
 package com.lifely.matching;
 
 import com.lifely.auth.AuthUser;
+import com.lifely.appointment.AppointmentDtos.PayTravelSupportRequest;
 import com.lifely.common.ApiResponse;
 import com.lifely.matching.dto.DonorMatchResponse;
 import com.lifely.matching.dto.RequestMatchEntry;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,11 @@ import java.util.UUID;
 public class MatchController {
 
     private final MatchService service;
+    private final MatchSupportService supportService;
 
-    public MatchController(MatchService service) {
+    public MatchController(MatchService service, MatchSupportService supportService) {
         this.service = service;
+        this.supportService = supportService;
     }
 
     @GetMapping("/api/donors/me/matches")
@@ -51,6 +55,14 @@ public class MatchController {
     @PreAuthorize("hasAnyRole('REQUESTER','ORGANIZATION','ADMIN')")
     public ApiResponse<RequestMatchEntry> complete(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id) {
         return ApiResponse.ok("Đã ghi nhận lần hiến máu", service.complete(user, id));
+    }
+
+    /** Cơ sở ghi nhận đã chi hỗ trợ đi lại cho lượt hiến khẩn cấp (body trống = mức cơ sở đã công bố). */
+    @PostMapping("/api/matches/{id}/travel-support")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<MatchSupportService.Result> payTravelSupport(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                                    @Valid @RequestBody(required = false) PayTravelSupportRequest req) {
+        return ApiResponse.ok("Đã ghi nhận hỗ trợ đi lại", supportService.pay(user, id, req == null ? null : req.amountVnd()));
     }
 
     @PostMapping("/api/matches/{id}/no-show")

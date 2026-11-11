@@ -46,6 +46,10 @@ public class Match {
     @Column(name = "responded_at")
     private Instant respondedAt;
 
+    /** Cơ sở đã chi hỗ trợ đi lại cho lượt hiến này (đồng); chỉ đọc, ghi qua MatchSupportService. */
+    @Column(name = "travel_support_paid_vnd", insertable = false, updatable = false)
+    private Integer travelSupportPaidVnd;
+
     /** Kết quả liên hệ thủ công do nhân viên ghi nhận (xem {@link ContactResult}). */
     @Enumerated(EnumType.STRING)
     @Column(name = "contact_result", nullable = false)

@@ -32,7 +32,7 @@ function Segmented<T extends string>({ value, onChange, items, label }: {
 }
 
 /** Chi phí và thời gian đi tới nơi hiến máu: xe máy cá nhân (xăng + gửi xe) so với GrabBike / GrabCar. Chỉ để tham khảo. */
-export function TravelCostCard({ distanceKm, hospitalName, district, city, supportVnd, parkingFee, bare, audience = "donor" }: {
+export function TravelCostCard({ distanceKm, hospitalName, district, city, supportVnd, parkingFee, bare, audience = "donor", noFacility }: {
   distanceKm: number; hospitalName: string; district?: string | null; city?: string | null;
   /** Mức hỗ trợ đi lại do cơ sở công bố (đồng). Bỏ trống = dùng mức tối đa theo quy định, chưa phải cam kết của cơ sở này. */
   supportVnd?: number | null;
@@ -42,14 +42,16 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
   bare?: boolean;
   /** requester: người cần máu, chỉ xem quãng đường và cước; không có hỗ trợ đi lại. */
   audience?: "donor" | "requester";
+  /** Yêu cầu của gia đình, không gắn cơ sở y tế: không có khoản hỗ trợ đi lại nào được ghi nhận. */
+  noFacility?: boolean;
 }) {
   const donor = audience === "donor";
   const [roundTrip, setRoundTrip] = useState(true);
   const [vehicle, setVehicle] = useState<"small" | "mid">("small");
   const preset = VEHICLE_PRESETS.find((p) => p.id === vehicle) ?? VEHICLE_PRESETS[0];
   const est = useMemo(
-    () => estimateTravel({ straightKm: distanceKm, roundTrip, litersPer100Km: preset.litersPer100Km, supportVnd, parkingFee }),
-    [distanceKm, roundTrip, preset.litersPer100Km, supportVnd, parkingFee],
+    () => estimateTravel({ straightKm: distanceKm, roundTrip, litersPer100Km: preset.litersPer100Km, supportVnd: noFacility ? 0 : supportVnd, parkingFee }),
+    [distanceKm, roundTrip, preset.litersPer100Km, supportVnd, parkingFee, noFacility],
   );
   const motor = est.options.find((o) => o.mode === "motorbike")!;
   const grabBike = est.options.find((o) => o.mode === "grabBike")!;
@@ -94,7 +96,9 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
           <Wallet className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
           <div className="space-y-1">
             <p className="font-semibold">Ai chi trả tiền đi lại?</p>
-            {supportVnd === 0
+            {noFacility
+              ? <p>Yêu cầu này do gia đình đăng, <strong>không gắn cơ sở y tế</strong> nên không có khoản hỗ trợ đi lại nào được ghi nhận. Bạn tự chịu chi phí, hoặc tự thỏa thuận trực tiếp với người nhà; LIFELY không thu, không chi trả và không đối soát khoản này.</p>
+              : supportVnd === 0
               ? <p>Bạn tự trả. <strong>{hospitalName}</strong> hiện không công bố khoản hỗ trợ đi lại cho người hiến máu.</p>
               : supportVnd != null
                 ? <p>Bạn tự trả trước. <strong>{hospitalName}</strong> công bố <strong>hỗ trợ tiền đi lại {formatVnd(supportVnd)}/lần hiến</strong> (tiền mặt, do cơ sở chi), cùng suất ăn nhẹ và quà tặng theo lượng máu hiến. Cột “sau hỗ trợ” là số tiền bạn thực tế tự chịu.</p>

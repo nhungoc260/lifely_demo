@@ -45,6 +45,10 @@ public class AbuseAdminService {
                                             JOIN organizations o ON o.id = s.organization_id
                                             JOIN donor_profiles dp ON dp.id = a.donor_id JOIN users u ON u.id = dp.user_id
                                            WHERE a.id = f.subject_id)
+                     WHEN 'MATCH' THEN (SELECT 'Lượt hiến khẩn cấp của ' || u.full_name || ' tại ' || r.hospital_name
+                                            FROM matches m JOIN blood_requests r ON r.id = m.request_id
+                                            JOIN donor_profiles dp ON dp.id = m.donor_id JOIN users u ON u.id = dp.user_id
+                                           WHERE m.id = f.subject_id)
                      WHEN 'ORGANIZATION' THEN (SELECT 'Cơ sở ' || o.name FROM organizations o WHERE o.id = f.subject_id)
                    END AS label
               FROM abuse_flags f

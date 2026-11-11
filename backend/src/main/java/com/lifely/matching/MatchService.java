@@ -1,5 +1,7 @@
 package com.lifely.matching;
 
+import com.lifely.abuse.AbuseGuardService;
+import com.lifely.abuse.AbuseRules;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
@@ -17,12 +19,15 @@ import com.lifely.matching.dto.RequestMatchEntry;
 import com.lifely.notification.NotificationService;
 import com.lifely.notification.NotificationType;
 import com.lifely.notify.StaffAlertService;
+import com.lifely.organization.Organization;
+import com.lifely.organization.OrganizationRepository;
 import com.lifely.request.*;
 import com.lifely.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -49,6 +54,8 @@ public class MatchService {
     private final DonorVerificationService verification;
     private final InventoryService inventory;
     private final StaffAlertService staffAlerts;
+    private final OrganizationRepository organizations;
+    private final AbuseGuardService abuseGuard;
 
     public MatchService(MatchRepository matchRepository, MatchEventRepository eventRepository,
                         DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
@@ -56,7 +63,7 @@ public class MatchService {
                         MatchingService matchingService, NotificationService notifications,
                         UserRepository userRepository, AuditService audit, EntityManager entityManager,
                         DonorVerificationService verification, InventoryService inventory,
-                        StaffAlertService staffAlerts) {
+                        StaffAlertService staffAlerts, OrganizationRepository organizations, AbuseGuardService abuseGuard) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.donorRepository = donorRepository;
@@ -72,6 +79,8 @@ public class MatchService {
         this.verification = verification;
         this.inventory = inventory;
         this.staffAlerts = staffAlerts;
+        this.organizations = organizations;
+        this.abuseGuard = abuseGuard;
     }
 
     /**
@@ -183,6 +192,15 @@ public class MatchService {
         first.setStatus(MatchStatus.COMPLETED);
         matchRepository.save(first);
         matchingService.event(first.getId(), "COMPLETED", null);
+        if (first.getRespondedAt() != null) {
+            // Chống lạm dụng: xác nhận "đã hiến" quá sớm sau khi nhận lời thì không thể là hiến thật.
+            AbuseRules.Finding fast = AbuseRules.matchCompletedTooFast(
+                    Duration.between(first.getRespondedAt(), Instant.now()).toMillis() / 60_000.0);
+            if (fast != null) {
+                abuseGuard.recordFlag("MATCH", first.getId(), fast,
+                        fast.severity() == AbuseRules.Severity.HIGH ? "SUPPORT_BLOCKED" : "NONE");
+            }
+        }
 
         DonorProfile donor = donorOf(first);
         DonationHistory h = new DonationHistory();
@@ -399,6 +417,7 @@ public class MatchService {
 
     private DonorMatchResponse toDonorResponse(Match m, BloodRequest r, DonorProfile donor) {
         boolean showContact = m.getStatus() == MatchStatus.ACCEPTED || m.getStatus() == MatchStatus.COMPLETED;
+        Organization org = r.getOrganizationId() == null ? null : organizations.findById(r.getOrganizationId()).orElse(null);
         MatchExplanation explanation = donor.hasLocation()
                 ? MatchExplanation.from(matchingService.score(donor, r, Instant.now()),
                 donor.getAvailabilityStatus() == com.lifely.donor.AvailabilityStatus.AVAILABLE)
@@ -407,7 +426,9 @@ public class MatchService {
                 m.getDistanceKm().doubleValue(), r.getId(), r.getBloodType().getCode(), r.unitsStillNeeded(),
                 r.getUnitsRequired(), r.getUnitsConfirmed(), r.getUrgency(), r.getStatus(), r.getHospitalName(),
                 r.getCity(), r.getDistrict(), r.getDeadline(), r.getDescription(),
-                showContact ? r.getContactPhone() : null, explanation);
+                showContact ? r.getContactPhone() : null, explanation,
+                org != null, org == null ? null : org.getTravelSupportVnd(), org == null ? null : org.getParkingFeeVnd(),
+                m.getTravelSupportPaidVnd());
     }
 
     private RequestMatchEntry requesterEntry(Match m, int rank) {
@@ -431,6 +452,7 @@ public class MatchService {
         return new RequestMatchEntry(m.getId(), rank > 0 ? "Người hiến #" + rank : "Người hiến", m.getDistanceKm().doubleValue(),
                 m.getMatchingScore().doubleValue(), m.getStatus(), m.getRespondedAt(), name, phone,
                 badge.facilityVerified(), badge.verifiedByName(),
-                m.getContactResult(), m.getContactResultAt(), m.getContactedAt(), lastRemindedAt, remindCount);
+                m.getContactResult(), m.getContactResultAt(), m.getContactedAt(), lastRemindedAt, remindCount,
+                m.getTravelSupportPaidVnd());
     }
 }

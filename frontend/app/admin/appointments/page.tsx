@@ -78,6 +78,7 @@ export default function AdminAppointments() {
                           { key: "k", header: "Gửi xe máy", cell: (r) => r.parkingFeeVnd == null ? "Chưa cập nhật" : r.parkingFeeVnd === 0 ? "Miễn phí" : formatVnd(r.parkingFeeVnd) },
                           { key: "d", header: "Đã hiến", cell: (r) => r.donated },
                           { key: "g", header: "Đã ghi nhận", cell: (r) => `${r.paid} (${formatVnd(r.paidTotalVnd)})` },
+                          { key: "k2", header: "Trong đó khẩn cấp", cell: (r) => `${r.paidUrgent} / ${r.donatedUrgent}` },
                           { key: "u", header: "Chưa ghi nhận", cell: (r) => r.unpaid > 0 && r.policyVnd > 0 ? <Pill t="amber">{r.unpaid}</Pill> : r.unpaid },
                         ]} />
                       )}

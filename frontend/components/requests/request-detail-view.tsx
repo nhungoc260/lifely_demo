@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, BellRing, Check, CheckCircle2, Circle, Clock, Loader2, MapPin, Radio, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BellRing, Check, CheckCircle2, Circle, Clock, HandCoins, Loader2, MapPin, Radio, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +21,7 @@ import { useQuery } from "@/hooks/use-query";
 import { useRealtime, useRealtimeStatus } from "@/hooks/use-realtime";
 import { toApiError } from "@/lib/api";
 import { formatDateTime, STATUS_LABEL, timeAgo } from "@/lib/format";
+import { formatVnd } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import { deliveryApi, orgApi, requestApi } from "@/services";
@@ -89,6 +90,12 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
     setBusy(matchId);
     try { await requestApi.complete(matchId); toast.success("Đã ghi nhận lần hiến máu. Cảm ơn bạn!"); matches.reload(); }
     catch (e) { toast.error(toApiError(e).message); } finally { setBusy(null); }
+  }
+
+  async function paySupport(matchId: string) {
+    setBusy(matchId);
+    try { const res = await requestApi.payTravelSupport(matchId); toast.success(`Đã ghi nhận hỗ trợ đi lại ${formatVnd(res.amountVnd)}. Người hiến được thông báo.`); matches.reload(); }
+    catch (e) { toast.error(toApiError(e).message); matches.reload(); } finally { setBusy(null); }
   }
 
   async function noShow(matchId: string) {
@@ -163,6 +170,9 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                                   <ShieldCheck className="size-3" aria-hidden />Đã được {m.verifiedByName ?? "cơ sở y tế"} xác nhận hiến máu
                                 </p>
                               )}
+                              {m.status === "COMPLETED" && m.facilityVerified && (m.travelSupportPaidVnd != null
+                                ? <p className="mt-1 text-xs font-medium text-success">Đã ghi nhận hỗ trợ đi lại {formatVnd(m.travelSupportPaidVnd)}</p>
+                                : isOrg ? <p className="mt-1 text-xs text-muted-foreground">Chưa ghi nhận hỗ trợ đi lại cho lượt hiến này.</p> : null)}
                               <CallDonor m={m} onChanged={() => { matches.reload(); req.reload(); hist.reload(); }} />
                             </div>
                             <div className="flex items-center gap-2">
@@ -179,6 +189,7 @@ export function RequestDetailView({ basePath }: { basePath: "/requester" | "/org
                               {m.status === "ACCEPTED" && <Button size="sm" variant="outline" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <Check />} {isOrg ? "Xác nhận đã hiến (cơ sở y tế)" : "Đánh dấu đã hiến"}</Button>}
                               {m.status === "ACCEPTED" && <Button size="sm" variant="ghost" onClick={() => noShow(m.matchId)} disabled={busy === m.matchId}>Không đến</Button>}
                               {m.status === "COMPLETED" && isOrg && <Button size="sm" variant="ghost" onClick={() => complete(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Xác nhận với tư cách cơ sở y tế</Button>}
+                              {m.status === "COMPLETED" && isOrg && m.facilityVerified && m.travelSupportPaidVnd == null && <Button size="sm" variant="outline" onClick={() => paySupport(m.matchId)} disabled={busy === m.matchId}>{busy === m.matchId ? <Loader2 className="animate-spin" /> : <HandCoins />} Đã chi hỗ trợ đi lại</Button>}
                             </div>
                           </li>
                         ))}

@@ -10,6 +10,7 @@ import type {
   AbuseFlagRow,
   AbuseOverview,
   OrgTravelSupport,
+  PayTravelSupportResult,
 } from "@/types/domain";
 
 // ---- auth
@@ -78,6 +79,7 @@ export const requestApi = {
   matches: (id: string) => get<RequestMatchEntry[]>(`/api/requests/${id}/matches`),
   cancel: (id: string, reason?: string) => post<BloodRequest>(`/api/requests/${id}/cancel`, { reason }),
   complete: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/complete`),
+  payTravelSupport: (matchId: string, amountVnd?: number) => post<PayTravelSupportResult>(`/api/matches/${matchId}/travel-support`, amountVnd ? { amountVnd } : {}),
   contactResult: (matchId: string, result: ContactResult) => post<RequestMatchEntry>(`/api/matches/${matchId}/contact-result`, { result }),
   noShow: (matchId: string) => post<RequestMatchEntry>(`/api/matches/${matchId}/no-show`),
   facilityConfirm: (id: string) => post<BloodRequest>(`/api/requests/${id}/facility-confirm`),

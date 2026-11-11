@@ -9,9 +9,9 @@ describe("nhãn giám sát bất thường", () => {
       expect(RULE_LABEL[code].why.length).toBeGreaterThan(10);
     }
   });
-  it("12 mã quy tắc, không trùng", () => {
-    expect(ABUSE_RULE_CODES).toHaveLength(12);
-    expect(new Set(ABUSE_RULE_CODES).size).toBe(12);
+  it("13 mã quy tắc, không trùng", () => {
+    expect(ABUSE_RULE_CODES).toHaveLength(13);
+    expect(new Set(ABUSE_RULE_CODES).size).toBe(13);
   });
   it("mã lạ (backend thêm quy tắc mới) vẫn hiện được, không vỡ giao diện", () => {
     expect(ruleLabel("RULE_MOI").title).toBe("RULE_MOI");
@@ -19,6 +19,6 @@ describe("nhãn giám sát bất thường", () => {
   it("đủ nhãn cho mức độ, hành động tự động và loại đối tượng", () => {
     expect(Object.keys(SEVERITY_LABEL).sort()).toEqual(["HIGH", "MEDIUM"]);
     expect(Object.keys(AUTO_ACTION_LABEL).sort()).toEqual(["AUTO_CANCELLED", "NONE", "SUPPORT_BLOCKED"]);
-    expect(Object.keys(SUBJECT_LABEL).sort()).toEqual(["APPOINTMENT", "ORGANIZATION", "REQUEST"]);
+    expect(Object.keys(SUBJECT_LABEL).sort()).toEqual(["APPOINTMENT", "MATCH", "ORGANIZATION", "REQUEST"]);
   });
 });

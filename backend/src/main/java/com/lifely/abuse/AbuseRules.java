@@ -78,6 +78,19 @@ public final class AbuseRules {
                 String.format(java.util.Locale.ROOT, "Xác nhận đã hiến chỉ %.0f phút sau giờ bắt đầu", minutesAfterStart)) : null;
     }
 
+    /**
+     * Luồng khẩn cấp: xác nhận "đã hiến" quá sớm sau khi người hiến nhận lời. Cần thời gian di chuyển, khám sàng lọc và lấy máu,
+     * nên dưới 5 phút là không thể (chặn ghi nhận hỗ trợ), dưới 20 phút là đáng ngờ (chỉ để admin xem).
+     */
+    public static Finding matchCompletedTooFast(double minutesAfterAccept) {
+        if (minutesAfterAccept < 5) {
+            return new Finding("MATCH_COMPLETED_TOO_FAST", Severity.HIGH, String.format(java.util.Locale.ROOT,
+                    "Xác nhận đã hiến chỉ %.0f phút sau khi người hiến nhận lời (cần di chuyển, khám sàng lọc, lấy máu)", Math.max(0, minutesAfterAccept)));
+        }
+        return minutesAfterAccept < MIN_DONATION_MINUTES ? new Finding("MATCH_COMPLETED_TOO_FAST", Severity.MEDIUM,
+                String.format(java.util.Locale.ROOT, "Xác nhận đã hiến chỉ %.0f phút sau khi người hiến nhận lời", minutesAfterAccept)) : null;
+    }
+
     public static Finding supportOverLimit(int amountVnd) {
         return amountVnd > MAX_TRAVEL_SUPPORT_VND ? new Finding("SUPPORT_OVER_LIMIT", Severity.MEDIUM,
                 "Ghi nhận hỗ trợ " + amountVnd + "đ, vượt mức tối đa " + MAX_TRAVEL_SUPPORT_VND + "đ theo quy định") : null;

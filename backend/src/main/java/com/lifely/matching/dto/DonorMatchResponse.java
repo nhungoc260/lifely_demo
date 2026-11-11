@@ -12,5 +12,7 @@ public record DonorMatchResponse(UUID matchId, MatchStatus status, double matchi
                                  UUID requestId, String bloodType, int unitsNeeded, int unitsRequired,
                                  int unitsConfirmed, Urgency urgency, RequestStatus requestStatus,
                                  String hospitalName, String city, String district, Instant deadline,
-                                 String description, String contactPhone, MatchExplanation explanation) {
+                                 String description, String contactPhone, MatchExplanation explanation,
+                                 boolean facilityLinked, Integer facilityTravelSupportVnd, Integer facilityParkingFeeVnd,
+                                 Integer travelSupportPaidVnd) {
 }
