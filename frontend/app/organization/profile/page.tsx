@@ -35,6 +35,8 @@ const schema = z.object({
   phone: z.string().regex(/^(0|\+84)\d{9,10}$/, "Số điện thoại không hợp lệ"),
   email: z.string().email("Email không hợp lệ"),
   contactPerson: z.string().trim().min(2, "Nhập người liên hệ"),
+  travelSupportVnd: z.number({ message: "Nhập mức hỗ trợ (0 nếu không hỗ trợ)" }).int("Nhập số nguyên").min(0, "Không âm").max(500000, "Tối đa 500.000đ"),
+  parkingFeeVnd: z.number({ message: "Nhập phí gửi xe (0 nếu miễn phí)" }).int("Nhập số nguyên").min(0, "Không âm").max(200000, "Tối đa 200.000đ"),
 });
 type Values = z.infer<typeof schema>;
 
@@ -47,7 +49,7 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
   const [submitting, setSubmitting] = useState(false);
   const { register, handleSubmit, setValue, setError, control, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: org?.name ?? "", type: org?.type ?? "HOSPITAL", address: org?.address ?? "", city: org?.city ?? "TP. Hồ Chí Minh", district: org?.district ?? "", latitude: org?.latitude ?? undefined, longitude: org?.longitude ?? undefined, phone: org?.phone ?? "", email: org?.email ?? "", contactPerson: org?.contactPerson ?? "" },
+    defaultValues: { name: org?.name ?? "", type: org?.type ?? "HOSPITAL", address: org?.address ?? "", city: org?.city ?? "TP. Hồ Chí Minh", district: org?.district ?? "", latitude: org?.latitude ?? undefined, longitude: org?.longitude ?? undefined, phone: org?.phone ?? "", email: org?.email ?? "", contactPerson: org?.contactPerson ?? "", travelSupportVnd: org?.travelSupportVnd ?? 50000, parkingFeeVnd: org?.parkingFeeVnd ?? undefined },
   });
   const lat = useWatch({ control, name: "latitude" });
   const lng = useWatch({ control, name: "longitude" });
@@ -98,6 +100,14 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
               <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} help="Dùng làm vị trí chính xác cho các yêu cầu của bạn." />
               {(errors.latitude || errors.longitude) && <p role="alert" className="mt-2 text-xs font-medium text-critical">Chọn vị trí trên bản đồ</p>}
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Hỗ trợ người hiến đi lại</CardTitle></CardHeader>
+          <CardContent className="grid gap-5 sm:grid-cols-2">
+            <p className="text-sm text-muted-foreground sm:col-span-2">Người hiến máu tình nguyện được cơ sở tiếp nhận máu hỗ trợ tiền đi lại bằng tiền mặt, tối đa 50.000đ mỗi lần hiến theo quy định. Con số bạn nhập sẽ hiện cho người hiến khi họ chọn khung giờ, cùng ước tính cước Grab, Be, Xanh SM. LIFELY không thu hay chuyển tiền: sau khi xác nhận đã hiến, bạn chi trực tiếp rồi bấm ghi nhận ở trang Lịch hiến để người hiến và admin đối chiếu.</p>
+            <Field label="Hỗ trợ đi lại mỗi lần hiến (đồng)" htmlFor="travelSupportVnd" error={errors.travelSupportVnd?.message}><Input id="travelSupportVnd" type="number" inputMode="numeric" min={0} max={500000} step={1000} {...register("travelSupportVnd", { valueAsNumber: true })} aria-invalid={!!errors.travelSupportVnd} /></Field>
+            <Field label="Phí gửi xe máy tại cơ sở (đồng)" htmlFor="parkingFeeVnd" error={errors.parkingFeeVnd?.message}><Input id="parkingFeeVnd" type="number" inputMode="numeric" min={0} max={200000} step={1000} {...register("parkingFeeVnd", { valueAsNumber: true })} aria-invalid={!!errors.parkingFeeVnd} /></Field>
           </CardContent>
         </Card>
         {org?.verificationStatus === "VERIFIED" && <p className="rounded-xl bg-warning/10 p-4 text-sm">Đổi tên, địa chỉ hoặc vị trí sẽ phải xác minh lại.</p>}

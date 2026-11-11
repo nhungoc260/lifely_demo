@@ -70,6 +70,13 @@ public class BloodRequest {
     @Column(precision = 9, scale = 6)
     private BigDecimal longitude;
 
+    /** Vị trí nhà / nơi bệnh nhân đang ở (tuỳ chọn), dùng hiện khoảng cách tới bệnh viện và đối chiếu bất thường. */
+    @Column(name = "home_latitude", precision = 9, scale = 6)
+    private BigDecimal homeLatitude;
+
+    @Column(name = "home_longitude", precision = 9, scale = 6)
+    private BigDecimal homeLongitude;
+
     private Instant deadline;
 
     @Column(name = "contact_phone")

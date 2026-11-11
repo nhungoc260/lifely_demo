@@ -16,16 +16,19 @@ public final class AppointmentDtos {
     }
 
     public record SlotDto(UUID id, UUID organizationId, String organizationName, String address, String city,
-                          Instant startsAt, Instant endsAt, int capacity, int bookedCount, int available, String status) {
+                          Instant startsAt, Instant endsAt, int capacity, int bookedCount, int available, String status,
+                          Double latitude, Double longitude, int travelSupportVnd, Integer parkingFeeVnd) {
     }
 
     public record AppointmentDto(UUID id, UUID slotId, UUID organizationId, String organizationName, String address,
-                                 Instant startsAt, Instant endsAt, String status, boolean canCancel, Instant createdAt) {
+                                 Instant startsAt, Instant endsAt, String status, boolean canCancel, Instant createdAt,
+                                 Integer travelSupportPaidVnd, int travelSupportVnd) {
     }
 
     /** Dành cho nhân viên cơ sở: tên và nhóm máu người hiến để tiếp nhận; không có số điện thoại. */
     public record OrgAppointmentDto(UUID id, UUID slotId, String donorName, String bloodType, String status,
-                                    Instant startsAt, Instant handledAt, Instant createdAt) {
+                                    Instant startsAt, Instant handledAt, Instant createdAt, Integer travelSupportPaidVnd,
+                                    int travelSupportVnd) {
     }
 
     /** location: địa điểm hiến máu của khung giờ này; để trống = dùng địa chỉ trong hồ sơ cơ sở. */
@@ -41,6 +44,10 @@ public final class AppointmentDtos {
     }
 
     public record LocationChangeResult(SlotDto slot, int updatedSlots, int notifiedDonors) {
+    }
+
+    /** amountVnd để trống = dùng mức hỗ trợ cơ sở đã công bố. */
+    public record PayTravelSupportRequest(@Min(1) @Max(500000) Integer amountVnd) {
     }
 
     public enum Action { CHECK_IN, SCREEN_PASS, DEFER, NO_SHOW, DONATED }

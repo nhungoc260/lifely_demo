@@ -15,6 +15,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { APPOINTMENT_STATUS_LABEL, formatSlotRange, ORG_ACTIONS } from "@/lib/appointments";
+import { formatVnd } from "@/lib/travel-cost";
 import { appointmentApi, orgApi } from "@/services";
 import type { AppointmentAction, DonationSlot } from "@/types/domain";
 
@@ -30,6 +31,13 @@ function SlotAppointments({ slot, onChanged }: { slot: DonationSlot; onChanged: 
     finally { setBusy(null); }
   }
 
+  async function paySupport(id: string) {
+    setBusy(id + "SUPPORT");
+    try { await appointmentApi.payTravelSupport(id); toast.success("Đã ghi nhận hỗ trợ đi lại. Người hiến được thông báo."); q.reload(); }
+    catch (e) { toast.error(toApiError(e).message); q.reload(); }
+    finally { setBusy(null); }
+  }
+
   if (q.initialLoading) return <Skeleton className="mt-3 h-16" />;
   if (!q.data || q.data.length === 0) return <p className="mt-3 text-xs text-muted-foreground">Chưa có ai đặt khung giờ này.</p>;
   return (
@@ -40,8 +48,17 @@ function SlotAppointments({ slot, onChanged }: { slot: DonationSlot; onChanged: 
             <div>
               <p className="font-medium">{a.donorName}{a.bloodType ? ` · ${a.bloodType}` : ""}</p>
               <p className="text-xs text-muted-foreground">{APPOINTMENT_STATUS_LABEL[a.status]}</p>
+              {a.status === "DONATED" && (a.travelSupportPaidVnd != null
+                ? <p className="text-xs font-medium text-success">Đã ghi nhận hỗ trợ đi lại {formatVnd(a.travelSupportPaidVnd)}</p>
+                : a.travelSupportVnd > 0 ? <p className="text-xs text-muted-foreground">Chưa ghi nhận hỗ trợ đi lại ({formatVnd(a.travelSupportVnd)})</p>
+                : <p className="text-xs text-muted-foreground">Cơ sở chưa công bố mức hỗ trợ đi lại (cập nhật ở Hồ sơ tổ chức).</p>)}
             </div>
             <div className="flex gap-2">
+              {a.status === "DONATED" && a.travelSupportPaidVnd == null && a.travelSupportVnd > 0 && (
+                <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => paySupport(a.id)}>
+                  {busy === a.id + "SUPPORT" && <Loader2 className="animate-spin" />} Đã chi hỗ trợ {formatVnd(a.travelSupportVnd)}
+                </Button>
+              )}
               {ORG_ACTIONS[a.status].map((o) => (
                 <Button key={o.action} size="sm" variant={o.action === "DONATED" ? "default" : "outline"} disabled={busy !== null}
                   onClick={() => (o.action === "DONATED" ? setDonatedFor(a.id) : act(a.id, o.action))}>

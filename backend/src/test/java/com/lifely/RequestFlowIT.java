@@ -38,7 +38,7 @@ class RequestFlowIT {
 
     private CreateRequestDto dto(UUID org, String blood) {
         return new CreateRequestDto(blood, 2, "ignored-name", "TP. Hồ Chí Minh", null, 10.77, 106.70, Urgency.URGENT,
-                Instant.now().plus(3, ChronoUnit.HOURS), "0901234567", null, org);
+                Instant.now().plus(3, ChronoUnit.HOURS), "0901234567", null, org, null, null);
     }
 
     private void cleanup(UUID requestId) {

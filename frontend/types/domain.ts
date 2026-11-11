@@ -269,6 +269,8 @@ export interface Organization {
   verificationStatus: OrgStatus;
   verificationNote: string | null;
   verifiedAt: string | null;
+  travelSupportVnd: number;
+  parkingFeeVnd: number | null;
   documents: OrgDocument[];
 }
 
@@ -405,17 +407,34 @@ export interface InventorySettings {
 export interface DonationSlot {
   id: string; organizationId: string; organizationName: string; address: string | null; city: string | null;
   startsAt: string; endsAt: string; capacity: number; bookedCount: number; available: number; status: "ACTIVE" | "CLOSED";
+  latitude: number | null; longitude: number | null; travelSupportVnd: number; parkingFeeVnd: number | null;
 }
 export interface LocationChangeResult { slot: DonationSlot; updatedSlots: number; notifiedDonors: number }
 export type AppointmentStatus = "BOOKED" | "CHECKED_IN" | "SCREENED" | "DONATED" | "DEFERRED" | "NO_SHOW" | "CANCELLED";
 export interface Appointment {
   id: string; slotId: string; organizationId: string; organizationName: string; address: string | null;
   startsAt: string; endsAt: string; status: AppointmentStatus; canCancel: boolean; createdAt: string;
+  travelSupportPaidVnd: number | null; travelSupportVnd: number;
 }
 export interface OrgAppointment {
   id: string; slotId: string; donorName: string; bloodType: string | null; status: AppointmentStatus;
   startsAt: string; handledAt: string | null; createdAt: string;
+  travelSupportPaidVnd: number | null; travelSupportVnd: number;
 }
+export type AbuseSeverity = "MEDIUM" | "HIGH";
+export type AbuseAutoAction = "NONE" | "AUTO_CANCELLED" | "SUPPORT_BLOCKED";
+export type AbuseStatus = "OPEN" | "DISMISSED" | "CONFIRMED";
+export interface AbuseFlagRow {
+  id: string; subjectType: "REQUEST" | "APPOINTMENT" | "ORGANIZATION"; subjectId: string; subjectLabel: string | null;
+  ruleCode: string; severity: AbuseSeverity; autoAction: AbuseAutoAction; detail: string; status: AbuseStatus;
+  createdAt: string; reviewedAt: string | null; reviewNote: string | null;
+}
+export interface AbuseOverview { open: number; openHigh: number; autoActions: number; confirmed: number; dismissed: number; rows: AbuseFlagRow[] }
+export interface TravelSupportRow {
+  organizationId: string; organizationName: string; city: string | null; policyVnd: number; parkingFeeVnd: number | null;
+  donated: number; paid: number; unpaid: number; paidTotalVnd: number;
+}
+export interface TravelSupportReport { rows: TravelSupportRow[]; donated: number; paid: number; unpaid: number; paidTotalVnd: number }
 export type AppointmentAction = "CHECK_IN" | "SCREEN_PASS" | "DEFER" | "NO_SHOW" | "DONATED";
 
 // ---- Đồng ý nhận thông báo theo kênh & theo dõi phát thông báo

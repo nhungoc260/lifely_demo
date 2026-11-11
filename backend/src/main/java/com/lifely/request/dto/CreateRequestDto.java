@@ -19,5 +19,7 @@ public record CreateRequestDto(
         @NotNull Instant deadline,
         @NotBlank @Pattern(regexp = Patterns.PHONE, message = "Số điện thoại không hợp lệ") String contactPhone,
         @Size(max = 1000) String description,
-        UUID organizationId) {
+        UUID organizationId,
+        @DecimalMin("-90") @DecimalMax("90") Double homeLatitude,
+        @DecimalMin("-180") @DecimalMax("180") Double homeLongitude) {
 }

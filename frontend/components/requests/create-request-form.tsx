@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { StickyActions } from "@/components/app/sticky-actions";
 import { LocationPicker } from "@/components/map/location-picker";
+import { TravelCostCard } from "@/components/donor/travel-cost-card";
 import { CoveragePanel } from "@/components/requests/coverage-panel";
 import { PageHeader } from "@/components/shell/page-header";
 import { BloodChip, UrgencyBadge } from "@/components/ui/badges";
@@ -21,6 +22,7 @@ import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
 import { URGENCY_LABEL } from "@/lib/labels";
+import { distanceKm as roadDistanceKm } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { orgApi, publicApi, requestApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
@@ -136,6 +138,8 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
       .sort((x, y) => x.km - y.km)
       .slice(0, 5);
   }, [refPoint, orgs.data]);
+  const homeToHospitalKm = geo && lat != null && lng != null ? roadDistanceKm(geo.lat, geo.lng, lat, lng) : null;
+  const selectedOrg = orgs.data?.find((x) => x.id === orgId);
   const isOtherFacility = isOrg && !!orgId && !!myOrg.data && orgId !== myOrg.data.id;
 
   async function submit(v: Values) {
@@ -147,7 +151,13 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         district: v.district || undefined, latitude: v.latitude, longitude: v.longitude, urgency: v.urgency,
         deadline: new Date(v.deadlineLocal).toISOString(), contactPhone: v.contactPhone,
         description: v.description || undefined, organizationId: v.organizationId || undefined,
+        homeLatitude: geo?.lat, homeLongitude: geo?.lng,
       }, idempotencyKey);
+      if (created.status === "CANCELLED") {
+        toast.error("Yêu cầu bị hệ thống tạm dừng vì có dấu hiệu bất thường. Hãy chọn bệnh viện đã xác minh trong danh sách hoặc liên hệ quản trị viên.");
+        router.push(`${basePath}/requests/${created.id}`);
+        return;
+      }
       toast.success(created.verified
         ? "Yêu cầu đã được tiếp nhận. Chúng tôi đang tìm người hiến máu; việc có máu hay không do cơ sở y tế quyết định."
         : "Đã gửi yêu cầu để xác minh.");
@@ -171,6 +181,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
               <div><dt className="text-muted-foreground">Nhóm máu</dt><dd className="font-medium">{p.bloodType}</dd></div>
               <div><dt className="text-muted-foreground">Số đơn vị</dt><dd className="font-medium">{p.unitsRequired}</dd></div>
               <div><dt className="text-muted-foreground">Địa điểm</dt><dd className="font-medium">{p.hospitalName}</dd><dd className="text-muted-foreground">{[p.district, p.city].filter(Boolean).join(", ")}</dd></div>
+              {homeToHospitalKm != null && <div><dt className="text-muted-foreground">Từ vị trí của bạn tới bệnh viện</dt><dd className="font-medium">~{(homeToHospitalKm * 1.35).toFixed(1)} km đường đi (chim bay {homeToHospitalKm.toFixed(1)} km)</dd></div>}
               <div><dt className="text-muted-foreground">Mức độ khẩn cấp</dt><dd className="font-medium">{URGENCY_LABEL[p.urgency]}</dd></div>
               <div><dt className="text-muted-foreground">Hạn chót</dt><dd className="font-medium">{formatDateTime(new Date(p.deadlineLocal).toISOString())}</dd></div>
               <div><dt className="text-muted-foreground">Liên hệ</dt><dd className="font-medium">{p.contactPhone}</dd></div>
@@ -286,6 +297,22 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         </Card>
 
         <CoveragePanel bloodType={bt} latitude={lat ?? null} longitude={lng ?? null} />
+
+        {homeToHospitalKm != null && lat != null ? (
+          <TravelCostCard audience="requester" distanceKm={homeToHospitalKm} hospitalName={selectedOrg?.name ?? "bệnh viện"} city={selectedOrg?.city}
+            parkingFee={null} />
+        ) : (
+          <Card>
+            <CardHeader><CardTitle>Từ vị trí của bạn tới bệnh viện</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p className="text-muted-foreground">Cho biết vị trí hiện tại của bạn (nhà hoặc nơi bệnh nhân đang ở) để xem khoảng cách, thời gian và chi phí đi tới bệnh viện bằng xe máy, Grab, Be, Xanh SM. Vị trí này cũng giúp hệ thống đối chiếu yêu cầu có thật hay không, và không hiển thị với người hiến máu.</p>
+              <Button type="button" variant="outline" size="sm" onClick={locateMe} loading={geoBusy}><LocateFixed /> Dùng vị trí hiện tại</Button>
+              {geo && (lat == null || lng == null) && <p className="text-xs text-muted-foreground">Hãy chọn bệnh viện hoặc đặt ghim ở trên để xem chi phí.</p>}
+            </CardContent>
+          </Card>
+        )}
+
+        <p className="rounded-xl bg-muted/60 p-4 text-xs text-muted-foreground">Yêu cầu được duyệt tự động để kịp thời. Nếu có dấu hiệu bất thường (nhiều tài khoản chung số điện thoại, tạo yêu cầu dồn dập, thông tin không khớp...), hệ thống dừng yêu cầu ngay và quản trị viên xem xét. LIFELY không trả tiền hay quà cho người tạo yêu cầu.</p>
 
         <Card>
           <CardHeader><CardTitle>Hạn chót &amp; liên hệ</CardTitle></CardHeader>

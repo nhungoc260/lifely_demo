@@ -82,6 +82,12 @@ public class OrganizationService {
         o.setPhone(req.phone());
         o.setEmail(req.email().trim().toLowerCase());
         o.setContactPerson(Sanitizer.plain(req.contactPerson()));
+        if (req.travelSupportVnd() != null) {
+            o.setTravelSupportVnd(req.travelSupportVnd());
+        }
+        if (req.parkingFeeVnd() != null) {
+            o.setParkingFeeVnd(req.parkingFeeVnd());
+        }
         if (sensitiveChange) {
             o.setVerificationStatus(OrgVerificationStatus.UNDER_REVIEW);
             o.setVerificationNote("Thông tin đã thay đổi; cần xác minh lại");

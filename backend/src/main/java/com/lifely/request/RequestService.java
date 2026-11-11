@@ -1,5 +1,6 @@
 package com.lifely.request;
 
+import com.lifely.abuse.AbuseGuardService;
 import com.lifely.admin.AdminAlerts;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
@@ -55,13 +56,14 @@ public class RequestService {
     private final RequestCreateGuard createGuard;
     private final StaffAlertService staffAlerts;
     private final AdminAlerts adminAlerts;
+    private final AbuseGuardService abuseGuard;
 
     public RequestService(BloodRequestRepository requestRepository, BloodTypeRepository bloodTypeRepository,
                           OrganizationRepository organizationRepository, RequestLifecycle lifecycle,
                           RequestAccess access, MatchingService matchingService, MatchRepository matchRepository,
                           NotificationService notifications, RequestStatusHistoryRepository historyRepository,
                           AuditService audit, RequestCreateGuard createGuard, StaffAlertService staffAlerts,
-                          AdminAlerts adminAlerts) {
+                          AdminAlerts adminAlerts, AbuseGuardService abuseGuard) {
         this.requestRepository = requestRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.organizationRepository = organizationRepository;
@@ -75,6 +77,7 @@ public class RequestService {
         this.createGuard = createGuard;
         this.staffAlerts = staffAlerts;
         this.adminAlerts = adminAlerts;
+        this.abuseGuard = abuseGuard;
     }
 
     public RequestResponse create(AuthUser user, CreateRequestDto dto) {
@@ -126,6 +129,13 @@ public class RequestService {
         r.setDeadline(dto.deadline());
         r.setContactPhone(dto.contactPhone());
         r.setDescription(Sanitizer.plain(dto.description()));
+        if ((dto.homeLatitude() == null) != (dto.homeLongitude() == null)) {
+            throw AppException.badRequest("INVALID_HOME_LOCATION", "Vị trí nhà cần đủ cả vĩ độ và kinh độ");
+        }
+        if (dto.homeLatitude() != null) {
+            r.setHomeLatitude(BigDecimal.valueOf(dto.homeLatitude()).setScale(6, RoundingMode.HALF_UP));
+            r.setHomeLongitude(BigDecimal.valueOf(dto.homeLongitude()).setScale(6, RoundingMode.HALF_UP));
+        }
 
         // Liên kết tổ chức: dùng tọa độ/tên của tổ chức ĐÃ XÁC MINH để không thể giả vị trí bệnh viện.
         // Cơ sở của chính tài khoản tổ chức (nếu có và đã xác minh).
@@ -165,6 +175,20 @@ public class RequestService {
         lifecycle.transition(r, RequestStatus.CREATED, "Đã tạo yêu cầu", user.getId());
         audit.log(user.getId(), AuditAction.REQUEST_CREATED, "REQUEST", r.getId(),
                 Map.of("bloodType", dto.bloodType(), "units", dto.unitsRequired(), "urgency", dto.urgency().name()));
+
+        // Chống lạm dụng: duyệt tự động vẫn là mặc định, nhưng tín hiệu rất mạnh thì dừng NGAY (trước khi báo người hiến),
+        // tín hiệu vừa thì cho đi tiếp và mở cờ để admin theo dõi.
+        AbuseGuardService.Verdict verdict = abuseGuard.assessRequest(r, user.getId(), org != null,
+                dto.homeLatitude(), dto.homeLongitude());
+        if (verdict.autoBlock()) {
+            r.setCancelReason("Hệ thống tự động dừng yêu cầu có dấu hiệu bất thường");
+            lifecycle.transition(r, RequestStatus.CANCELLED, "Tự động hủy do dấu hiệu bất thường", null);
+            notifications.notify(user.getId(), NotificationType.REQUEST_REJECTED, "Yêu cầu đã bị tạm dừng",
+                    "Hệ thống phát hiện dấu hiệu bất thường ở yêu cầu của bạn nên đã dừng lại để bảo vệ người hiến máu. "
+                            + "Nếu đây là nhu cầu thật, hãy chọn bệnh viện đã xác minh trong danh sách hoặc liên hệ quản trị viên.",
+                    "REQUEST", r.getId());
+            return RequestResponse.from(r);
+        }
 
         // Tổ chức đã xác minh: yêu cầu được tin cậy ngay và vào điều phối luôn. Còn lại chờ admin xác minh.
         boolean autoVerified = ownFacility;

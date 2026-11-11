@@ -6,6 +6,9 @@ import type {
   OrgStatus, Page, Privacy, PublicOrg, PublicRequest, PublicStats, Report, ReportReason, ReportStatus,
   ContactResult, DonorVerification, RequestMatchEntry, RequesterDashboard, RequestStatus, UserSummary,
   Appointment, AppointmentAction, DeliverySummary, Gender, HealthCheck, HealthEvaluation, HealthInput, HealthSummary, DonationSlot, InventoryMovement, LocationChangeResult, NotificationConsents, OrgAppointment,
+  TravelSupportReport,
+  AbuseFlagRow,
+  AbuseOverview,
 } from "@/types/domain";
 
 // ---- auth
@@ -58,6 +61,8 @@ export interface CreateRequestInput {
   bloodType: string; unitsRequired: number; hospitalName: string; city: string; district?: string;
   latitude: number; longitude: number; urgency: string; deadline: string; contactPhone: string;
   description?: string; organizationId?: string;
+  /** Vị trí nhà / nơi bệnh nhân đang ở (tuỳ chọn): hiện khoảng cách tới bệnh viện và giúp đối chiếu bất thường. */
+  homeLatitude?: number; homeLongitude?: number;
 }
 export const requestApi = {
   /** idempotencyKey: sinh MỘT lần cho mỗi lần mở biểu mẫu; gửi lại cùng khóa sẽ không tạo yêu cầu thứ hai. */
@@ -100,6 +105,7 @@ export const appointmentApi = {
   closeSlot: (id: string) => post<DonationSlot>(`/api/organizations/me/slots/${id}/close`),
   orgAppointments: (slotId: string) => get<OrgAppointment[]>(`/api/organizations/me/slots/${slotId}/appointments`),
   transition: (id: string, action: AppointmentAction) => post<OrgAppointment>(`/api/organizations/me/appointments/${id}/status`, { action }),
+  payTravelSupport: (id: string, amountVnd?: number) => post<OrgAppointment>(`/api/organizations/me/appointments/${id}/travel-support`, amountVnd ? { amountVnd } : {}),
   inventoryMovements: () => get<InventoryMovement[]>("/api/organizations/me/inventory/movements"),
 };
 
@@ -146,6 +152,10 @@ export const orgApi = {
 };
 
 export const adminApi = {
+  abuseFlags: (status: string = "OPEN") => get<AbuseOverview>(`/api/admin/abuse-flags${qs({ status })}`),
+  reviewAbuseFlag: (id: string, decision: "CONFIRMED" | "DISMISSED", note?: string) =>
+    post<AbuseFlagRow>(`/api/admin/abuse-flags/${id}/review`, { decision, note }),
+  travelSupport: () => get<TravelSupportReport>("/api/admin/travel-support"),
   dashboard: () => get<AdminDashboard>("/api/admin/dashboard"),
   users: (p: { q?: string; role?: string; status?: string; page?: number; size?: number; sort?: string; dir?: string }) =>
     get<Page<AdminUser>>(`/api/admin/users${qs(p)}`),

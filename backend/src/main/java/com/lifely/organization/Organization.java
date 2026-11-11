@@ -49,6 +49,14 @@ public class Organization {
     @Column(name = "contact_person")
     private String contactPerson;
 
+    /** Mức hỗ trợ đi lại (đồng) cơ sở công bố cho người hiến máu tình nguyện mỗi lần hiến. */
+    @Column(name = "travel_support_vnd")
+    private int travelSupportVnd = 50_000;
+
+    /** Phí gửi xe máy tại cơ sở (đồng); null = chưa cập nhật. */
+    @Column(name = "parking_fee_vnd")
+    private Integer parkingFeeVnd;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status")
     private OrgVerificationStatus verificationStatus = OrgVerificationStatus.PENDING;

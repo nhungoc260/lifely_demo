@@ -1,5 +1,7 @@
 package com.lifely.appointment;
 
+import com.lifely.abuse.AbuseGuardService;
+import com.lifely.abuse.AbuseRules;
 import com.lifely.appointment.AppointmentDtos.Action;
 import com.lifely.appointment.AppointmentDtos.AppointmentDto;
 import com.lifely.appointment.AppointmentDtos.ChangeLocationRequest;
@@ -62,10 +64,12 @@ public class AppointmentService {
     private final AuditService audit;
     private final MatchingProperties matching;
     private final NotifyProperties notifyProps;
+    private final AbuseGuardService abuseGuard;
 
     public AppointmentService(JdbcTemplate jdbc, DonorProfileRepository donors, OrganizationRepository organizations,
                               NotificationService notifications, OutboxService outbox, InventoryService inventory,
-                              AuditService audit, MatchingProperties matching, NotifyProperties notifyProps) {
+                              AuditService audit, MatchingProperties matching, NotifyProperties notifyProps,
+                              AbuseGuardService abuseGuard) {
         this.jdbc = jdbc;
         this.donors = donors;
         this.organizations = organizations;
@@ -75,6 +79,7 @@ public class AppointmentService {
         this.audit = audit;
         this.matching = matching;
         this.notifyProps = notifyProps;
+        this.abuseGuard = abuseGuard;
     }
 
     // ------------------------------------------------------------------ người hiến
@@ -84,7 +89,7 @@ public class AppointmentService {
         int range = Math.min(Math.max(days, 1), 90);
         StringBuilder sql = new StringBuilder("""
                 SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
-                       s.capacity, s.booked_count, s.status
+                       s.capacity, s.booked_count, s.status, o.latitude, o.longitude, o.travel_support_vnd, o.parking_fee_vnd
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE s.status = 'ACTIVE' AND s.starts_at > now()
                    AND s.starts_at < now() + (? * interval '1 day') AND o.verification_status = 'VERIFIED'
@@ -105,7 +110,7 @@ public class AppointmentService {
                 .orElseThrow(() -> AppException.notFound("DONOR_PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ người hiến máu"));
         List<SlotDto> found = jdbc.query("""
                 SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
-                       s.capacity, s.booked_count, s.status
+                       s.capacity, s.booked_count, s.status, o.latitude, o.longitude, o.travel_support_vnd, o.parking_fee_vnd
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE s.id = ? AND o.verification_status = 'VERIFIED'
                 """, (rs, i) -> slot(rs), slotId);
@@ -360,7 +365,7 @@ public class AppointmentService {
     public List<OrgAppointmentDto> orgAppointments(AuthUser user, UUID slotId) {
         Organization org = orgOf(user);
         return jdbc.query("""
-                SELECT a.id, a.slot_id, u.full_name, bt.code, a.status, s.starts_at, a.handled_at, a.created_at
+                SELECT a.id, a.slot_id, u.full_name, bt.code, a.status, s.starts_at, a.handled_at, a.created_at, a.travel_support_paid_vnd
                   FROM appointments a
                   JOIN donation_slots s ON s.id = a.slot_id
                   JOIN donor_profiles dp ON dp.id = a.donor_id
@@ -371,7 +376,8 @@ public class AppointmentService {
                 """, (rs, i) -> new OrgAppointmentDto(rs.getObject("id", UUID.class), rs.getObject("slot_id", UUID.class),
                 rs.getString("full_name"), rs.getString("code"), rs.getString("status"),
                 rs.getTimestamp("starts_at").toInstant(), instant(rs.getTimestamp("handled_at")),
-                rs.getTimestamp("created_at").toInstant()), slotId, org.getId());
+                rs.getTimestamp("created_at").toInstant(), rs.getObject("travel_support_paid_vnd", Integer.class),
+                org.getTravelSupportVnd()), slotId, org.getId());
     }
 
     /**
@@ -414,15 +420,93 @@ public class AppointmentService {
             throw AppException.conflict("INVALID_STATE", "Lịch hẹn vừa được cập nhật bởi người khác");
         }
         audit.log(user.getId(), "APPOINTMENT_" + to, "APPOINTMENT", appointmentId, Map.of("from", from));
+        if (action == Action.DONATED) {
+            // Xác nhận hiến quá nhanh hoặc trước giờ bắt đầu: mở cờ cho admin; mức cao thì chặn ghi nhận hỗ trợ đi lại.
+            AbuseRules.Finding f = AbuseRules.instantDonation(Duration.between(startsAt, Instant.now()).toMillis() / 60_000.0);
+            if (f != null) {
+                abuseGuard.recordFlag("APPOINTMENT", appointmentId, f,
+                        f.severity() == AbuseRules.Severity.HIGH ? "SUPPORT_BLOCKED" : "NONE");
+            }
+        }
         return jdbc.query("""
-                SELECT a.id, a.slot_id, u.full_name, bt.code, a.status, s.starts_at, a.handled_at, a.created_at
+                SELECT a.id, a.slot_id, u.full_name, bt.code, a.status, s.starts_at, a.handled_at, a.created_at, a.travel_support_paid_vnd
                   FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
                   JOIN donor_profiles dp ON dp.id = a.donor_id JOIN users u ON u.id = dp.user_id
                   LEFT JOIN blood_types bt ON bt.id = dp.blood_type_id WHERE a.id = ?
                 """, (rs, i) -> new OrgAppointmentDto(rs.getObject("id", UUID.class), rs.getObject("slot_id", UUID.class),
                 rs.getString("full_name"), rs.getString("code"), rs.getString("status"),
                 rs.getTimestamp("starts_at").toInstant(), instant(rs.getTimestamp("handled_at")),
-                rs.getTimestamp("created_at").toInstant()), appointmentId).get(0);
+                rs.getTimestamp("created_at").toInstant(), rs.getObject("travel_support_paid_vnd", Integer.class),
+                org.getTravelSupportVnd()), appointmentId).get(0);
+    }
+
+    /**
+     * Ghi nhận cơ sở đã chi hỗ trợ đi lại (tiền mặt, ngoài LIFELY) cho một lần hiến đã được xác nhận. Chỉ ghi được một lần,
+     * chỉ với lịch DONATED của đúng cơ sở. LIFELY không thu hay chuyển tiền; đây chỉ là sổ ghi nhận để người hiến và admin đối chiếu.
+     */
+    @Transactional
+    public OrgAppointmentDto payTravelSupport(AuthUser user, UUID appointmentId, Integer amountVnd) {
+        Organization org = verifiedOrg(user);
+        int amount = amountVnd != null ? amountVnd : org.getTravelSupportVnd();
+        if (amount <= 0) {
+            throw AppException.badRequest("TRAVEL_SUPPORT_AMOUNT", "Cơ sở chưa công bố mức hỗ trợ đi lại; hãy nhập số tiền đã chi");
+        }
+        String blocked = abuseGuard.supportBlockReason(appointmentId);
+        if (blocked != null) {
+            throw AppException.conflict("TRAVEL_SUPPORT_BLOCKED",
+                    "Không ghi nhận hỗ trợ đi lại vì lịch này đang bị đánh dấu bất thường: " + blocked);
+        }
+        // Người hiến đã có lần hiến được xác nhận trong 12 tuần gần đây: ghi nhận tiếp là dấu hiệu lấy tiền, quà nhiều lần.
+        Long sinceDays = jdbc.queryForObject("""
+                SELECT EXTRACT(DAY FROM now() - MAX(a2.handled_at))::bigint
+                  FROM appointments a JOIN appointments a2 ON a2.donor_id = a.donor_id AND a2.id <> a.id AND a2.status = 'DONATED'
+                 WHERE a.id = ?
+                """, Long.class, appointmentId);
+        AbuseRules.Finding tooSoon = sinceDays == null ? null : AbuseRules.donationTooSoon(sinceDays);
+        if (tooSoon != null) {
+            abuseGuard.recordFlag("APPOINTMENT", appointmentId, tooSoon, "SUPPORT_BLOCKED");
+            throw AppException.conflict("TRAVEL_SUPPORT_BLOCKED",
+                    "Không ghi nhận hỗ trợ đi lại: " + tooSoon.detail() + ". Admin sẽ xem xét.");
+        }
+        AbuseRules.Finding over = AbuseRules.supportOverLimit(amount);
+        if (over != null) {
+            abuseGuard.recordFlag("APPOINTMENT", appointmentId, over, "NONE");
+        }
+        Long burst = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
+                 WHERE s.organization_id = ? AND a.travel_support_paid_at > now() - interval '1 hour'
+                """, Long.class, org.getId());
+        AbuseRules.Finding spike = AbuseRules.orgBurst(burst == null ? 0 : burst);
+        if (spike != null) {
+            abuseGuard.recordFlag("ORGANIZATION", org.getId(), spike, "NONE");
+        }
+        int n = jdbc.update("""
+                UPDATE appointments a SET travel_support_paid_vnd = ?, travel_support_paid_at = now()
+                  FROM donation_slots s
+                 WHERE a.id = ? AND s.id = a.slot_id AND s.organization_id = ?
+                   AND a.status = 'DONATED' AND a.travel_support_paid_vnd IS NULL
+                """, amount, appointmentId, org.getId());
+        if (n == 0) {
+            throw AppException.conflict("TRAVEL_SUPPORT_NOT_PAYABLE",
+                    "Chỉ ghi nhận được cho lịch đã hiến của cơ sở và chưa ghi nhận hỗ trợ đi lại");
+        }
+        audit.log(user.getId(), "TRAVEL_SUPPORT_PAID", "APPOINTMENT", appointmentId, Map.of("amountVnd", amount));
+        UUID donorUser = jdbc.queryForObject("""
+                SELECT dp.user_id FROM appointments a JOIN donor_profiles dp ON dp.id = a.donor_id WHERE a.id = ?
+                """, UUID.class, appointmentId);
+        notifications.notify(donorUser, NotificationType.SYSTEM, "Đã ghi nhận hỗ trợ đi lại",
+                org.getName() + " ghi nhận đã hỗ trợ tiền đi lại " + String.format("%,d", amount).replace(',', '.')
+                        + "đ cho lần hiến máu của bạn.", "APPOINTMENT", appointmentId);
+        return jdbc.query("""
+                SELECT a.id, a.slot_id, u.full_name, bt.code, a.status, s.starts_at, a.handled_at, a.created_at, a.travel_support_paid_vnd
+                  FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
+                  JOIN donor_profiles dp ON dp.id = a.donor_id JOIN users u ON u.id = dp.user_id
+                  LEFT JOIN blood_types bt ON bt.id = dp.blood_type_id WHERE a.id = ?
+                """, (rs, i) -> new OrgAppointmentDto(rs.getObject("id", UUID.class), rs.getObject("slot_id", UUID.class),
+                rs.getString("full_name"), rs.getString("code"), rs.getString("status"),
+                rs.getTimestamp("starts_at").toInstant(), instant(rs.getTimestamp("handled_at")),
+                rs.getTimestamp("created_at").toInstant(), rs.getObject("travel_support_paid_vnd", Integer.class),
+                org.getTravelSupportVnd()), appointmentId).get(0);
     }
 
     static String nextStatus(String from, Action action) {
@@ -524,7 +608,8 @@ public class AppointmentService {
 
     private static String mineSql(String where, String tail) {
         return """
-                SELECT a.id, a.slot_id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, s.starts_at, s.ends_at, a.status, a.created_at
+                SELECT a.id, a.slot_id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, s.starts_at, s.ends_at, a.status, a.created_at,
+                       a.travel_support_paid_vnd, o.travel_support_vnd
                   FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
                   JOIN organizations o ON o.id = s.organization_id
                  WHERE\s""" + where + " " + tail;
@@ -533,7 +618,7 @@ public class AppointmentService {
     private static String slotSql(String where) {
         return """
                 SELECT s.id, s.organization_id, o.name, COALESCE(s.location_address, o.address) AS address, o.city, s.starts_at, s.ends_at,
-                       s.capacity, s.booked_count, s.status
+                       s.capacity, s.booked_count, s.status, o.latitude, o.longitude, o.travel_support_vnd, o.parking_fee_vnd
                   FROM donation_slots s JOIN organizations o ON o.id = s.organization_id
                  WHERE\s""" + where;
     }
@@ -544,7 +629,9 @@ public class AppointmentService {
         return new SlotDto(rs.getObject("id", UUID.class), rs.getObject("organization_id", UUID.class),
                 rs.getString("name"), rs.getString("address"), rs.getString("city"),
                 rs.getTimestamp("starts_at").toInstant(), rs.getTimestamp("ends_at").toInstant(),
-                capacity, booked, Math.max(0, capacity - booked), rs.getString("status"));
+                capacity, booked, Math.max(0, capacity - booked), rs.getString("status"),
+                coord(rs, "latitude"), coord(rs, "longitude"), rs.getInt("travel_support_vnd"),
+                rs.getObject("parking_fee_vnd", Integer.class));
     }
 
     private static AppointmentDto appointment(java.sql.ResultSet rs) throws java.sql.SQLException {
@@ -553,7 +640,13 @@ public class AppointmentService {
         boolean canCancel = "BOOKED".equals(status) && startsAt.minus(CANCEL_CUTOFF).isAfter(Instant.now());
         return new AppointmentDto(rs.getObject("id", UUID.class), rs.getObject("slot_id", UUID.class),
                 rs.getObject("organization_id", UUID.class), rs.getString("name"), rs.getString("address"), startsAt,
-                rs.getTimestamp("ends_at").toInstant(), status, canCancel, rs.getTimestamp("created_at").toInstant());
+                rs.getTimestamp("ends_at").toInstant(), status, canCancel, rs.getTimestamp("created_at").toInstant(),
+                rs.getObject("travel_support_paid_vnd", Integer.class), rs.getInt("travel_support_vnd"));
+    }
+
+    private static Double coord(java.sql.ResultSet rs, String column) throws java.sql.SQLException {
+        java.math.BigDecimal v = rs.getBigDecimal(column);
+        return v == null ? null : v.doubleValue();
     }
 
     /** Cắt chuỗi dài, thêm dấu … khi bị cắt. */

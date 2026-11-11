@@ -14,5 +14,7 @@ public record UpdateOrganizationRequest(
         @NotNull @DecimalMin("-180") @DecimalMax("180") Double longitude,
         @NotBlank @Pattern(regexp = Patterns.PHONE, message = "Số điện thoại không hợp lệ") String phone,
         @NotBlank @Email @Size(max = 255) String email,
-        @NotBlank @Size(max = 150) String contactPerson) {
+        @NotBlank @Size(max = 150) String contactPerson,
+        @Min(0) @Max(500000) Integer travelSupportVnd,
+        @Min(0) @Max(200000) Integer parkingFeeVnd) {
 }

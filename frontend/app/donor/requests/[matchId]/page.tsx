@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { MatchScore } from "@/components/donor/match-card";
+import { TravelCostCard } from "@/components/donor/travel-cost-card";
 import { ReportDialog } from "@/components/requests/report-dialog";
 import { BloodChip, MatchBadge, StatusBadge, UrgencyBadge } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,8 @@ export default function MatchDetail() {
               <div className="mt-6 flex justify-end"><ReportDialog targetType="REQUEST" targetId={m.requestId} /></div>
             </Card>
 
+            <div className="space-y-6">
+            <TravelCostCard distanceKm={m.distanceKm} hospitalName={m.hospitalName} district={m.district} city={m.city} />
             <Card>
               <CardHeader><CardTitle>Vì sao yêu cầu này được kết nối với bạn</CardTitle></CardHeader>
               <CardContent>
@@ -119,6 +122,7 @@ export default function MatchDetail() {
                 ) : <p className="text-sm text-muted-foreground">Hãy thêm vị trí vào hồ sơ để xem cách kết nối này được tính.</p>}
               </CardContent>
             </Card>
+            </div>
           </div>
         ) : null}
 

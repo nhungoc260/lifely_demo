@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarDays, HandCoins, Users } from "lucide-react";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/shell/page-header";
@@ -12,6 +12,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useQuery } from "@/hooks/use-query";
 import { formatDateTime } from "@/lib/format";
+import { formatVnd } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/services";
 
@@ -23,6 +24,7 @@ const STATUS: Record<string, { label: string; tone: "green" | "amber" | "red" | 
 
 export default function AdminAppointments() {
   const q = useQuery("admin-appointments", adminApi.appointments);
+  const ts = useQuery("admin-travel-support", adminApi.travelSupport);
   const [status, setStatus] = useState<string | null>(null);
   const d = q.data;
   const rows = d ? d.recent.filter((r) => !status || r.status === status) : [];
@@ -55,6 +57,34 @@ export default function AdminAppointments() {
                 ]} />
               )}
             </CardContent></Card>
+            <Card className="mt-6">
+              <CardHeader><CardTitle>Hỗ trợ đi lại cho người hiến, theo từng cơ sở</CardTitle></CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-muted-foreground">Mỗi cơ sở tự công bố mức hỗ trợ (quy định tối đa 50.000đ/lần hiến) và tự ghi nhận khi đã chi tiền mặt cho người hiến. Đây là sổ đối chiếu do cơ sở khai; LIFELY không thu hay chuyển tiền. Cơ sở có nhiều lần hiến chưa ghi nhận là nơi cần nhắc.</p>
+                {ts.initialLoading ? <Skeleton className="h-40" />
+                  : ts.error && !ts.data ? <ErrorState message={ts.error.message} onRetry={ts.reload} />
+                  : ts.data && (
+                    <>
+                      <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                        <StatCard label="Lượt hiến đã xác nhận" value={ts.data.donated} icon={Users} />
+                        <StatCard label="Đã ghi nhận hỗ trợ" value={ts.data.paid} icon={HandCoins} accent />
+                        <StatCard label="Chưa ghi nhận" value={ts.data.unpaid} icon={CalendarDays} />
+                        <StatCard label="Tổng tiền đã ghi nhận" value={formatVnd(ts.data.paidTotalVnd)} icon={HandCoins} />
+                      </div>
+                      {ts.data.rows.length === 0 ? <EmptyState title="Chưa có cơ sở được xác minh" /> : (
+                        <DataTable caption="Hỗ trợ đi lại theo cơ sở" rows={ts.data.rows} rowKey={(r) => r.organizationId} columns={[
+                          { key: "o", header: "Cơ sở", cell: (r) => <div><p>{r.organizationName}</p><p className="text-xs text-muted-foreground">{r.city ?? ""}</p></div> },
+                          { key: "p", header: "Mức công bố", cell: (r) => r.policyVnd > 0 ? formatVnd(r.policyVnd) : "Không hỗ trợ" },
+                          { key: "k", header: "Gửi xe máy", cell: (r) => r.parkingFeeVnd == null ? "Chưa cập nhật" : r.parkingFeeVnd === 0 ? "Miễn phí" : formatVnd(r.parkingFeeVnd) },
+                          { key: "d", header: "Đã hiến", cell: (r) => r.donated },
+                          { key: "g", header: "Đã ghi nhận", cell: (r) => `${r.paid} (${formatVnd(r.paidTotalVnd)})` },
+                          { key: "u", header: "Chưa ghi nhận", cell: (r) => r.unpaid > 0 && r.policyVnd > 0 ? <Pill t="amber">{r.unpaid}</Pill> : r.unpaid },
+                        ]} />
+                      )}
+                    </>
+                  )}
+              </CardContent>
+            </Card>
           </>
         )}
     </>

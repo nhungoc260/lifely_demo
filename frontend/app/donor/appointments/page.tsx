@@ -14,11 +14,15 @@ import { useQuery } from "@/hooks/use-query";
 import { toApiError } from "@/lib/api";
 import { APPOINTMENT_STATUS_LABEL, formatSlotRange } from "@/lib/appointments";
 import { formatDateTime } from "@/lib/format";
-import { appointmentApi } from "@/services";
+import { TravelCostCard } from "@/components/donor/travel-cost-card";
+import { distanceKm, formatVnd } from "@/lib/travel-cost";
+import { appointmentApi, donorApi } from "@/services";
 
 export default function DonorAppointments() {
   const slots = useQuery("slots-open", () => appointmentApi.slots({ days: 30 }));
   const mine = useQuery("appointments-mine", appointmentApi.mine);
+  const me = useQuery("donor-me", donorApi.me);
+  const home = me.data?.latitude != null && me.data?.longitude != null ? { lat: me.data.latitude, lng: me.data.longitude } : null;
   const [busy, setBusy] = useState<string | null>(null);
 
   async function book(id: string) {
@@ -69,6 +73,16 @@ export default function DonorAppointments() {
                           <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
                             {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
                           </p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.travelSupportVnd > 0 ? `Hỗ trợ đi lại ${formatVnd(s.travelSupportVnd)}/lần hiến` : "Không hỗ trợ đi lại"}
+                            {s.parkingFeeVnd != null ? ` · Gửi xe máy ${s.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(s.parkingFeeVnd)}` : ""}
+                          </p>
+                          {home && s.latitude != null && s.longitude != null ? (
+                            <details className="mt-1 rounded-xl bg-card ring-1 ring-border/60">
+                              <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-primary">Chi phí đi lại ước tính (Grab, Be, Xanh SM, xe máy)</summary>
+                              <div className="px-1 pb-2"><TravelCostCard bare distanceKm={distanceKm(home.lat, home.lng, s.latitude, s.longitude)} hospitalName={s.organizationName} city={s.city} supportVnd={s.travelSupportVnd} parkingFee={s.parkingFeeVnd} /></div>
+                            </details>
+                          ) : <p className="text-xs text-muted-foreground">Cập nhật vị trí trong hồ sơ để xem chi phí đi lại ước tính.</p>}
                         </div>
                         <Button size="sm" className="press shrink-0" onClick={() => book(s.id)} disabled={s.available === 0 || busy === s.id}>
                           {busy === s.id ? <Loader2 className="animate-spin" /> : <CalendarCheck />} Đặt
@@ -96,6 +110,7 @@ export default function DonorAppointments() {
                           <p className="font-medium">{formatDateTime(a.startsAt)}</p>
                           <p className="text-xs text-muted-foreground">{a.organizationName}{a.address ? ` · ${a.address}` : ""}</p>
                           <p className="mt-1 text-xs">{APPOINTMENT_STATUS_LABEL[a.status]}</p>
+                          <p className="text-xs text-muted-foreground">{a.travelSupportVnd > 0 ? `Cơ sở công bố hỗ trợ đi lại ${formatVnd(a.travelSupportVnd)} sau khi hiến.` : "Cơ sở này không công bố hỗ trợ đi lại."}</p>
                           {(a.status === "BOOKED" || a.status === "CHECKED_IN") && (
                             <details className="mt-2 rounded-xl bg-card px-3 py-2 ring-1 ring-border/60">
                               <summary className="cursor-pointer text-xs font-medium text-primary">Mã QR check-in</summary>
@@ -118,7 +133,7 @@ export default function DonorAppointments() {
                     <div>
                       <p className="mb-2 text-xs font-medium text-muted-foreground">Đã kết thúc</p>
                       <ul className="space-y-1 text-sm">
-                        {past.map((a) => <li key={a.id} className="flex justify-between gap-3"><span>{formatDateTime(a.startsAt)} · {a.organizationName}</span><span className="text-muted-foreground">{APPOINTMENT_STATUS_LABEL[a.status]}</span></li>)}
+                        {past.map((a) => <li key={a.id} className="flex justify-between gap-3"><span>{formatDateTime(a.startsAt)} · {a.organizationName}</span><span className="text-right text-muted-foreground">{APPOINTMENT_STATUS_LABEL[a.status]}{a.status === "DONATED" && <span className="block text-xs">{a.travelSupportPaidVnd != null ? `Đã nhận hỗ trợ đi lại ${formatVnd(a.travelSupportPaidVnd)}` : "Cơ sở chưa ghi nhận hỗ trợ đi lại"}</span>}</span></li>)}
                       </ul>
                     </div>
                   )}

@@ -5,6 +5,7 @@ import com.lifely.appointment.AppointmentDtos.ChangeLocationRequest;
 import com.lifely.appointment.AppointmentDtos.CreateSlotRequest;
 import com.lifely.appointment.AppointmentDtos.LocationChangeResult;
 import com.lifely.appointment.AppointmentDtos.OrgAppointmentDto;
+import com.lifely.appointment.AppointmentDtos.PayTravelSupportRequest;
 import com.lifely.appointment.AppointmentDtos.SlotDto;
 import com.lifely.appointment.AppointmentDtos.StatusRequest;
 import com.lifely.auth.AuthUser;
@@ -100,5 +101,13 @@ public class AppointmentController {
     public ApiResponse<OrgAppointmentDto> transition(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
                                                      @Valid @RequestBody StatusRequest req) {
         return ApiResponse.ok("Đã cập nhật lịch hẹn", service.transition(user, id, req.action()));
+    }
+
+    /** Ghi nhận cơ sở đã chi hỗ trợ đi lại cho lần hiến đã xác nhận (body có thể để trống = mức cơ sở đã công bố). */
+    @PostMapping("/api/organizations/me/appointments/{id}/travel-support")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ApiResponse<OrgAppointmentDto> payTravelSupport(@AuthenticationPrincipal AuthUser user, @PathVariable UUID id,
+                                                           @Valid @RequestBody(required = false) PayTravelSupportRequest req) {
+        return ApiResponse.ok("Đã ghi nhận hỗ trợ đi lại", service.payTravelSupport(user, id, req == null ? null : req.amountVnd()));
     }
 }
