@@ -73,11 +73,11 @@ export default function DonorAppointments() {
                           <p className={s.available === 0 ? "text-xs font-medium text-critical" : "text-xs text-muted-foreground"}>
                             {s.available === 0 ? "Đã hết chỗ" : `Còn ${s.available} / ${s.capacity} chỗ`}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          {typeof s.travelSupportVnd === "number" && <p className="text-xs text-muted-foreground">
                             {s.travelSupportVnd > 0 ? `Hỗ trợ đi lại ${formatVnd(s.travelSupportVnd)}/lần hiến` : "Không hỗ trợ đi lại"}
                             {s.parkingFeeVnd != null ? ` · Gửi xe máy ${s.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(s.parkingFeeVnd)}` : ""}
-                          </p>
-                          {home && s.latitude != null && s.longitude != null ? (
+                          </p>}
+                          {typeof s.travelSupportVnd !== "number" ? null : home && s.latitude != null && s.longitude != null ? (
                             <details className="mt-1 rounded-xl bg-card ring-1 ring-border/60">
                               <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-primary">Chi phí đi lại ước tính (Grab, Be, Xanh SM, xe máy)</summary>
                               <div className="px-1 pb-2"><TravelCostCard bare distanceKm={distanceKm(home.lat, home.lng, s.latitude, s.longitude)} hospitalName={s.organizationName} city={s.city} supportVnd={s.travelSupportVnd} parkingFee={s.parkingFeeVnd} /></div>

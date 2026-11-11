@@ -11,6 +11,7 @@ import { z } from "zod";
 import { StickyActions } from "@/components/app/sticky-actions";
 import { LocationPicker } from "@/components/map/location-picker";
 import { TravelCostCard } from "@/components/donor/travel-cost-card";
+import { DistanceCostTable } from "@/components/requests/distance-cost-table";
 import { CoveragePanel } from "@/components/requests/coverage-panel";
 import { PageHeader } from "@/components/shell/page-header";
 import { BloodChip, UrgencyBadge } from "@/components/ui/badges";
@@ -22,7 +23,7 @@ import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
 import { URGENCY_LABEL } from "@/lib/labels";
-import { distanceKm as roadDistanceKm } from "@/lib/travel-cost";
+import { distanceKm as roadDistanceKm, TRAVEL_COST } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { orgApi, publicApi, requestApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
@@ -138,6 +139,9 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
       .sort((x, y) => x.km - y.km)
       .slice(0, 5);
   }, [refPoint, orgs.data]);
+  const [manualKm, setManualKm] = useState("");
+  const manualRoadKm = Number(manualKm.replace(",", "."));
+  const manualOk = manualKm.trim() !== "" && Number.isFinite(manualRoadKm) && manualRoadKm > 0 && manualRoadKm <= 2000;
   const homeToHospitalKm = geo && lat != null && lng != null ? roadDistanceKm(geo.lat, geo.lng, lat, lng) : null;
   const selectedOrg = orgs.data?.find((x) => x.id === orgId);
   const isOtherFacility = isOrg && !!orgId && !!myOrg.data && orgId !== myOrg.data.id;
@@ -304,10 +308,20 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         ) : (
           <Card>
             <CardHeader><CardTitle>Từ vị trí của bạn tới bệnh viện</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Cho biết vị trí hiện tại của bạn (nhà hoặc nơi bệnh nhân đang ở) để xem khoảng cách, thời gian và chi phí đi tới bệnh viện bằng xe máy, Grab, Be, Xanh SM. Vị trí này cũng giúp hệ thống đối chiếu yêu cầu có thật hay không, và không hiển thị với người hiến máu.</p>
+            <CardContent className="space-y-4 text-sm">
+              <p className="text-muted-foreground">Cho biết vị trí hiện tại của bạn (nhà hoặc nơi bệnh nhân đang ở) và chọn bệnh viện để tính chính xác khoảng cách, thời gian và chi phí. Vị trí này cũng giúp hệ thống đối chiếu yêu cầu có thật hay không, và không hiển thị với người hiến máu.</p>
               <Button type="button" variant="outline" size="sm" onClick={locateMe} loading={geoBusy}><LocateFixed /> Dùng vị trí hiện tại</Button>
               {geo && (lat == null || lng == null) && <p className="text-xs text-muted-foreground">Hãy chọn bệnh viện hoặc đặt ghim ở trên để xem chi phí.</p>}
+
+              <div className="max-w-xs">
+                <Field label="Hoặc nhập quãng đường ước tính (km đường đi)" htmlFor="manualKm" error={manualKm.trim() !== "" && !manualOk ? "Nhập số km từ 0,1 tới 2000" : undefined}>
+                  <Input id="manualKm" inputMode="decimal" placeholder="VD: 8" value={manualKm} onChange={(e) => setManualKm(e.target.value)} />
+                </Field>
+              </div>
+
+              {manualOk
+                ? <TravelCostCard bare audience="requester" distanceKm={manualRoadKm / TRAVEL_COST.roadFactor} hospitalName={selectedOrg?.name ?? "bệnh viện"} city={selectedOrg?.city} parkingFee={null} />
+                : <DistanceCostTable />}
             </CardContent>
           </Card>
         )}

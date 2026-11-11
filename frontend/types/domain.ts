@@ -434,6 +434,11 @@ export interface TravelSupportRow {
   organizationId: string; organizationName: string; city: string | null; policyVnd: number; parkingFeeVnd: number | null;
   donated: number; paid: number; unpaid: number; paidTotalVnd: number;
 }
+export interface OrgTravelSupportMonth { month: string; paid: number; totalVnd: number }
+export interface OrgTravelSupport {
+  policyVnd: number; parkingFeeVnd: number | null; donated: number; paid: number; unpaid: number; paidTotalVnd: number;
+  months: OrgTravelSupportMonth[];
+}
 export interface TravelSupportReport { rows: TravelSupportRow[]; donated: number; paid: number; unpaid: number; paidTotalVnd: number }
 export type AppointmentAction = "CHECK_IN" | "SCREEN_PASS" | "DEFER" | "NO_SHOW" | "DONATED";
 

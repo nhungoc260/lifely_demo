@@ -219,3 +219,21 @@ export function distanceKm(aLat: number, aLng: number, bLat: number, bLng: numbe
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(dLng / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
+
+export interface ReferenceRow {
+  roadKm: number;
+  /** Tiền xăng xe máy một chiều (chưa gồm gửi xe). */
+  fuel: number;
+  grabBike: number; beBike: number; greenBike: number;
+  grabCar: number; beCar: number; greenCar: number;
+}
+
+/** Bảng tham khảo một chiều theo quãng đường đường thực tế (km), để so sánh xăng với Grab, Be, Xanh SM trước khi biết vị trí. */
+export function referenceRows(roadKms: number[], litersPer100Km: number = VEHICLE_PRESETS[0].litersPer100Km): ReferenceRow[] {
+  return roadKms.map((km) => ({
+    roadKm: km,
+    fuel: fuelCost(km, litersPer100Km),
+    grabBike: grabBikeFare(km), beBike: beBikeFare(km), greenBike: greenBikeFare(km),
+    grabCar: grabCarFare(km), beCar: beCarFare(km), greenCar: greenCarFare(km),
+  }));
+}

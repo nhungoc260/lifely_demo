@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { StatusChart } from "@/components/admin/charts";
 import { BloodGroupRequestsChart, WeeklyRequestsChart } from "@/components/organization/stats-charts";
+import { TravelSupportSummary } from "@/components/organization/travel-support-summary";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +75,7 @@ export default function OrganizationStats() {
             </div>
           </>
         )}
+      <TravelSupportSummary />
       </div>
     </>
   );

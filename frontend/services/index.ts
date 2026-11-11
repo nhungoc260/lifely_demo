@@ -9,6 +9,7 @@ import type {
   TravelSupportReport,
   AbuseFlagRow,
   AbuseOverview,
+  OrgTravelSupport,
 } from "@/types/domain";
 
 // ---- auth
@@ -136,6 +137,7 @@ export const orgApi = {
   },
   submit: () => post<Organization>("/api/organizations/me/submit"),
   dashboard: () => get<OrgDashboard>("/api/organizations/me/dashboard"),
+  travelSupport: () => get<OrgTravelSupport>("/api/organizations/me/travel-support"),
   donations: () => get<DonationLogEntry[]>("/api/organizations/me/donations"),
   donors: () => get<OrgDonorEntry[]>("/api/organizations/me/donors"),
   staff: () => get<StaffOverview>("/api/organizations/me/staff"),

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { RequesterAppHome } from "@/components/app/requester-home";
 import { useAppMode } from "@/hooks/use-app-mode";
 import { RequesterRequestCard } from "@/components/requests/requester-request-card";
+import { TravelSupportSummary } from "@/components/organization/travel-support-summary";
 import { PageHeader } from "@/components/shell/page-header";
 import { OrgStatusBadge } from "@/components/ui/badges";
 import { buttonVariants } from "@/components/ui/button";
@@ -81,6 +82,8 @@ export default function OrganizationDashboard() {
               <ul className="mt-4 space-y-3">{closed.map((r) => <li key={r.id}><RequesterRequestCard r={r} basePath="/organization" /></li>)}</ul>
             </details>
           )}
+
+          <TravelSupportSummary />
         </>
       )}
     </>

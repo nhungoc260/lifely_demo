@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   beBikeFare, beCarFare, directionsUrl, estimateTravel, fuelCost, grabBikeFare, grabCarFare, greenBikeFare, greenCarFare,
-  distanceKm, roadKmFrom, speedKmh, TRAVEL_COST,
+  distanceKm, referenceRows, roadKmFrom, speedKmh, TRAVEL_COST,
 } from "@/lib/travel-cost";
 
 // 10:00 giờ TP.HCM, thứ Ba: không cao điểm
@@ -134,6 +134,24 @@ describe("khoảng cách chim bay", () => {
     const d = distanceKm(10.7539, 106.6603, 10.7725, 106.698); // Chợ Rẫy -> chợ Bến Thành, xấp xỉ
     expect(d).toBeGreaterThan(3);
     expect(d).toBeLessThan(6);
+  });
+});
+
+describe("bảng tham khảo theo quãng đường", () => {
+  it("mỗi dòng khớp hàm tính từng hãng, xe máy rẻ hơn mọi app", () => {
+    const rows = referenceRows([3, 10]);
+    expect(rows).toHaveLength(2);
+    expect(rows[1].grabBike).toBe(grabBikeFare(10));
+    expect(rows[1].beCar).toBe(beCarFare(10));
+    expect(rows[1].greenCar).toBe(greenCarFare(10));
+    for (const r of rows) {
+      expect(r.fuel).toBeLessThan(Math.min(r.grabBike, r.beBike, r.greenBike));
+      expect(r.grabCar).toBeGreaterThan(r.grabBike);
+    }
+  });
+  it("quãng đường dài hơn thì mọi chi phí đều tăng", () => {
+    const [a, b] = referenceRows([5, 15]);
+    for (const k of ["fuel", "grabBike", "beBike", "greenBike", "grabCar", "beCar", "greenCar"] as const) expect(b[k]).toBeGreaterThan(a[k]);
   });
 });
 
