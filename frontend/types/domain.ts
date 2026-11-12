@@ -443,6 +443,12 @@ export interface TravelSupportRow {
   /** Trong đó theo yêu cầu máu khẩn cấp (không phải lịch hiến đặt trước). */
   donatedUrgent: number; paidUrgent: number;
 }
+/** Một lượt hiến đã xác nhận để ghi nhận hoặc theo dõi hỗ trợ đi lại: lịch hiến đặt trước hoặc yêu cầu khẩn cấp. */
+export interface TravelSupportItem {
+  kind: "APPOINTMENT" | "URGENT"; id: string; organizationId: string; organizationName: string;
+  donorName: string; bloodType: string | null; donatedAt: string | null; place: string;
+  paidVnd: number | null; paidAt: string | null; policyVnd: number;
+}
 export interface OrgTravelSupportMonth { month: string; paid: number; totalVnd: number }
 export interface OrgTravelSupport {
   policyVnd: number; parkingFeeVnd: number | null; donated: number; paid: number; unpaid: number; paidTotalVnd: number;

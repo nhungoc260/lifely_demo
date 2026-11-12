@@ -11,6 +11,7 @@ import type {
   AbuseOverview,
   OrgTravelSupport,
   PayTravelSupportResult,
+  TravelSupportItem,
 } from "@/types/domain";
 
 // ---- auth
@@ -140,6 +141,7 @@ export const orgApi = {
   submit: () => post<Organization>("/api/organizations/me/submit"),
   dashboard: () => get<OrgDashboard>("/api/organizations/me/dashboard"),
   travelSupport: () => get<OrgTravelSupport>("/api/organizations/me/travel-support"),
+  travelSupportItems: (status: string = "UNPAID") => get<TravelSupportItem[]>(`/api/organizations/me/travel-support/items${qs({ status })}`),
   donations: () => get<DonationLogEntry[]>("/api/organizations/me/donations"),
   donors: () => get<OrgDonorEntry[]>("/api/organizations/me/donors"),
   staff: () => get<StaffOverview>("/api/organizations/me/staff"),
@@ -160,6 +162,7 @@ export const adminApi = {
   reviewAbuseFlag: (id: string, decision: "CONFIRMED" | "DISMISSED", note?: string) =>
     post<AbuseFlagRow>(`/api/admin/abuse-flags/${id}/review`, { decision, note }),
   travelSupport: () => get<TravelSupportReport>("/api/admin/travel-support"),
+  travelSupportItems: (status: string = "UNPAID", organizationId?: string) => get<TravelSupportItem[]>(`/api/admin/travel-support/items${qs({ status, organizationId })}`),
   dashboard: () => get<AdminDashboard>("/api/admin/dashboard"),
   users: (p: { q?: string; role?: string; status?: string; page?: number; size?: number; sort?: string; dir?: string }) =>
     get<Page<AdminUser>>(`/api/admin/users${qs(p)}`),

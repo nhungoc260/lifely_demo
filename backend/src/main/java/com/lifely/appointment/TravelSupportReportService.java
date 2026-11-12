@@ -4,7 +4,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -29,6 +33,73 @@ public class TravelSupportReportService {
     /** Tổng hợp hỗ trợ đi lại của MỘT cơ sở, cho trang Thống kê của cơ sở. */
     public record OrgReport(int policyVnd, Integer parkingFeeVnd, long donated, long paid, long unpaid, long paidTotalVnd,
                             long donatedUrgent, long paidUrgent, List<Month> months) {
+    }
+
+    /** Một lượt hiến đã xác nhận: để cơ sở ghi nhận chi hỗ trợ và admin theo dõi. kind: APPOINTMENT (lịch hiến) hoặc URGENT. */
+    public record Item(String kind, UUID id, UUID organizationId, String organizationName, String donorName, String bloodType,
+                       Instant donatedAt, String place, Integer paidVnd, Instant paidAt, int policyVnd) {
+    }
+
+    private static final Set<String> ITEM_STATUSES = Set.of("UNPAID", "PAID", "ALL");
+
+    /** Danh sách lượt hiến đã xác nhận của cả hai luồng (lịch hẹn và khẩn cấp do cơ sở xác nhận), mới và chưa ghi nhận lên đầu. */
+    private static final String ITEMS = """
+            SELECT x.* FROM (
+                SELECT 'APPOINTMENT' AS kind, a.id AS id, o.id AS org_id, o.name AS org_name, u.full_name AS donor_name,
+                       bt.code AS blood_code, COALESCE(a.handled_at, s.starts_at) AS at,
+                       'Lịch hiến ' || to_char(s.starts_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD/MM/YYYY HH24:MI') AS place,
+                       a.travel_support_paid_vnd AS paid_vnd, a.travel_support_paid_at AS paid_at, o.travel_support_vnd AS policy
+                  FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
+                  JOIN organizations o ON o.id = s.organization_id
+                  JOIN donor_profiles dp ON dp.id = a.donor_id JOIN users u ON u.id = dp.user_id
+                  LEFT JOIN blood_types bt ON bt.id = dp.blood_type_id
+                 WHERE a.status = 'DONATED'
+                UNION ALL
+                SELECT 'URGENT', m.id, o.id, o.name, u.full_name, bt.code,
+                       (SELECT MAX(h.donated_on) FROM donation_history h
+                         WHERE h.match_id = m.id AND h.verification_level = 'ORG_VERIFIED')::timestamptz,
+                       'Yêu cầu khẩn cấp tại ' || r.hospital_name,
+                       m.travel_support_paid_vnd, m.travel_support_paid_at, o.travel_support_vnd
+                  FROM matches m JOIN blood_requests r ON r.id = m.request_id
+                  JOIN organizations o ON o.id = r.organization_id
+                  JOIN donor_profiles dp ON dp.id = m.donor_id JOIN users u ON u.id = dp.user_id
+                  LEFT JOIN blood_types bt ON bt.id = dp.blood_type_id
+                 WHERE m.status = 'COMPLETED' AND EXISTS (
+                       SELECT 1 FROM donation_history h WHERE h.match_id = m.id AND h.verification_level = 'ORG_VERIFIED')
+            ) x
+            """;
+
+    /**
+     * Danh sách lượt hiến để ghi nhận / theo dõi. organizationId null = mọi cơ sở (admin).
+     * status: UNPAID (chưa ghi nhận), PAID (đã ghi nhận), ALL.
+     */
+    @Transactional(readOnly = true)
+    public List<Item> items(UUID organizationId, String status) {
+        String st = status == null ? "UNPAID" : status.toUpperCase();
+        if (!ITEM_STATUSES.contains(st)) {
+            throw com.lifely.common.AppException.badRequest("INVALID_STATUS", "Trạng thái không hợp lệ");
+        }
+        StringBuilder sql = new StringBuilder(ITEMS).append(" WHERE TRUE");
+        List<Object> args = new ArrayList<>();
+        if (organizationId != null) {
+            sql.append(" AND x.org_id = ?");
+            args.add(organizationId);
+        }
+        if ("UNPAID".equals(st)) {
+            sql.append(" AND x.paid_vnd IS NULL");
+        } else if ("PAID".equals(st)) {
+            sql.append(" AND x.paid_vnd IS NOT NULL");
+        }
+        sql.append(" ORDER BY x.at DESC NULLS LAST LIMIT 200");
+        return jdbc.query(sql.toString(), (rs, i) -> new Item(rs.getString("kind"), rs.getObject("id", UUID.class),
+                rs.getObject("org_id", UUID.class), rs.getString("org_name"), rs.getString("donor_name"),
+                rs.getString("blood_code"), instant(rs.getTimestamp("at")), rs.getString("place"),
+                rs.getObject("paid_vnd", Integer.class), instant(rs.getTimestamp("paid_at")), rs.getInt("policy")),
+                args.toArray());
+    }
+
+    private static Instant instant(Timestamp t) {
+        return t == null ? null : t.toInstant();
     }
 
     /**

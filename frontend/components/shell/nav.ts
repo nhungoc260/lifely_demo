@@ -1,5 +1,5 @@
 import {
-  Activity, BarChart3, Bell, CalendarDays, ClipboardList, Droplets, FilePlus2, HeartHandshake, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert, Siren,
+  Activity, BarChart3, Bell, CalendarDays, ClipboardList, Droplets, FilePlus2, HandCoins, HeartHandshake, HeartPulse, History, LayoutDashboard, Map, ScrollText, ShieldAlert, Siren,
   Building2, HandHelping, MessageSquare, ShieldCheck, UserRound, Users, type LucideIcon,
 } from "lucide-react";
 
@@ -48,6 +48,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/organization/requests", label: "Yêu cầu", icon: ClipboardList, mobile: true },
     { href: "/organization/requests/create", label: "Yêu cầu mới", icon: FilePlus2 },
     { href: "/organization/appointments", label: "Lịch hiến", icon: CalendarDays },
+    { href: "/organization/travel-support", label: "Hỗ trợ đi lại", icon: HandCoins },
     { href: "/organization/inventory", label: "Kho máu", icon: Droplets },
     { href: "/organization/donors", label: "Người hiến", icon: HeartHandshake },
     { href: "/organization/donations", label: "Lịch sử hiến", icon: HeartPulse },
@@ -65,6 +66,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/appointments", label: "Lịch hiến", icon: CalendarDays },
     { href: "/admin/users", label: "Người dùng", icon: Users, mobile: true },
     { href: "/admin/reports", label: "Báo cáo vi phạm", short: "Báo cáo", icon: ShieldAlert, mobile: true },
+    { href: "/admin/travel-support", label: "Hỗ trợ đi lại", icon: HandCoins },
     { href: "/admin/abuse", label: "Giám sát bất thường", icon: Siren },
     { href: "/admin/messages", label: "Tin nhắn", icon: MessageSquare },
     { href: "/admin/operations", label: "Thống kê vận hành", icon: BarChart3 },

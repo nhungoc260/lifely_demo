@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, LocateFixed, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
 import { URGENCY_LABEL } from "@/lib/labels";
-import { distanceKm as roadDistanceKm, TRAVEL_COST } from "@/lib/travel-cost";
+import { distanceKm as roadDistanceKm, formatVnd, TRAVEL_COST } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { orgApi, publicApi, requestApi } from "@/services";
 import { useAuth } from "@/providers/auth-provider";
@@ -142,7 +143,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
   const [manualKm, setManualKm] = useState("");
   const manualRoadKm = Number(manualKm.replace(",", "."));
   const manualOk = manualKm.trim() !== "" && Number.isFinite(manualRoadKm) && manualRoadKm > 0 && manualRoadKm <= 2000;
-  const homeToHospitalKm = geo && lat != null && lng != null ? roadDistanceKm(geo.lat, geo.lng, lat, lng) : null;
+  const homeToHospitalKm = !isOrg && geo && lat != null && lng != null ? roadDistanceKm(geo.lat, geo.lng, lat, lng) : null;
   const selectedOrg = orgs.data?.find((x) => x.id === orgId);
   const isOtherFacility = isOrg && !!orgId && !!myOrg.data && orgId !== myOrg.data.id;
 
@@ -155,7 +156,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         district: v.district || undefined, latitude: v.latitude, longitude: v.longitude, urgency: v.urgency,
         deadline: new Date(v.deadlineLocal).toISOString(), contactPhone: v.contactPhone,
         description: v.description || undefined, organizationId: v.organizationId || undefined,
-        homeLatitude: geo?.lat, homeLongitude: geo?.lng,
+        homeLatitude: isOrg ? undefined : geo?.lat, homeLongitude: isOrg ? undefined : geo?.lng,
       }, idempotencyKey);
       if (created.status === "CANCELLED") {
         toast.error("Yêu cầu bị hệ thống tạm dừng vì có dấu hiệu bất thường. Hãy chọn bệnh viện đã xác minh trong danh sách hoặc liên hệ quản trị viên.");
@@ -302,7 +303,19 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
 
         <CoveragePanel bloodType={bt} latitude={lat ?? null} longitude={lng ?? null} />
 
-        {homeToHospitalKm != null && lat != null ? (
+        {isOrg ? (
+          <Card>
+            <CardHeader><CardTitle>Hỗ trợ người hiến đi lại</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {myOrg.data ? (
+                <p>Người hiến thấy mức hỗ trợ đi lại do cơ sở của bạn công bố: <strong>{myOrg.data.travelSupportVnd > 0 ? `${formatVnd(myOrg.data.travelSupportVnd)}/lần hiến` : "không hỗ trợ"}</strong>
+                  {myOrg.data.parkingFeeVnd != null ? `, gửi xe máy ${myOrg.data.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(myOrg.data.parkingFeeVnd)}` : ", phí gửi xe chưa cập nhật"}.
+                  Chi phí đi tới cơ sở bằng xe máy, Grab, Be, Xanh SM được tính riêng cho từng người hiến theo vị trí của họ.</p>
+              ) : <p className="text-muted-foreground">Đang tải thông tin cơ sở…</p>}
+              <p className="text-muted-foreground">Sau khi xác nhận người hiến đã hiến, bạn bấm “Đã chi hỗ trợ đi lại” ở chi tiết yêu cầu để ghi nhận. LIFELY không thu hay chuyển tiền. Chỉnh mức hỗ trợ và phí gửi xe ở <Link href="/organization/profile" className="font-medium text-primary underline">Hồ sơ tổ chức</Link>.</p>
+            </CardContent>
+          </Card>
+        ) : homeToHospitalKm != null && lat != null ? (
           <TravelCostCard audience="requester" distanceKm={homeToHospitalKm} hospitalName={selectedOrg?.name ?? "bệnh viện"} city={selectedOrg?.city}
             parkingFee={null} />
         ) : (
@@ -326,7 +339,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
           </Card>
         )}
 
-        <p className="rounded-xl bg-muted/60 p-4 text-xs text-muted-foreground">Yêu cầu được duyệt tự động để kịp thời. Nếu có dấu hiệu bất thường (nhiều tài khoản chung số điện thoại, tạo yêu cầu dồn dập, thông tin không khớp...), hệ thống dừng yêu cầu ngay và quản trị viên xem xét. LIFELY không trả tiền hay quà cho người tạo yêu cầu.</p>
+        <p className="rounded-xl bg-muted/60 p-4 text-xs text-muted-foreground">{isOrg ? "Yêu cầu của cơ sở đã xác minh được điều phối ngay. Hệ thống vẫn theo dõi dấu hiệu bất thường để bảo vệ người hiến máu. LIFELY không trả tiền hay quà cho người tạo yêu cầu." : null}{isOrg ? null : "Yêu cầu được duyệt tự động để kịp thời. Nếu có dấu hiệu bất thường (nhiều tài khoản chung số điện thoại, tạo yêu cầu dồn dập, thông tin không khớp...), hệ thống dừng yêu cầu ngay và quản trị viên xem xét. LIFELY không trả tiền hay quà cho người tạo yêu cầu."}</p>
 
         <Card>
           <CardHeader><CardTitle>Hạn chót &amp; liên hệ</CardTitle></CardHeader>
