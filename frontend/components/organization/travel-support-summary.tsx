@@ -38,7 +38,7 @@ export function TravelSupportSummary({ onStats = false }: { onStats?: boolean } 
             <Card className="mt-4">
               <CardHeader><CardTitle>Tiền hỗ trợ đã chi theo tháng (6 tháng gần nhất)</CardTitle></CardHeader>
               <CardContent>
-                {d.months.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có khoản hỗ trợ nào được ghi nhận. Sau khi xác nhận người hiến đã hiến, bấm “Đã chi hỗ trợ” ở trang <Link href="/organization/appointments" className="font-medium text-primary underline">Lịch hiến</Link>.</p> : (
+                {d.months.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có khoản hỗ trợ nào được ghi nhận.</p> : (
                   <ul className="space-y-3">
                     {d.months.map((m) => (
                       <li key={m.month} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-3 text-sm">
@@ -49,8 +49,8 @@ export function TravelSupportSummary({ onStats = false }: { onStats?: boolean } 
                     ))}
                   </ul>
                 )}
-                <p className="mt-4 text-sm">Trong đó theo <strong>yêu cầu máu khẩn cấp</strong>: {d.donatedUrgent} lượt hiến đã xác nhận, {d.paidUrgent} lượt đã chi hỗ trợ. Mở yêu cầu, ở danh sách người hiến đã hiến, bấm “Đã chi hỗ trợ đi lại”.</p>
-                <p className="mt-2 text-xs text-muted-foreground">Gửi xe máy tại cơ sở: {d.parkingFeeVnd == null ? "chưa cập nhật" : d.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(d.parkingFeeVnd)}. Chỉnh mức hỗ trợ và phí gửi xe ở <Link href="/organization/profile" className="font-medium text-primary underline">Hồ sơ tổ chức</Link>. LIFELY chỉ ghi nhận, không thu hay chuyển tiền.</p>
+                <p className="mt-4 text-sm text-muted-foreground">Khẩn cấp: <span className="font-semibold text-foreground">{d.donatedUrgent}</span> lượt hiến, <span className="font-semibold text-foreground">{d.paidUrgent}</span> đã chi hỗ trợ.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Gửi xe máy: {d.parkingFeeVnd == null ? "chưa cập nhật" : d.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(d.parkingFeeVnd)} · <Link href="/organization/profile" className="font-medium text-primary underline">Chỉnh ở Hồ sơ</Link></p>
               </CardContent>
             </Card>
           </>

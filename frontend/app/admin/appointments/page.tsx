@@ -60,7 +60,7 @@ export default function AdminAppointments() {
             <Card className="mt-6">
               <CardHeader><CardTitle>Hỗ trợ đi lại cho người hiến, theo từng cơ sở</CardTitle></CardHeader>
               <CardContent>
-                <p className="mb-4 text-sm text-muted-foreground">Mỗi cơ sở tự công bố mức hỗ trợ (quy định tối đa 50.000đ/lần hiến) và tự ghi nhận khi đã chi tiền mặt cho người hiến. Đây là sổ đối chiếu do cơ sở khai; LIFELY không thu hay chuyển tiền. Cơ sở có nhiều lần hiến chưa ghi nhận là nơi cần nhắc.</p>
+                <p className="mb-4 text-sm text-muted-foreground">Mức công bố và số lượt cơ sở đã ghi nhận chi.</p>
                 {ts.initialLoading ? <Skeleton className="h-40" />
                   : ts.error && !ts.data ? <ErrorState message={ts.error.message} onRetry={ts.reload} />
                   : ts.data && (

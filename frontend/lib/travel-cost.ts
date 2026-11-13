@@ -237,3 +237,28 @@ export function referenceRows(roadKms: number[], litersPer100Km: number = VEHICL
     grabCar: grabCarFare(km), beCar: beCarFare(km), greenCar: greenCarFare(km),
   }));
 }
+
+export interface SupportSuggestion {
+  roadKm: number;
+  /** Cước GrabBike đi và về (mức hợp lý tối đa người hiến phải chi để tới cơ sở). */
+  grabBikeRoundTrip: number;
+  /** Tiền xăng xe máy đi và về (chưa gồm gửi xe). */
+  motorRoundTrip: number;
+  /** Số tiền gợi ý ghi nhận: không vượt mức cơ sở công bố, không vượt chi phí đi lại ước tính. */
+  suggested: number;
+}
+
+/**
+ * Gợi ý số tiền hỗ trợ cho một lượt hiến dựa trên khoảng cách thật từ nhà người hiến tới cơ sở:
+ * lấy thấp hơn giữa mức cơ sở công bố và cước GrabBike đi và về, làm tròn 1.000đ, tối thiểu 1.000đ.
+ * Không biết khoảng cách thì dùng đúng mức cơ sở công bố. Cơ sở không công bố mức (0) thì không gợi ý (0).
+ */
+export function suggestSupport(straightKm: number | null | undefined, policyVnd: number): SupportSuggestion {
+  if (policyVnd <= 0) return { roadKm: 0, grabBikeRoundTrip: 0, motorRoundTrip: 0, suggested: 0 };
+  if (straightKm == null) return { roadKm: 0, grabBikeRoundTrip: 0, motorRoundTrip: 0, suggested: policyVnd };
+  const roadKm = roadKmFrom(straightKm);
+  const grabBikeRoundTrip = grabBikeFare(roadKm) * 2;
+  const motorRoundTrip = fuelCost(roadKm, VEHICLE_PRESETS[0].litersPer100Km) * 2;
+  const suggested = Math.max(1_000, Math.min(policyVnd, roundVnd(grabBikeRoundTrip)));
+  return { roadKm, grabBikeRoundTrip, motorRoundTrip, suggested };
+}

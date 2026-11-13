@@ -105,7 +105,7 @@ function OrgForm({ org, reload }: { org: Organization | null; reload: () => void
         <Card>
           <CardHeader><CardTitle>Hỗ trợ người hiến đi lại</CardTitle></CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
-            <p className="text-sm text-muted-foreground sm:col-span-2">Người hiến máu tình nguyện được cơ sở tiếp nhận máu hỗ trợ tiền đi lại bằng tiền mặt, tối đa 50.000đ mỗi lần hiến theo quy định. Con số bạn nhập sẽ hiện cho người hiến khi họ chọn khung giờ, cùng ước tính cước Grab, Be, Xanh SM. LIFELY không thu hay chuyển tiền: sau khi xác nhận đã hiến, bạn chi trực tiếp rồi bấm ghi nhận ở trang Lịch hiến để người hiến và admin đối chiếu.</p>
+            <p className="text-sm text-muted-foreground sm:col-span-2">Người hiến thấy mức này khi chọn khung giờ. Quy định tối đa 50.000đ mỗi lần hiến.</p>
             <Field label="Hỗ trợ đi lại mỗi lần hiến (đồng)" htmlFor="travelSupportVnd" error={errors.travelSupportVnd?.message}><Input id="travelSupportVnd" type="number" inputMode="numeric" min={0} max={500000} step={1000} {...register("travelSupportVnd", { valueAsNumber: true })} aria-invalid={!!errors.travelSupportVnd} /></Field>
             <Field label="Phí gửi xe máy tại cơ sở (đồng)" htmlFor="parkingFeeVnd" error={errors.parkingFeeVnd?.message}><Input id="parkingFeeVnd" type="number" inputMode="numeric" min={0} max={200000} step={1000} {...register("parkingFeeVnd", { valueAsNumber: true })} aria-invalid={!!errors.parkingFeeVnd} /></Field>
           </CardContent>

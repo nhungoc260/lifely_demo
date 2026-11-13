@@ -24,6 +24,7 @@ import { toApiError } from "@/lib/api";
 import { applyServerErrors } from "@/lib/forms";
 import { formatDateTime } from "@/lib/format";
 import { URGENCY_LABEL } from "@/lib/labels";
+import { locateUser } from "@/lib/geo";
 import { distanceKm as roadDistanceKm, formatVnd, TRAVEL_COST } from "@/lib/travel-cost";
 import { cn } from "@/lib/utils";
 import { orgApi, publicApi, requestApi } from "@/services";
@@ -118,14 +119,16 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
 
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoBusy, setGeoBusy] = useState(false);
-  function locateMe() {
-    if (!navigator.geolocation) { toast.error("Trình duyệt không hỗ trợ định vị"); return; }
+  async function locateMe() {
     setGeoBusy(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoBusy(false); },
-      () => { setGeoBusy(false); toast.error("Không lấy được vị trí. Hãy cho phép định vị hoặc chọn bệnh viện trong danh sách."); },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
+    try {
+      const g = await locateUser();
+      setGeo({ lat: g.lat, lng: g.lng });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Không lấy được vị trí.");
+    } finally {
+      setGeoBusy(false);
+    }
   }
   const refPoint = useMemo(() => {
     if (geo) return geo;
@@ -292,12 +295,8 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
               <Field label="Thành phố" htmlFor="city" error={errors.city?.message}><Input id="city" readOnly={!!orgId} {...register("city")} /></Field>
               <Field label="Quận/Huyện" htmlFor="district"><Input id="district" readOnly={!!orgId} {...register("district")} /></Field>
             </div>
-            {!orgId && (
-              <>
-                <LocationPicker latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} hospitals={orgs.data} help="Đặt ghim ở nơi người hiến máu cần đến." />
-                {(errors.latitude || errors.longitude) && <p role="alert" className="text-xs font-medium text-critical">Chọn vị trí trên bản đồ</p>}
-              </>
-            )}
+            <LocationPicker locked={!!orgId} latitude={lat ?? null} longitude={lng ?? null} onChange={(a, b) => { setValue("latitude", a, { shouldValidate: true }); setValue("longitude", b, { shouldValidate: true }); }} hospitals={orgs.data} help="Đặt ghim ở nơi người hiến máu cần đến." />
+            {!orgId && (errors.latitude || errors.longitude) && <p role="alert" className="text-xs font-medium text-critical">Chọn vị trí trên bản đồ</p>}
           </CardContent>
         </Card>
 
@@ -306,13 +305,14 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
         {isOrg ? (
           <Card>
             <CardHeader><CardTitle>Hỗ trợ người hiến đi lại</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="flex flex-wrap items-center gap-2 text-sm">
               {myOrg.data ? (
-                <p>Người hiến thấy mức hỗ trợ đi lại do cơ sở của bạn công bố: <strong>{myOrg.data.travelSupportVnd > 0 ? `${formatVnd(myOrg.data.travelSupportVnd)}/lần hiến` : "không hỗ trợ"}</strong>
-                  {myOrg.data.parkingFeeVnd != null ? `, gửi xe máy ${myOrg.data.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(myOrg.data.parkingFeeVnd)}` : ", phí gửi xe chưa cập nhật"}.
-                  Chi phí đi tới cơ sở bằng xe máy, Grab, Be, Xanh SM được tính riêng cho từng người hiến theo vị trí của họ.</p>
-              ) : <p className="text-muted-foreground">Đang tải thông tin cơ sở…</p>}
-              <p className="text-muted-foreground">Sau khi xác nhận người hiến đã hiến, bạn bấm “Đã chi hỗ trợ đi lại” ở chi tiết yêu cầu để ghi nhận. LIFELY không thu hay chuyển tiền. Chỉnh mức hỗ trợ và phí gửi xe ở <Link href="/organization/profile" className="font-medium text-primary underline">Hồ sơ tổ chức</Link>.</p>
+                <>
+                  <span className="rounded-full bg-success/10 px-3 py-1.5 font-semibold text-success">{myOrg.data.travelSupportVnd > 0 ? `Hỗ trợ tối đa ${formatVnd(myOrg.data.travelSupportVnd)}/lần hiến` : "Không hỗ trợ đi lại"}</span>
+                  <span className="rounded-full bg-muted px-3 py-1.5 text-muted-foreground">Gửi xe máy: {myOrg.data.parkingFeeVnd == null ? "chưa cập nhật" : myOrg.data.parkingFeeVnd === 0 ? "miễn phí" : formatVnd(myOrg.data.parkingFeeVnd)}</span>
+                  <Link href="/organization/profile" className="ml-auto text-xs font-medium text-primary underline">Chỉnh</Link>
+                </>
+              ) : <span className="text-muted-foreground">Đang tải…</span>}
             </CardContent>
           </Card>
         ) : homeToHospitalKm != null && lat != null ? (
@@ -322,12 +322,12 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
           <Card>
             <CardHeader><CardTitle>Từ vị trí của bạn tới bệnh viện</CardTitle></CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <p className="text-muted-foreground">Cho biết vị trí hiện tại của bạn (nhà hoặc nơi bệnh nhân đang ở) và chọn bệnh viện để tính chính xác khoảng cách, thời gian và chi phí. Vị trí này cũng giúp hệ thống đối chiếu yêu cầu có thật hay không, và không hiển thị với người hiến máu.</p>
+              <p className="text-muted-foreground">Cho biết vị trí của bạn để xem khoảng cách và chi phí tới bệnh viện. Vị trí này không hiển thị với người hiến.</p>
               <Button type="button" variant="outline" size="sm" onClick={locateMe} loading={geoBusy}><LocateFixed /> Dùng vị trí hiện tại</Button>
               {geo && (lat == null || lng == null) && <p className="text-xs text-muted-foreground">Hãy chọn bệnh viện hoặc đặt ghim ở trên để xem chi phí.</p>}
 
               <div className="max-w-xs">
-                <Field label="Hoặc nhập quãng đường ước tính (km đường đi)" htmlFor="manualKm" error={manualKm.trim() !== "" && !manualOk ? "Nhập số km từ 0,1 tới 2000" : undefined}>
+                <Field label="Hoặc nhập số km đường đi" htmlFor="manualKm" error={manualKm.trim() !== "" && !manualOk ? "Nhập số km từ 0,1 tới 2000" : undefined}>
                   <Input id="manualKm" inputMode="decimal" placeholder="VD: 8" value={manualKm} onChange={(e) => setManualKm(e.target.value)} />
                 </Field>
               </div>
@@ -338,8 +338,6 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
             </CardContent>
           </Card>
         )}
-
-        <p className="rounded-xl bg-muted/60 p-4 text-xs text-muted-foreground">{isOrg ? "Yêu cầu của cơ sở đã xác minh được điều phối ngay. Hệ thống vẫn theo dõi dấu hiệu bất thường để bảo vệ người hiến máu. LIFELY không trả tiền hay quà cho người tạo yêu cầu." : null}{isOrg ? null : "Yêu cầu được duyệt tự động để kịp thời. Nếu có dấu hiệu bất thường (nhiều tài khoản chung số điện thoại, tạo yêu cầu dồn dập, thông tin không khớp...), hệ thống dừng yêu cầu ngay và quản trị viên xem xét. LIFELY không trả tiền hay quà cho người tạo yêu cầu."}</p>
 
         <Card>
           <CardHeader><CardTitle>Hạn chót &amp; liên hệ</CardTitle></CardHeader>

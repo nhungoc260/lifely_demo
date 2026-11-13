@@ -25,6 +25,10 @@ export interface MapViewProps {
   onSelectRequest?: (id: string) => void;
   height?: number | string;
   scrollWheelZoom?: boolean;
+  /** click (mặc định): con lăn chỉ phóng to bản đồ sau khi bấm vào bản đồ, để cuộn trang không bị bản đồ chặn. always: luôn phóng to bằng con lăn. */
+  wheelMode?: "click" | "always";
+  /** Khóa ghim: bấm vào bản đồ không đổi vị trí đã chọn (dùng khi vị trí lấy từ bệnh viện đã xác minh). */
+  locked?: boolean;
   className?: string;
 }
 
@@ -117,6 +121,20 @@ function Recenter({ center, zoom }: { center: [number, number]; zoom?: number })
   return null;
 }
 
+/** Con lăn chuột chỉ phóng to bản đồ khi người dùng đã bấm vào bản đồ; rời chuột khỏi bản đồ thì trả lại việc cuộn trang. */
+function WheelGuard({ onActive }: { onActive: (v: boolean) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    map.scrollWheelZoom.disable();
+    const on = () => { map.scrollWheelZoom.enable(); onActive(true); };
+    const off = () => { map.scrollWheelZoom.disable(); onActive(false); };
+    map.on("click focus", on);
+    map.on("mouseout blur", off);
+    return () => { map.off("click focus", on); map.off("mouseout blur", off); };
+  }, [map, onActive]);
+  return null;
+}
+
 function Clicks({ onPick }: { onPick?: (lat: number, lng: number) => void }) {
   useMapEvents({ click: (e) => onPick?.(e.latlng.lat, e.latlng.lng) });
   return null;
@@ -124,14 +142,16 @@ function Clicks({ onPick }: { onPick?: (lat: number, lng: number) => void }) {
 
 export default function MapView({
   center = DEFAULT_CENTER, zoom = 12, requests = [], hospitals = [], radius, approxArea, picked, onPick,
-  onSelectRequest, height = 420, scrollWheelZoom = true, className,
+  onSelectRequest, height = 420, scrollWheelZoom = true, wheelMode = "click", locked = false, className,
 }: MapViewProps) {
+  const [active, setActive] = useState(false);
   return (
-    <div className={className} style={{ height }} role="region" aria-label="Bản đồ các yêu cầu khẩn cấp và bệnh viện">
-      <MapContainer center={center} zoom={zoom} scrollWheelZoom={scrollWheelZoom} style={{ height: "100%", width: "100%", borderRadius: "1.25rem", zIndex: 0 }}>
+    <div className={`relative ${className ?? ""}`} style={{ height }} role="region" aria-label="Bản đồ các yêu cầu khẩn cấp và bệnh viện">
+      <MapContainer center={center} zoom={zoom} scrollWheelZoom={wheelMode === "always" ? scrollWheelZoom : false} dragging={!L.Browser.mobile} style={{ height: "100%", width: "100%", borderRadius: "1.25rem", zIndex: 0 }}>
         <BaseTiles />
         <Recenter center={center} zoom={zoom} />
-        <Clicks onPick={onPick} />
+        {wheelMode === "click" && <WheelGuard onActive={setActive} />}
+        <Clicks onPick={locked ? undefined : onPick} />
         {radius && <Circle center={radius.center} radius={radius.km * 1000} pathOptions={{ color: "#b51f45", weight: 1.5, fillOpacity: 0.05, dashArray: "6 6" }} />}
         {approxArea && <Circle center={approxArea.center} radius={approxArea.km * 1000} pathOptions={{ color: "#2563eb", weight: 1, fillOpacity: 0.12 }} />}
         {hospitals.map((h) => (
@@ -150,6 +170,9 @@ export default function MapView({
         ))}
         {picked && <Marker position={picked} icon={pickIcon} />}
       </MapContainer>
+      {wheelMode === "click" && !active && (
+        <div className="pointer-events-none absolute right-3 top-3 z-[500] rounded-full bg-background/90 px-3 py-1 text-xs font-medium text-foreground shadow">{L.Browser.mobile ? "Dùng 2 ngón tay để di chuyển bản đồ" : "Bấm vào bản đồ để phóng to bằng con lăn"}</div>
+      )}
     </div>
   );
 }

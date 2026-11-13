@@ -10,37 +10,36 @@ import {
 } from "@/lib/travel-cost";
 
 const ICON: Record<TravelGroup, typeof Bike> = { self: Fuel, bike: Bike, car: Car };
-const GROUPS: { id: TravelGroup; title: string }[] = [
-  { id: "self", title: "Tự đi" },
-  { id: "bike", title: "Xe máy công nghệ" },
-  { id: "car", title: "Ô tô công nghệ" },
-];
 
 function Segmented<T extends string>({ value, onChange, items, label }: {
   value: T; onChange: (v: T) => void; items: { id: T; label: string }[]; label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-xl bg-muted p-1 text-xs">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-xl bg-muted p-0.5 text-xs">
       {items.map((it) => (
         <button
           key={it.id} type="button" role="radio" aria-checked={value === it.id} onClick={() => onChange(it.id)}
-          className={cn("min-h-9 rounded-lg px-3 py-1.5 font-medium transition-colors", value === it.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+          className={cn("min-h-8 rounded-[10px] px-3 font-medium transition-colors", value === it.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
         >{it.label}</button>
       ))}
     </div>
   );
 }
 
-/** Chi phí và thời gian đi tới nơi hiến máu: xe máy cá nhân (xăng + gửi xe) so với GrabBike / GrabCar. Chỉ để tham khảo. */
+function Stat({ label, value }: { label: string; value: string }) {
+  return <div className="px-2"><p className="text-[11px] text-muted-foreground">{label}</p><p className="mt-0.5 text-base font-semibold tabular-nums">{value}</p></div>;
+}
+
+/** Quãng đường, thời gian và chi phí tới bệnh viện: xe máy cá nhân so với GrabBike/beBike/Xanh SM và ô tô công nghệ. Chỉ để tham khảo. */
 export function TravelCostCard({ distanceKm, hospitalName, district, city, supportVnd, parkingFee, bare, audience = "donor", noFacility }: {
   distanceKm: number; hospitalName: string; district?: string | null; city?: string | null;
-  /** Mức hỗ trợ đi lại do cơ sở công bố (đồng). Bỏ trống = dùng mức tối đa theo quy định, chưa phải cam kết của cơ sở này. */
+  /** Mức hỗ trợ đi lại do cơ sở công bố (đồng). Bỏ trống = mức tối đa theo quy định, chưa phải cam kết của cơ sở này. */
   supportVnd?: number | null;
   /** Phí gửi xe máy do cơ sở công bố. Bỏ trống = giả định mặc định. */
   parkingFee?: number | null;
   /** true = không bọc Card (dùng trong khung mở rộng). */
   bare?: boolean;
-  /** requester: người cần máu, chỉ xem quãng đường và cước; không có hỗ trợ đi lại. */
+  /** requester: người cần máu, chỉ xem quãng đường và cước. */
   audience?: "donor" | "requester";
   /** Yêu cầu của gia đình, không gắn cơ sở y tế: không có khoản hỗ trợ đi lại nào được ghi nhận. */
   noFacility?: boolean;
@@ -53,68 +52,60 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
     () => estimateTravel({ straightKm: distanceKm, roundTrip, litersPer100Km: preset.litersPer100Km, supportVnd: noFacility ? 0 : supportVnd, parkingFee }),
     [distanceKm, roundTrip, preset.litersPer100Km, supportVnd, parkingFee, noFacility],
   );
+  const sorted = useMemo(() => [...est.options].sort((a, b) => a.total - b.total), [est.options]);
+  const maxTotal = Math.max(1, ...est.options.map((o) => o.total));
   const motor = est.options.find((o) => o.mode === "motorbike")!;
-  const grabBike = est.options.find((o) => o.mode === "grabBike")!;
-  const saving = grabBike.total - motor.total;
 
   return (
     <Wrapper bare={bare}>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Route className="size-4 text-primary" aria-hidden />{donor ? "Quãng đường và chi phí đi lại" : "Từ vị trí của bạn tới bệnh viện"}</CardTitle></CardHeader>
-      <CardContent>
-        <dl className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl bg-muted/60 p-3"><dt className="text-xs text-muted-foreground">Đường chim bay</dt><dd className="mt-0.5 text-lg font-semibold tabular-nums">{est.straightKm.toFixed(1)} km</dd></div>
-          <div className="rounded-xl bg-muted/60 p-3"><dt className="text-xs text-muted-foreground">Đường thực tế ước tính</dt><dd className="mt-0.5 text-lg font-semibold tabular-nums">~{est.roadKm.toFixed(1)} km <span className="text-xs font-normal text-muted-foreground">· ~{Math.max(1, Math.round(est.minutes))} phút</span></dd></div>
-        </dl>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Segmented label="Số chiều" value={roundTrip ? "round" : "one"} onChange={(v) => setRoundTrip(v === "round")} items={[{ id: "one", label: "Một chiều" }, { id: "round", label: "Đi và về" }]} />
-          <Segmented label="Loại xe máy" value={vehicle} onChange={setVehicle} items={[{ id: "small", label: "Vision ~1,8 L/100km" }, { id: "mid", label: "Air Blade ~2,2 L/100km" }]} />
+      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+        <CardTitle className="flex items-center gap-2 text-base"><Route className="size-4 text-primary" aria-hidden />{donor ? "Đường tới bệnh viện" : "Từ bạn tới bệnh viện"}</CardTitle>
+        <Segmented label="Số chiều" value={roundTrip ? "round" : "one"} onChange={(v) => setRoundTrip(v === "round")} items={[{ id: "one", label: "1 chiều" }, { id: "round", label: "Đi và về" }]} />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-3 divide-x divide-border rounded-2xl bg-muted/50 py-3 text-center">
+          <Stat label="Chim bay" value={`${est.straightKm.toFixed(1)} km`} />
+          <Stat label="Đường đi" value={`~${est.roadKm.toFixed(1)} km`} />
+          <Stat label="Thời gian" value={`~${Math.max(1, Math.round(est.minutes))} phút`} />
         </div>
 
-        <div className="mt-4 flex items-start gap-2 rounded-xl bg-muted/60 p-3 text-xs">
-          <Fuel className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <p><strong>Giá xăng gần nhất: {formatVnd(TRAVEL_COST.fuelPricePerLiter)}/lít</strong> ({TRAVEL_COST.fuelPriceNote}; kiểm tra ngày {TRAVEL_COST.fuelPriceCheckedAt}). Giá xăng điều chỉnh theo kỳ, có thể đã đổi.</p>
+        <ul className="divide-y divide-border">
+          {sorted.map((o, i) => <OptionRow key={o.mode} o={o} legs={est.legs} best={i === 0} pct={(o.total / maxTotal) * 100} showSupport={donor && est.support > 0} />)}
+        </ul>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground"><Fuel className="size-3.5" aria-hidden />Xăng {formatVnd(TRAVEL_COST.fuelPricePerLiter)}/lít</span>
+          <Segmented label="Loại xe máy" value={vehicle} onChange={setVehicle} items={[{ id: "small", label: "Vision" }, { id: "mid", label: "Air Blade" }]} />
         </div>
 
-        {GROUPS.map((g) => {
-          const rows = est.options.filter((o) => o.group === g.id);
-          const Icon = ICON[g.id];
-          return (
-            <section key={g.id} className="mt-4" aria-label={g.title}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h3>
-              <ul className="divide-y divide-border">
-                {rows.map((o) => <OptionRow key={o.mode} o={o} legs={est.legs} Icon={Icon} overall={o.mode === est.cheapest} showSupport={donor} />)}
-              </ul>
-            </section>
-          );
-        })}
-
-        {!donor && (
-          <p className="mt-4 rounded-xl bg-muted/60 p-3 text-sm">Chi phí đi lại do gia đình tự chi. LIFELY không thu hay chi trả tiền, và không có tiền hay quà nào dành cho người tạo yêu cầu. Yêu cầu có dấu hiệu bất thường (nhiều tài khoản chung số điện thoại, tạo dồn dập...) sẽ bị hệ thống dừng ngay và admin xem xét.</p>
+        {donor && (
+          noFacility ? (
+            <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">Yêu cầu của gia đình, không có hỗ trợ đi lại.</p>
+          ) : supportVnd === 0 ? (
+            <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">{hospitalName} không hỗ trợ đi lại.</p>
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl bg-success/10 px-4 py-3">
+              <Wallet className="size-5 shrink-0 text-success" aria-hidden />
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="font-semibold">Hỗ trợ đi lại tối đa {formatVnd(est.support)}</p>
+                <p className="text-xs text-muted-foreground">{supportVnd == null ? "Mức thường áp dụng, cơ sở có thể khác" : `Do ${hospitalName} chi, tiền mặt`}</p>
+              </div>
+              <div className="text-right"><p className="text-[11px] text-muted-foreground">Xe máy, bạn tự chịu</p><p className="font-semibold tabular-nums">{formatVnd(motor.afterSupport)}</p></div>
+            </div>
+          )
         )}
-        {donor && <div className="mt-4 flex items-start gap-3 rounded-xl bg-success/10 p-4 text-sm">
-          <Wallet className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
-          <div className="space-y-1">
-            <p className="font-semibold">Ai chi trả tiền đi lại?</p>
-            {noFacility
-              ? <p>Yêu cầu này do gia đình đăng, <strong>không gắn cơ sở y tế</strong> nên không có khoản hỗ trợ đi lại nào được ghi nhận. Bạn tự chịu chi phí, hoặc tự thỏa thuận trực tiếp với người nhà; LIFELY không thu, không chi trả và không đối soát khoản này.</p>
-              : supportVnd === 0
-              ? <p>Bạn tự trả. <strong>{hospitalName}</strong> hiện không công bố khoản hỗ trợ đi lại cho người hiến máu.</p>
-              : supportVnd != null
-                ? <p>Bạn tự trả trước. <strong>{hospitalName}</strong> công bố <strong>hỗ trợ tiền đi lại {formatVnd(supportVnd)}/lần hiến</strong> (tiền mặt, do cơ sở chi), cùng suất ăn nhẹ và quà tặng theo lượng máu hiến. Cột “sau hỗ trợ” là số tiền bạn thực tế tự chịu.</p>
-                : <p>Bạn tự trả trước. Với hiến máu tình nguyện, cơ sở tiếp nhận máu thường <strong>hỗ trợ tiền đi lại tối đa {formatVnd(TRAVEL_COST.facilityTravelSupport)}/lần hiến</strong> (tiền mặt), cùng suất ăn nhẹ và quà tặng. Đây là mức tối đa theo quy định, chưa phải cam kết của cơ sở này. Cột “sau hỗ trợ” tính theo mức đó.</p>}
-            <p className="text-xs text-muted-foreground">Yêu cầu máu khẩn cấp không đảm bảo khoản này: do cơ sở y tế quyết định, hãy hỏi nhân viên khi liên hệ. LIFELY không thu hay chi trả tiền; cơ sở ghi nhận khi đã chi.</p>
-            {saving > 0 && <p>Đi xe máy của bạn rẻ hơn GrabBike khoảng <strong>{formatVnd(saving)}</strong> ({est.legs === 2 ? "đi và về" : "một chiều"}).</p>}
-          </div>
-        </div>}
 
-        <a href={directionsUrl(hospitalName, district, city)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
-          <Navigation className="size-4" aria-hidden />Chỉ đường tới {hospitalName}
+        <a href={directionsUrl(hospitalName, district, city)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+          <Navigation className="size-4" aria-hidden />Chỉ đường
         </a>
 
-        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Chỉ là ước tính để bạn tham khảo, không phải giá chốt: giá thật hiển thị trên app lúc đặt xe. Cước Grab, Be, Xanh SM theo bảng giá TP.HCM đã công bố (đã gồm VAT), chưa tính phụ phí giờ cao điểm, thời tiết, khuyến mãi. Bảng giá Xanh SM cập nhật cũ hơn Grab và Be. Xăng tính theo mức mọi hãng xe công bố nhân thêm {TRAVEL_COST.cityFuelFactor} khi đi phố đông; {parkingFee != null ? `phí gửi xe máy ${formatVnd(parkingFee)} do cơ sở công bố.` : `phí gửi xe máy giả định ${formatVnd(TRAVEL_COST.motorbikeParking)}, mỗi bệnh viện có thể khác.`}
-        </p>
+        <details className="group text-xs text-muted-foreground">
+          <summary className="cursor-pointer select-none font-medium hover:text-foreground">Cách tính</summary>
+          <p className="mt-2 leading-relaxed">
+            Ước tính tham khảo, giá thật hiển thị trên app lúc đặt xe. Cước Grab, Be, Xanh SM theo bảng giá TP.HCM đã công bố (gồm VAT, Xanh SM cập nhật cũ hơn), chưa gồm phụ phí giờ cao điểm, thời tiết, khuyến mãi.
+            Xăng: mức tiêu hao hãng công bố nhân {TRAVEL_COST.cityFuelFactor} khi đi phố đông, giá {TRAVEL_COST.fuelPriceNote}. Gửi xe máy {formatVnd(est.parking)}{parkingFee != null ? " do cơ sở công bố" : " (giả định)"}.
+          </p>
+        </details>
       </CardContent>
     </Wrapper>
   );
@@ -124,20 +115,23 @@ function Wrapper({ bare, children }: { bare?: boolean; children: React.ReactNode
   return bare ? <div>{children}</div> : <Card>{children}</Card>;
 }
 
-function OptionRow({ o, legs, Icon, overall, showSupport }: { o: TravelOption; legs: 1 | 2; Icon: typeof Bike; overall: boolean; showSupport: boolean }) {
+function OptionRow({ o, legs, best, pct, showSupport }: { o: TravelOption; legs: 1 | 2; best: boolean; pct: number; showSupport: boolean }) {
+  const Icon = ICON[o.group];
   return (
-    <li className="flex items-center gap-3 py-3 text-sm">
-      <span className={cn("grid size-9 shrink-0 place-content-center rounded-xl", o.bestInGroup ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}><Icon className="size-4" aria-hidden /></span>
+    <li className="flex items-center gap-3 py-3">
+      <span className={cn("grid size-10 shrink-0 place-content-center rounded-xl", best ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}><Icon className="size-[18px]" aria-hidden /></span>
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{o.label}
-          {overall ? <span className="ml-2 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">Rẻ nhất</span>
-            : o.bestInGroup && o.group !== "self" ? <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">Rẻ nhất nhóm</span> : null}
+        <p className="flex items-center gap-2 text-sm font-medium">
+          <span className="truncate">{o.label}</span>
+          {best && <span className="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">Rẻ nhất</span>}
         </p>
-        <p className="text-xs text-muted-foreground">{o.note}{legs === 2 && o.group !== "self" ? ` · ${formatVnd(o.oneWay)} mỗi chiều` : ""}</p>
+        <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-muted" role="presentation"><span className={cn("block h-full rounded-full", best ? "bg-success" : "bg-primary/35")} style={{ width: `${Math.max(4, pct)}%` }} /></span>
       </div>
       <div className="text-right">
         <p className="text-base font-semibold tabular-nums">{formatVnd(o.total)}</p>
-        {showSupport && <p className="text-[11px] text-muted-foreground tabular-nums">sau hỗ trợ: {o.afterSupport === 0 ? "0đ" : formatVnd(o.afterSupport)}</p>}
+        <p className="text-[11px] text-muted-foreground tabular-nums">
+          {showSupport ? `sau hỗ trợ ${formatVnd(o.afterSupport)}` : legs === 2 && o.group !== "self" ? `${formatVnd(o.oneWay)}/chiều` : ""}
+        </p>
       </div>
     </li>
   );

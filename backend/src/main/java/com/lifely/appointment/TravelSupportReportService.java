@@ -37,7 +37,8 @@ public class TravelSupportReportService {
 
     /** Một lượt hiến đã xác nhận: để cơ sở ghi nhận chi hỗ trợ và admin theo dõi. kind: APPOINTMENT (lịch hiến) hoặc URGENT. */
     public record Item(String kind, UUID id, UUID organizationId, String organizationName, String donorName, String bloodType,
-                       Instant donatedAt, String place, Integer paidVnd, Instant paidAt, int policyVnd) {
+                       Instant donatedAt, String place, Integer paidVnd, Instant paidAt, int policyVnd,
+                       Double distanceKm) {
     }
 
     private static final Set<String> ITEM_STATUSES = Set.of("UNPAID", "PAID", "ALL");
@@ -48,7 +49,12 @@ public class TravelSupportReportService {
                 SELECT 'APPOINTMENT' AS kind, a.id AS id, o.id AS org_id, o.name AS org_name, u.full_name AS donor_name,
                        bt.code AS blood_code, COALESCE(a.handled_at, s.starts_at) AS at,
                        'Lịch hiến ' || to_char(s.starts_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD/MM/YYYY HH24:MI') AS place,
-                       a.travel_support_paid_vnd AS paid_vnd, a.travel_support_paid_at AS paid_at, o.travel_support_vnd AS policy
+                       a.travel_support_paid_vnd AS paid_vnd, a.travel_support_paid_at AS paid_at, o.travel_support_vnd AS policy,
+                       ROUND((CASE WHEN dp.latitude IS NULL OR dp.longitude IS NULL OR o.latitude IS NULL OR o.longitude IS NULL THEN NULL
+                            ELSE 2 * 6371 * asin(LEAST(1.0, sqrt(
+                                 power(sin(radians(o.latitude - dp.latitude) / 2), 2)
+                                 + cos(radians(dp.latitude)) * cos(radians(o.latitude))
+                                 * power(sin(radians(o.longitude - dp.longitude) / 2), 2)))) END)::numeric, 1)::float8 AS dist_km
                   FROM appointments a JOIN donation_slots s ON s.id = a.slot_id
                   JOIN organizations o ON o.id = s.organization_id
                   JOIN donor_profiles dp ON dp.id = a.donor_id JOIN users u ON u.id = dp.user_id
@@ -59,7 +65,12 @@ public class TravelSupportReportService {
                        (SELECT MAX(h.donated_on) FROM donation_history h
                          WHERE h.match_id = m.id AND h.verification_level = 'ORG_VERIFIED')::timestamptz,
                        'Yêu cầu khẩn cấp tại ' || r.hospital_name,
-                       m.travel_support_paid_vnd, m.travel_support_paid_at, o.travel_support_vnd
+                       m.travel_support_paid_vnd, m.travel_support_paid_at, o.travel_support_vnd,
+                       ROUND((CASE WHEN dp.latitude IS NULL OR dp.longitude IS NULL OR o.latitude IS NULL OR o.longitude IS NULL THEN NULL
+                            ELSE 2 * 6371 * asin(LEAST(1.0, sqrt(
+                                 power(sin(radians(o.latitude - dp.latitude) / 2), 2)
+                                 + cos(radians(dp.latitude)) * cos(radians(o.latitude))
+                                 * power(sin(radians(o.longitude - dp.longitude) / 2), 2)))) END)::numeric, 1)::float8
                   FROM matches m JOIN blood_requests r ON r.id = m.request_id
                   JOIN organizations o ON o.id = r.organization_id
                   JOIN donor_profiles dp ON dp.id = m.donor_id JOIN users u ON u.id = dp.user_id
@@ -94,7 +105,8 @@ public class TravelSupportReportService {
         return jdbc.query(sql.toString(), (rs, i) -> new Item(rs.getString("kind"), rs.getObject("id", UUID.class),
                 rs.getObject("org_id", UUID.class), rs.getString("org_name"), rs.getString("donor_name"),
                 rs.getString("blood_code"), instant(rs.getTimestamp("at")), rs.getString("place"),
-                rs.getObject("paid_vnd", Integer.class), instant(rs.getTimestamp("paid_at")), rs.getInt("policy")),
+                rs.getObject("paid_vnd", Integer.class), instant(rs.getTimestamp("paid_at")), rs.getInt("policy"),
+                rs.getObject("dist_km", Double.class)),
                 args.toArray());
     }
 

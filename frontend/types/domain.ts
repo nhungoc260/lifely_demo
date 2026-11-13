@@ -448,6 +448,8 @@ export interface TravelSupportItem {
   kind: "APPOINTMENT" | "URGENT"; id: string; organizationId: string; organizationName: string;
   donorName: string; bloodType: string | null; donatedAt: string | null; place: string;
   paidVnd: number | null; paidAt: string | null; policyVnd: number;
+  /** Khoảng cách chim bay từ nhà người hiến tới cơ sở (km, làm tròn 0,1), null nếu chưa có vị trí. */
+  distanceKm: number | null;
 }
 export interface OrgTravelSupportMonth { month: string; paid: number; totalVnd: number }
 export interface OrgTravelSupport {

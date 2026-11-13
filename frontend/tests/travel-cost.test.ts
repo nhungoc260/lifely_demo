@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   beBikeFare, beCarFare, directionsUrl, estimateTravel, fuelCost, grabBikeFare, grabCarFare, greenBikeFare, greenCarFare,
-  distanceKm, referenceRows, roadKmFrom, speedKmh, TRAVEL_COST,
+  distanceKm, referenceRows, roadKmFrom, suggestSupport, speedKmh, TRAVEL_COST,
 } from "@/lib/travel-cost";
 
 // 10:00 giờ TP.HCM, thứ Ba: không cao điểm
@@ -152,6 +152,28 @@ describe("bảng tham khảo theo quãng đường", () => {
   it("quãng đường dài hơn thì mọi chi phí đều tăng", () => {
     const [a, b] = referenceRows([5, 15]);
     for (const k of ["fuel", "grabBike", "beBike", "greenBike", "grabCar", "beCar", "greenCar"] as const) expect(b[k]).toBeGreaterThan(a[k]);
+  });
+});
+
+describe("gợi ý số tiền hỗ trợ theo khoảng cách", () => {
+  it("gần thì gợi ý thấp hơn mức công bố, xa thì chạm mức công bố", () => {
+    const near = suggestSupport(1, 50_000);
+    const far = suggestSupport(12, 50_000);
+    expect(near.suggested).toBeLessThan(50_000);
+    expect(near.suggested).toBe(Math.round(near.grabBikeRoundTrip / 1000) * 1000);
+    expect(far.suggested).toBe(50_000);
+  });
+  it("không có khoảng cách thì dùng đúng mức công bố; không công bố thì 0", () => {
+    expect(suggestSupport(null, 50_000).suggested).toBe(50_000);
+    expect(suggestSupport(undefined, 30_000).suggested).toBe(30_000);
+    expect(suggestSupport(5, 0).suggested).toBe(0);
+  });
+  it("luôn trong khoảng 1.000đ tới mức công bố", () => {
+    for (const km of [0, 0.2, 1, 3, 8, 30]) {
+      const s = suggestSupport(km, 50_000).suggested;
+      expect(s).toBeGreaterThanOrEqual(1_000);
+      expect(s).toBeLessThanOrEqual(50_000);
+    }
   });
 });
 

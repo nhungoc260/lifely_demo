@@ -46,7 +46,7 @@ export default function AdminAbuse() {
 
   return (
     <>
-      <PageHeader title="Giám sát bất thường" description="Yêu cầu máu được duyệt tự động. Hệ thống dừng ngay khi tín hiệu rất mạnh (cờ mức Cao) và để lọt vào hàng đợi này những ca cần admin xem. Xác nhận vi phạm sẽ hủy yêu cầu còn hiệu lực; bỏ qua nghĩa là ca hợp lệ." />
+      <PageHeader title="Giám sát bất thường" description="Yêu cầu được duyệt tự động; ca đáng ngờ vào hàng đợi này để admin xử lý." />
       {q.initialLoading ? <Skeleton className="h-96" />
         : q.error && !d ? <ErrorState message={q.error.message} onRetry={q.reload} />
         : d && (

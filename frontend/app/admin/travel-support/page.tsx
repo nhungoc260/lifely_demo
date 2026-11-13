@@ -29,7 +29,7 @@ export default function AdminTravelSupport() {
 
   return (
     <>
-      <PageHeader title="Hỗ trợ đi lại" description="Theo dõi hỗ trợ đi lại cho người hiến ở mọi cơ sở, gồm lịch hiến đặt trước và yêu cầu máu khẩn cấp. Cơ sở tự ghi nhận khi đã chi tiền mặt; LIFELY không thu hay chuyển tiền. Ca đáng ngờ xem ở Giám sát bất thường." />
+      <PageHeader title="Hỗ trợ đi lại" description="Theo dõi hỗ trợ đi lại cho người hiến ở mọi cơ sở, gồm lịch đặt trước và yêu cầu khẩn cấp." />
 
       {sum.initialLoading ? <Skeleton className="h-32" />
         : sum.error && !s ? <ErrorState message={sum.error.message} onRetry={sum.reload} />
@@ -65,7 +65,7 @@ export default function AdminTravelSupport() {
                 { key: "s", header: "Hỗ trợ đi lại", cell: (r) => r.paidVnd != null ? `Đã ghi nhận ${formatVnd(r.paidVnd)}` : r.policyVnd > 0 ? <Pill t="amber">Chưa ghi nhận ({formatVnd(r.policyVnd)})</Pill> : "Cơ sở không hỗ trợ" },
               ]} />
             )}
-          <p className="mt-4 text-xs text-muted-foreground">Mức hỗ trợ và phí gửi xe do từng cơ sở công bố ở Hồ sơ tổ chức. Cơ sở ghi nhận khống hoặc dồn dập sẽ bị đánh dấu ở <Link href="/admin/abuse" className="font-medium text-primary underline">Giám sát bất thường</Link>.</p>
+          <p className="mt-4 text-xs text-muted-foreground">Cơ sở đáng ngờ xem ở <Link href="/admin/abuse" className="font-medium text-primary underline">Giám sát bất thường</Link>.</p>
         </CardContent>
       </Card>
     </>
