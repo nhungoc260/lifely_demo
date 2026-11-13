@@ -444,6 +444,9 @@ export interface TravelSupportRow {
   donatedUrgent: number; paidUrgent: number;
 }
 /** Một lượt hiến đã xác nhận để ghi nhận hoặc theo dõi hỗ trợ đi lại: lịch hiến đặt trước hoặc yêu cầu khẩn cấp. */
+export interface FuelPrice { priceVnd: number; effectiveDate: string; label: string; source: string | null; ageDays: number; stale: boolean; auto: boolean }
+export interface FuelFetchResult { ok: boolean; priceVnd: number | null; message: string }
+export interface FuelPriceEntry { id: string; effectiveDate: string; priceVnd: number; label: string; source: string | null; createdAt: string; auto: boolean }
 export interface TravelSupportItem {
   kind: "APPOINTMENT" | "URGENT"; id: string; organizationId: string; organizationName: string;
   donorName: string; bloodType: string | null; donatedAt: string | null; place: string;

@@ -12,7 +12,8 @@
  * - Xanh SM (nay đổi tên Green SM) TP.HCM: Bike 12.500đ/2 km đầu, 4.800đ/km (mytour.vn, phí ứng dụng đã gồm trong giá);
  *   Car 30.500đ/2 km đầu, 15.200đ/km tới km 12, 14.700đ/km tới km 25, 13.300đ/km từ km 26 (greensm.com, bảng cập nhật 02/2025,
  *   có thể đã đổi). Hai mức giá Xanh SM cũ hơn Grab và Be, cần đối chiếu lại trên app trước khi nộp.
- * - Giá xăng: Petrolimex vùng 1, E10 RON 95-III 21.150đ/lít, hiệu lực từ 15h ngày 05/11/2026.
+ * - Giá xăng: lấy từ API (admin cập nhật theo công bố Petrolimex, đổi theo ngày). Hằng số dưới đây chỉ là giá DỰ PHÒNG
+ *   khi chưa tải được: Petrolimex vùng 1, xăng E10 RON 95 Mức 3, 19.840đ/lít, công bố ngày 12/11/2026.
  * - Tiêu hao do hãng công bố: Honda Vision 1,82 lít/100 km, Air Blade 160 2,23 lít/100 km (điều kiện chuẩn).
  * - Hỗ trợ đi lại cho người hiến máu tình nguyện: tối đa 50.000đ/người/lần hiến, bằng tiền mặt, do cơ sở y tế tiếp nhận máu chi
  *   (văn bản Bộ Y tế, quyền lợi người hiến tại Bệnh viện Truyền máu Huyết học TP.HCM).
@@ -23,9 +24,10 @@
 export const TRAVEL_COST = {
   /** Đường thực tế = đường chim bay x hệ số (cùng giá trị lifely.matching.road-factor ở backend). */
   roadFactor: 1.35,
-  fuelPricePerLiter: 21_150,
-  fuelPriceNote: "Petrolimex vùng 1, xăng RON 95-III, hiệu lực từ 15h ngày 05/11/2026",
-  fuelPriceCheckedAt: "10/11/2026",
+  fuelPricePerLiter: 19_840,
+  fuelPriceNote: "Petrolimex vùng 1, xăng E10 RON 95 Mức 3, công bố ngày 12/11/2026",
+  fuelLabel: "Petrolimex vùng 1, xăng E10 RON 95 Mức 3",
+  fuelPriceCheckedAt: "12/11/2026",
   /** Hệ số tiêu hao khi chạy phố đông, nhân vào mức hãng công bố. GIẢ ĐỊNH. */
   cityFuelFactor: 1.2,
   /** Phí gửi xe máy mỗi lượt tại cơ sở y tế. GIẢ ĐỊNH, thay bằng số thật của từng bệnh viện khi có. */
@@ -141,9 +143,9 @@ export function greenCarFare(roadKm: number): number {
 }
 
 /** Tiền xăng cho một chiều. */
-export function fuelCost(roadKm: number, litersPer100Km: number): number {
+export function fuelCost(roadKm: number, litersPer100Km: number, pricePerLiter: number = TRAVEL_COST.fuelPricePerLiter): number {
   const liters = (roadKm / 100) * litersPer100Km * TRAVEL_COST.cityFuelFactor;
-  return roundVnd(liters * TRAVEL_COST.fuelPricePerLiter);
+  return roundVnd(liters * pricePerLiter);
 }
 
 /** Tốc độ theo giờ địa phương Asia/Ho_Chi_Minh (UTC+7, không có giờ mùa hè). Giờ cao điểm chỉ thứ Hai-thứ Sáu. */
@@ -171,6 +173,8 @@ export interface EstimateInput {
   parkingFee?: number | null;
   /** Mức hỗ trợ đi lại do cơ sở công bố; bỏ trống = mức tối đa theo quy định. */
   supportVnd?: number | null;
+  /** Giá xăng hiện hành (đồng/lít); bỏ trống = giá dự phòng trong TRAVEL_COST. */
+  fuelPrice?: number | null;
 }
 
 export function estimateTravel(input: EstimateInput): TravelEstimate {
@@ -180,7 +184,7 @@ export function estimateTravel(input: EstimateInput): TravelEstimate {
   const roadKm = roadKmFrom(straightKm);
   const legs: 1 | 2 = roundTrip ? 2 : 1;
 
-  const motorFuelOne = fuelCost(roadKm, litersPer100Km);
+  const motorFuelOne = fuelCost(roadKm, litersPer100Km, input.fuelPrice ?? TRAVEL_COST.fuelPricePerLiter);
   const app = "Giá app đã gồm VAT";
   const raw: Omit<TravelOption, "total" | "afterSupport" | "bestInGroup">[] = [
     { mode: "motorbike", group: "self", label: "Xe máy của bạn", oneWay: motorFuelOne + parking, note: "Tiền xăng + gửi xe (gửi một lần)" },
@@ -229,10 +233,11 @@ export interface ReferenceRow {
 }
 
 /** Bảng tham khảo một chiều theo quãng đường đường thực tế (km), để so sánh xăng với Grab, Be, Xanh SM trước khi biết vị trí. */
-export function referenceRows(roadKms: number[], litersPer100Km: number = VEHICLE_PRESETS[0].litersPer100Km): ReferenceRow[] {
+export function referenceRows(roadKms: number[], litersPer100Km: number = VEHICLE_PRESETS[0].litersPer100Km,
+                              fuelPrice: number = TRAVEL_COST.fuelPricePerLiter): ReferenceRow[] {
   return roadKms.map((km) => ({
     roadKm: km,
-    fuel: fuelCost(km, litersPer100Km),
+    fuel: fuelCost(km, litersPer100Km, fuelPrice),
     grabBike: grabBikeFare(km), beBike: beBikeFare(km), greenBike: greenBikeFare(km),
     grabCar: grabCarFare(km), beCar: beCarFare(km), greenCar: greenCarFare(km),
   }));
@@ -253,12 +258,20 @@ export interface SupportSuggestion {
  * lấy thấp hơn giữa mức cơ sở công bố và cước GrabBike đi và về, làm tròn 1.000đ, tối thiểu 1.000đ.
  * Không biết khoảng cách thì dùng đúng mức cơ sở công bố. Cơ sở không công bố mức (0) thì không gợi ý (0).
  */
-export function suggestSupport(straightKm: number | null | undefined, policyVnd: number): SupportSuggestion {
+export function suggestSupport(straightKm: number | null | undefined, policyVnd: number,
+                               fuelPrice: number = TRAVEL_COST.fuelPricePerLiter): SupportSuggestion {
   if (policyVnd <= 0) return { roadKm: 0, grabBikeRoundTrip: 0, motorRoundTrip: 0, suggested: 0 };
   if (straightKm == null) return { roadKm: 0, grabBikeRoundTrip: 0, motorRoundTrip: 0, suggested: policyVnd };
   const roadKm = roadKmFrom(straightKm);
   const grabBikeRoundTrip = grabBikeFare(roadKm) * 2;
-  const motorRoundTrip = fuelCost(roadKm, VEHICLE_PRESETS[0].litersPer100Km) * 2;
+  const motorRoundTrip = fuelCost(roadKm, VEHICLE_PRESETS[0].litersPer100Km, fuelPrice) * 2;
   const suggested = Math.max(1_000, Math.min(policyVnd, roundVnd(grabBikeRoundTrip)));
   return { roadKm, grabBikeRoundTrip, motorRoundTrip, suggested };
+}
+
+/** "2026-11-12" -> "12/11" (ngày hiệu lực giá xăng, hiện gọn). */
+export function shortDay(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [, m, d] = iso.split("-");
+  return m && d ? `${d}/${m}` : iso;
 }

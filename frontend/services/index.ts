@@ -12,6 +12,9 @@ import type {
   OrgTravelSupport,
   PayTravelSupportResult,
   TravelSupportItem,
+  FuelPrice,
+  FuelPriceEntry,
+  FuelFetchResult,
 } from "@/types/domain";
 
 // ---- auth
@@ -157,7 +160,13 @@ export const orgApi = {
   verifyRequest: (id: string) => post<BloodRequest>(`/api/organizations/me/requests/${id}/verify`),
 };
 
+export const fuelApi = {
+  current: () => get<FuelPrice>("/api/public/fuel-price"),
+};
+
 export const adminApi = {
+  fuelPrices: (limit: number = 14) => get<FuelPriceEntry[]>(`/api/admin/fuel-prices${qs({ limit })}`),
+  fetchFuelPriceNow: () => post<FuelFetchResult>("/api/admin/fuel-prices/fetch-now", {}),
   abuseFlags: (status: string = "OPEN") => get<AbuseOverview>(`/api/admin/abuse-flags${qs({ status })}`),
   reviewAbuseFlag: (id: string, decision: "CONFIRMED" | "DISMISSED", note?: string) =>
     post<AbuseFlagRow>(`/api/admin/abuse-flags/${id}/review`, { decision, note }),

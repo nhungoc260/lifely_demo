@@ -4,6 +4,7 @@ import { CalendarDays, HandCoins, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { FuelPriceCard } from "@/components/admin/fuel-price-card";
 import { PageHeader } from "@/components/shell/page-header";
 import { Pill } from "@/components/ui/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,9 @@ export default function AdminTravelSupport() {
     <>
       <PageHeader title="Hỗ trợ đi lại" description="Theo dõi hỗ trợ đi lại cho người hiến ở mọi cơ sở, gồm lịch đặt trước và yêu cầu khẩn cấp." />
 
+      <FuelPriceCard />
+
+      <div className="mt-6" />
       {sum.initialLoading ? <Skeleton className="h-32" />
         : sum.error && !s ? <ErrorState message={sum.error.message} onRetry={sum.reload} />
         : s && (

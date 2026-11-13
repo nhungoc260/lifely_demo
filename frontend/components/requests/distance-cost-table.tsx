@@ -3,16 +3,18 @@
 import { Bike, Car, Fuel } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useFuelPrice } from "@/hooks/use-fuel-price";
 import { cn } from "@/lib/utils";
-import { formatVnd, referenceRows, TRAVEL_COST } from "@/lib/travel-cost";
+import { formatVnd, referenceRows, shortDay, VEHICLE_PRESETS } from "@/lib/travel-cost";
 
 const KMS = [3, 5, 10, 15, 20];
 
 /** So sánh một chiều theo quãng đường: tiền xăng xe máy với GrabBike, beBike, Xanh SM Bike, GrabCar, beCar, Xanh SM Car. Dạng danh sách để dùng tốt trên điện thoại. */
 export function DistanceCostTable() {
   const [km, setKm] = useState(5);
+  const fuel = useFuelPrice();
   const rows = useMemo(() => {
-    const r = referenceRows([km])[0];
+    const r = referenceRows([km], VEHICLE_PRESETS[0].litersPer100Km, fuel.price)[0];
     return [
       { key: "fuel", label: "Xe máy của bạn", sub: "Tiền xăng", price: r.fuel, Icon: Fuel },
       { key: "grabBike", label: "GrabBike", price: r.grabBike, Icon: Bike },
@@ -22,7 +24,7 @@ export function DistanceCostTable() {
       { key: "beCar", label: "beCar 4 chỗ", price: r.beCar, Icon: Car },
       { key: "greenCar", label: "Xanh SM Car", price: r.greenCar, Icon: Car },
     ].sort((a, b) => a.price - b.price);
-  }, [km]);
+  }, [km, fuel.price]);
   const max = Math.max(1, ...rows.map((r) => r.price));
 
   return (
@@ -34,7 +36,7 @@ export function DistanceCostTable() {
               className={cn("min-h-9 shrink-0 rounded-full border px-4 text-sm font-medium", km === k ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted")}>{k} km</button>
           ))}
         </div>
-        <span className="hidden shrink-0 items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground sm:inline-flex"><Fuel className="size-3.5" aria-hidden />Xăng {formatVnd(TRAVEL_COST.fuelPricePerLiter)}/lít</span>
+        <span className="hidden shrink-0 items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground sm:inline-flex"><Fuel className="size-3.5" aria-hidden />Xăng {formatVnd(fuel.price)}/lít{fuel.effectiveDate ? ` · ${shortDay(fuel.effectiveDate)}` : ""}</span>
       </div>
       <ul className="mt-2 divide-y divide-border">
         {rows.map((r, i) => (
@@ -51,7 +53,7 @@ export function DistanceCostTable() {
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-xs text-muted-foreground">Một chiều, ước tính tham khảo. Xăng {formatVnd(TRAVEL_COST.fuelPricePerLiter)}/lít.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Một chiều, ước tính tham khảo. Xăng {formatVnd(fuel.price)}/lít{fuel.effectiveDate ? `, công bố ngày ${shortDay(fuel.effectiveDate)}` : ""}{fuel.stale ? " (giá cũ)" : ""}.</p>
     </div>
   );
 }

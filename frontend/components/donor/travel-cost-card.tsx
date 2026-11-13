@@ -4,9 +4,10 @@ import { Bike, Car, Fuel, Navigation, Route, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFuelPrice } from "@/hooks/use-fuel-price";
 import { cn } from "@/lib/utils";
 import {
-  directionsUrl, estimateTravel, formatVnd, TRAVEL_COST, VEHICLE_PRESETS, type TravelGroup, type TravelOption,
+  directionsUrl, estimateTravel, formatVnd, shortDay, TRAVEL_COST, VEHICLE_PRESETS, type TravelGroup, type TravelOption,
 } from "@/lib/travel-cost";
 
 const ICON: Record<TravelGroup, typeof Bike> = { self: Fuel, bike: Bike, car: Car };
@@ -45,12 +46,13 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
   noFacility?: boolean;
 }) {
   const donor = audience === "donor";
+  const fuel = useFuelPrice();
   const [roundTrip, setRoundTrip] = useState(true);
   const [vehicle, setVehicle] = useState<"small" | "mid">("small");
   const preset = VEHICLE_PRESETS.find((p) => p.id === vehicle) ?? VEHICLE_PRESETS[0];
   const est = useMemo(
-    () => estimateTravel({ straightKm: distanceKm, roundTrip, litersPer100Km: preset.litersPer100Km, supportVnd: noFacility ? 0 : supportVnd, parkingFee }),
-    [distanceKm, roundTrip, preset.litersPer100Km, supportVnd, parkingFee, noFacility],
+    () => estimateTravel({ straightKm: distanceKm, roundTrip, litersPer100Km: preset.litersPer100Km, supportVnd: noFacility ? 0 : supportVnd, parkingFee, fuelPrice: fuel.price }),
+    [distanceKm, roundTrip, preset.litersPer100Km, supportVnd, parkingFee, noFacility, fuel.price],
   );
   const sorted = useMemo(() => [...est.options].sort((a, b) => a.total - b.total), [est.options]);
   const maxTotal = Math.max(1, ...est.options.map((o) => o.total));
@@ -74,7 +76,7 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
         </ul>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground"><Fuel className="size-3.5" aria-hidden />Xăng {formatVnd(TRAVEL_COST.fuelPricePerLiter)}/lít</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground"><Fuel className="size-3.5" aria-hidden />Xăng {formatVnd(fuel.price)}/lít{fuel.effectiveDate ? ` · ${shortDay(fuel.effectiveDate)}` : ""}{fuel.stale && <span className="font-semibold text-warning"> · giá cũ</span>}</span>
           <Segmented label="Loại xe máy" value={vehicle} onChange={setVehicle} items={[{ id: "small", label: "Vision" }, { id: "mid", label: "Air Blade" }]} />
         </div>
 
@@ -103,7 +105,7 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
           <summary className="cursor-pointer select-none font-medium hover:text-foreground">Cách tính</summary>
           <p className="mt-2 leading-relaxed">
             Ước tính tham khảo, giá thật hiển thị trên app lúc đặt xe. Cước Grab, Be, Xanh SM theo bảng giá TP.HCM đã công bố (gồm VAT, Xanh SM cập nhật cũ hơn), chưa gồm phụ phí giờ cao điểm, thời tiết, khuyến mãi.
-            Xăng: mức tiêu hao hãng công bố nhân {TRAVEL_COST.cityFuelFactor} khi đi phố đông, giá {TRAVEL_COST.fuelPriceNote}. Gửi xe máy {formatVnd(est.parking)}{parkingFee != null ? " do cơ sở công bố" : " (giả định)"}.
+            Xăng: mức tiêu hao hãng công bố nhân {TRAVEL_COST.cityFuelFactor} khi đi phố đông, giá {fuel.label}{fuel.effectiveDate ? `, công bố ngày ${shortDay(fuel.effectiveDate)}` : ""}. Gửi xe máy {formatVnd(est.parking)}{parkingFee != null ? " do cơ sở công bố" : " (giả định)"}.
           </p>
         </details>
       </CardContent>

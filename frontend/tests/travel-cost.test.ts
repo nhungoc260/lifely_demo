@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   beBikeFare, beCarFare, directionsUrl, estimateTravel, fuelCost, grabBikeFare, grabCarFare, greenBikeFare, greenCarFare,
-  distanceKm, referenceRows, roadKmFrom, suggestSupport, speedKmh, TRAVEL_COST,
+  distanceKm, referenceRows, roadKmFrom, shortDay, suggestSupport, speedKmh, TRAVEL_COST,
 } from "@/lib/travel-cost";
 
 // 10:00 giờ TP.HCM, thứ Ba: không cao điểm
@@ -53,7 +53,7 @@ describe("tiền xăng xe máy", () => {
     expect(fuelCost(20, 1.82)).toBeGreaterThan(fuelCost(10, 1.82));
     expect(fuelCost(10, 2.23)).toBeGreaterThan(fuelCost(10, 1.82));
   });
-  it("10 km đường thực tế, 2,23 L/100km, giá 21.150đ: khoảng 6.000đ", () => {
+  it("10 km đường thực tế, 2,23 L/100km, theo giá xăng dự phòng", () => {
     const expected = (10 / 100) * 2.23 * TRAVEL_COST.cityFuelFactor * TRAVEL_COST.fuelPricePerLiter;
     expect(fuelCost(10, 2.23)).toBe(Math.round(expected / 1000) * 1000);
   });
@@ -174,6 +174,36 @@ describe("gợi ý số tiền hỗ trợ theo khoảng cách", () => {
       expect(s).toBeGreaterThanOrEqual(1_000);
       expect(s).toBeLessThanOrEqual(50_000);
     }
+  });
+});
+
+describe("giá xăng đổi theo ngày", () => {
+  it("giá xăng giảm thì tiền xăng giảm, giá tăng thì tăng; Grab không đổi", () => {
+    // 50 km để chênh lệch vượt mức làm tròn 1.000đ
+    const base = referenceRows([50], 1.82, 21_150)[0];
+    const cheaper = referenceRows([50], 1.82, 19_840)[0];
+    const pricier = referenceRows([50], 1.82, 25_000)[0];
+    expect(cheaper.fuel).toBeLessThan(base.fuel);
+    expect(pricier.fuel).toBeGreaterThan(base.fuel);
+    expect(cheaper.grabBike).toBe(base.grabBike);
+  });
+  it("estimateTravel dùng giá xăng truyền vào thay cho giá dự phòng", () => {
+    const d = new Date("2026-11-10T03:00:00Z");
+    const a = estimateTravel({ straightKm: 20, departure: d, fuelPrice: 19_840 });
+    const b = estimateTravel({ straightKm: 20, departure: d, fuelPrice: 40_000 });
+    const fa = a.options.find((o) => o.mode === "motorbike")!.total;
+    const fb = b.options.find((o) => o.mode === "motorbike")!.total;
+    expect(fb).toBeGreaterThan(fa);
+  });
+  it("bỏ trống giá xăng thì dùng giá dự phòng", () => {
+    const d = new Date("2026-11-10T03:00:00Z");
+    const a = estimateTravel({ straightKm: 8, departure: d });
+    const b = estimateTravel({ straightKm: 8, departure: d, fuelPrice: TRAVEL_COST.fuelPricePerLiter });
+    expect(a.options[0].total).toBe(b.options[0].total);
+  });
+  it("shortDay đổi yyyy-MM-dd sang dd/MM", () => {
+    expect(shortDay("2026-11-12")).toBe("12/11");
+    expect(shortDay(null)).toBe("");
   });
 });
 
