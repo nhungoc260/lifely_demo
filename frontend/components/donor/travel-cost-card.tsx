@@ -66,7 +66,7 @@ export function TravelCostCard({ distanceKm, hospitalName, district, city, suppo
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 divide-x divide-border rounded-2xl bg-muted/50 py-3 text-center">
-          <Stat label="Chim bay" value={`${est.straightKm.toFixed(1)} km`} />
+          <Stat label="Đường thẳng" value={`${est.straightKm.toFixed(1)} km`} />
           <Stat label="Đường đi" value={`~${est.roadKm.toFixed(1)} km`} />
           <Stat label="Thời gian" value={`~${Math.max(1, Math.round(est.minutes))} phút`} />
         </div>

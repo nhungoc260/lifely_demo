@@ -59,7 +59,7 @@ public final class AbuseRules {
     /** Nhà cách bệnh viện quá xa: có thể là bệnh nhân từ tỉnh xa lên, nên chỉ để admin xem, không tự động dừng. */
     public static Finding homeFar(double km) {
         return km > FAR_HOME_KM ? new Finding("HOME_FAR_FROM_HOSPITAL", Severity.MEDIUM,
-                String.format(java.util.Locale.ROOT, "Nhà cách bệnh viện khoảng %.0f km (đường chim bay)", km)) : null;
+                String.format(java.util.Locale.ROOT, "Nhà cách bệnh viện khoảng %.0f km (đường thẳng)", km)) : null;
     }
 
     /** Người hiến đã có lần hiến được xác nhận trong 12 tuần gần đây mà lại được ghi nhận hỗ trợ tiếp. */

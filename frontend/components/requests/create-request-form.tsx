@@ -189,7 +189,7 @@ export function CreateRequestForm({ basePath }: { basePath: "/requester" | "/org
               <div><dt className="text-muted-foreground">Nhóm máu</dt><dd className="font-medium">{p.bloodType}</dd></div>
               <div><dt className="text-muted-foreground">Số đơn vị</dt><dd className="font-medium">{p.unitsRequired}</dd></div>
               <div><dt className="text-muted-foreground">Địa điểm</dt><dd className="font-medium">{p.hospitalName}</dd><dd className="text-muted-foreground">{[p.district, p.city].filter(Boolean).join(", ")}</dd></div>
-              {homeToHospitalKm != null && <div><dt className="text-muted-foreground">Từ vị trí của bạn tới bệnh viện</dt><dd className="font-medium">~{(homeToHospitalKm * 1.35).toFixed(1)} km đường đi (chim bay {homeToHospitalKm.toFixed(1)} km)</dd></div>}
+              {homeToHospitalKm != null && <div><dt className="text-muted-foreground">Từ vị trí của bạn tới bệnh viện</dt><dd className="font-medium">~{(homeToHospitalKm * 1.35).toFixed(1)} km đường đi (đường thẳng {homeToHospitalKm.toFixed(1)} km)</dd></div>}
               <div><dt className="text-muted-foreground">Mức độ khẩn cấp</dt><dd className="font-medium">{URGENCY_LABEL[p.urgency]}</dd></div>
               <div><dt className="text-muted-foreground">Hạn chót</dt><dd className="font-medium">{formatDateTime(new Date(p.deadlineLocal).toISOString())}</dd></div>
               <div><dt className="text-muted-foreground">Liên hệ</dt><dd className="font-medium">{p.contactPhone}</dd></div>
