@@ -27,6 +27,8 @@ export const authApi = {
     post<AuthResponse>("/api/auth/google/register", b, false),
   forgot: (email: string) => post<null>("/api/auth/forgot-password", { email }, false),
   reset: (token: string, password: string) => post<null>("/api/auth/reset-password", { token, password }, false),
+  verifyEmail: (token: string) => post<null>("/api/auth/verify-email", { token }, false),
+  resendVerification: (email: string) => post<null>("/api/auth/resend-verification", { email }, false),
   saveOnboarding: (step: number, completed: boolean) =>
     put<UserSummary>("/api/users/me/onboarding", { step, completed }),
 };

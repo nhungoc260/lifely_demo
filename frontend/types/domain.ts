@@ -34,6 +34,8 @@ export interface UserSummary {
   roles: Role[];
   onboardingCompleted: boolean;
   onboardingStep: number;
+  /** false = email chưa được xác minh (tài khoản tạo bằng mật khẩu). Thiếu = coi như đã xác minh. */
+  emailVerified?: boolean;
 }
 
 export interface AuthResponse {

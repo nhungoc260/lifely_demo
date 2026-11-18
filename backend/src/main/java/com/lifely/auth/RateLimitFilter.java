@@ -24,11 +24,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final long WINDOW_MS = 60_000;
     private final int maxPerWindow;
     private final ObjectMapper mapper;
+    private final ClientIp clientIp;
     private final Map<String, Deque<Long>> hits = new ConcurrentHashMap<>();
 
-    public RateLimitFilter(int maxPerWindow, ObjectMapper mapper) {
+    public RateLimitFilter(int maxPerWindow, ObjectMapper mapper, ClientIp clientIp) {
         this.maxPerWindow = maxPerWindow;
         this.mapper = mapper;
+        this.clientIp = clientIp;
     }
 
     @Override
@@ -38,13 +40,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 && (path.equals("/api/auth/login") || path.equals("/api/auth/register")
                 || path.equals("/api/auth/google") || path.equals("/api/auth/google/register")
                 || path.equals("/api/auth/forgot-password") || path.equals("/api/auth/reset-password")
+                || path.equals("/api/auth/verify-email") || path.equals("/api/auth/resend-verification")
                 || path.equals("/api/reports") || path.equals("/api/public/contact") || path.equals("/api/users/me/delete")));
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        String key = request.getRemoteAddr() + "|" + request.getRequestURI();
+        String key = clientIp.resolve(request) + "|" + request.getRequestURI();
         long now = System.currentTimeMillis();
         Deque<Long> window = hits.computeIfAbsent(key, k -> new ArrayDeque<>());
         boolean allowed;
@@ -66,7 +69,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
         if (hits.size() > 10_000) {
-            hits.entrySet().removeIf(e -> e.getValue().isEmpty());
+            // dọn các khóa đã hết hạn cửa sổ (trước đây chỉ xóa deque rỗng nên map phình mãi)
+            hits.entrySet().removeIf(e -> {
+                synchronized (e.getValue()) {
+                    Long last = e.getValue().peekLast();
+                    return last == null || now - last > WINDOW_MS;
+                }
+            });
         }
         chain.doFilter(request, response);
     }

@@ -15,6 +15,13 @@ services:
         value: "true"
       - key: LOG_RESET_LINK
         value: "false"
+      # Số proxy tin cậy trước app: Vercel rewrite + proxy của Render = 2 (gọi thẳng Render = 1).
+      # Cần kiểm tra thực tế bằng cách xem log IP; sai số này thì giới hạn tốc độ sẽ gom nhiều người chung một IP.
+      - key: RATE_LIMIT_PROXY_HOPS
+        value: "2"
+      # Bật khi gửi email đã chạy ổn (MAIL_ENABLED): bắt xác minh email trước khi tạo yêu cầu/nhận lời.
+      - key: REQUIRE_VERIFIED_EMAIL
+        value: "false"
       - key: COOKIE_SECURE
         value: "true"
       - key: COOKIE_SAME_SITE

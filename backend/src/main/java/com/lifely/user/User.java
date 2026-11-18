@@ -39,6 +39,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
 
+    @Column(name = "email_verified")
+    private boolean emailVerified;
+
     @Column(name = "failed_login_attempts")
     private int failedLoginAttempts;
 

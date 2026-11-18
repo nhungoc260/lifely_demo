@@ -21,6 +21,7 @@ lifely:
     refresh-deadlines-on-startup: false  # KHÔNG dời deadline dữ liệu thật
   auth:
     log-reset-link: false                # KHÔNG ghi link đặt lại mật khẩu vào log; cần bật email (MAIL_ENABLED=true)
+    require-verified-email: true         # chống tài khoản giả: phải xác minh email mới tạo yêu cầu/nhận lời
   rate-limit:
     per-minute: 20
 

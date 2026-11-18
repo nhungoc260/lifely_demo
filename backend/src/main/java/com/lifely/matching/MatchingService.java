@@ -354,6 +354,27 @@ public class MatchingService {
         }
     }
 
+    /**
+     * Đủ người NHẬN LỜI: dừng gửi thêm lời mời nhưng giữ các lượt đang chờ làm dự phòng. Người nhận lời chưa chắc đã đến,
+     * nên không được để họ (hoặc tài khoản ảo) đóng cửa với những người hiến thật đã được mời.
+     */
+    @Transactional
+    public void pauseInvitesWhenFull(BloodRequest r) {
+        outbox.cancelPending("REQUEST", r.getId(), OutboxService.PURPOSE_INVITE);
+    }
+
+    /** Có chỗ trống (người nhận lời không đến/rút lui): báo tối đa 10 người dự phòng đang chờ để họ nhận lời thay. */
+    @Transactional
+    public void notifyStandbyDonors(BloodRequest r) {
+        matchRepository.findByRequestIdAndStatusIn(r.getId(), MatchStatus.AWAITING_RESPONSE).stream()
+                .sorted((a, b) -> b.getMatchingScore().compareTo(a.getMatchingScore()))
+                .limit(10)
+                .forEach(m -> donorRepository.findById(m.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
+                        NotificationType.SYSTEM, "Có chỗ trống cho yêu cầu " + r.getBloodType().getCode(),
+                        "Yêu cầu " + r.getBloodType().getCode() + " tại " + r.getHospitalName()
+                                + " vừa có chỗ trống. Nếu bạn vẫn sẵn sàng, hãy mở ứng dụng và nhận lời.", "REQUEST", r.getId())));
+    }
+
     void event(UUID matchId, String type, Map<String, Object> metadata) {
         MatchEvent e = new MatchEvent();
         e.setMatchId(matchId);

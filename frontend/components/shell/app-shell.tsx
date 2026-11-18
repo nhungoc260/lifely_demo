@@ -17,6 +17,7 @@ import { TopNavShell } from "@/components/shell/top-nav-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { EmailVerifyBanner } from "@/components/auth/email-verify-banner";
 import { homeFor, useAuth } from "@/providers/auth-provider";
 import { NotificationsProvider, useNotifications } from "@/providers/notifications-provider";
 import type { Role } from "@/types/domain";
@@ -197,6 +198,7 @@ export function RoleShell({ role, children }: { role: Role; children: React.Reac
   }
   return (
     <NotificationsProvider>
+      <EmailVerifyBanner />
       {appMode ? <AppModeShell role={role}>{children}</AppModeShell> : TOPNAV_ROLES.includes(role) ? <TopNavShell role={role}>{children}</TopNavShell> : <SidebarShell role={role}>{children}</SidebarShell>}
     </NotificationsProvider>
   );

@@ -5,6 +5,7 @@ import com.lifely.admin.AdminAlerts;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
+import com.lifely.auth.EmailVerificationGuard;
 import com.lifely.common.AppException;
 import com.lifely.common.PageResponse;
 import com.lifely.common.Sanitizer;
@@ -57,13 +58,14 @@ public class RequestService {
     private final StaffAlertService staffAlerts;
     private final AdminAlerts adminAlerts;
     private final AbuseGuardService abuseGuard;
+    private final EmailVerificationGuard emailGuard;
 
     public RequestService(BloodRequestRepository requestRepository, BloodTypeRepository bloodTypeRepository,
                           OrganizationRepository organizationRepository, RequestLifecycle lifecycle,
                           RequestAccess access, MatchingService matchingService, MatchRepository matchRepository,
                           NotificationService notifications, RequestStatusHistoryRepository historyRepository,
                           AuditService audit, RequestCreateGuard createGuard, StaffAlertService staffAlerts,
-                          AdminAlerts adminAlerts, AbuseGuardService abuseGuard) {
+                          AdminAlerts adminAlerts, AbuseGuardService abuseGuard, EmailVerificationGuard emailGuard) {
         this.requestRepository = requestRepository;
         this.bloodTypeRepository = bloodTypeRepository;
         this.organizationRepository = organizationRepository;
@@ -78,6 +80,7 @@ public class RequestService {
         this.staffAlerts = staffAlerts;
         this.adminAlerts = adminAlerts;
         this.abuseGuard = abuseGuard;
+        this.emailGuard = emailGuard;
     }
 
     public RequestResponse create(AuthUser user, CreateRequestDto dto) {
@@ -90,6 +93,7 @@ public class RequestService {
      */
     @Transactional
     public RequestResponse create(AuthUser user, CreateRequestDto dto, String idempotencyKey) {
+        emailGuard.requireVerified(user.getId());   // chống tạo hàng loạt yêu cầu bằng tài khoản chưa xác minh email
         String key = idempotencyKey == null || idempotencyKey.isBlank() ? null : idempotencyKey.trim();
         if (key != null && !key.matches("[A-Za-z0-9_-]{8,64}")) {
             throw AppException.badRequest("INVALID_IDEMPOTENCY_KEY", "Khóa chống gửi trùng không hợp lệ");
@@ -333,6 +337,18 @@ public class RequestService {
         if (!RequestStatus.CANCELLABLE.contains(r.getStatus())) {
             throw AppException.conflict("REQUEST_NOT_EDITABLE", "Không thể sửa yêu cầu này nữa");
         }
+        boolean changesContent = (dto.contactPhone() != null && !dto.contactPhone().equals(r.getContactPhone()))
+                || (dto.description() != null && !Sanitizer.plain(dto.description()).equals(r.getDescription()));
+        if (changesContent && isContentLocked(user, r)) {
+            // Chống lừa đảo: sau khi quản trị viên/cơ sở y tế đã duyệt, hoặc khi đã có người nhận lời (họ đã thấy số liên hệ),
+            // người tạo không được đổi SĐT/mô tả sang nội dung chưa ai duyệt.
+            throw AppException.conflict("REQUEST_CONTENT_LOCKED",
+                    "Số điện thoại và mô tả đã được khóa sau khi yêu cầu được xác minh hoặc có người nhận lời. "
+                            + "Bạn vẫn có thể gia hạn hạn chót; muốn đổi nội dung hãy hủy và tạo yêu cầu mới.");
+        }
+        if (changesContent) {
+            lifecycle.note(r, "Người tạo đã chỉnh sửa số điện thoại hoặc mô tả", user.getId());
+        }
         if (dto.contactPhone() != null) r.setContactPhone(dto.contactPhone());
         if (dto.description() != null) r.setDescription(Sanitizer.plain(dto.description()));
         if (dto.deadline() != null) {
@@ -345,6 +361,21 @@ public class RequestService {
             r.setDeadline(dto.deadline());
         }
         return RequestResponse.from(requestRepository.save(r));
+    }
+
+    /**
+     * Nội dung liên hệ bị khóa khi: đã có người nhận lời, hoặc yêu cầu đã được duyệt (admin hoặc cơ sở y tế xác nhận).
+     * Nhân viên của chính cơ sở gắn với yêu cầu vẫn được chỉnh (họ là bên đã xác minh).
+     * Yêu cầu tự động huy động nhưng cơ sở chưa xác nhận (facilityReview = PENDING) thì chưa ai duyệt nội dung, nên chưa khóa.
+     */
+    private boolean isContentLocked(AuthUser user, BloodRequest r) {
+        if (user.hasRole(Role.ORGANIZATION) && r.getOrganizationId() != null
+                && organizationRepository.findForUser(user.getId())
+                .map(o -> o.getId().equals(r.getOrganizationId())).orElse(false)) {
+            return false;
+        }
+        boolean reviewed = r.isVerified() && !"PENDING".equals(r.getFacilityReview());
+        return reviewed || r.getUnitsConfirmed() > 0;
     }
 
     @Transactional(readOnly = true)

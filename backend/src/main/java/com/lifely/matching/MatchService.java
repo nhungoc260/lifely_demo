@@ -5,6 +5,7 @@ import com.lifely.abuse.AbuseRules;
 import com.lifely.audit.AuditAction;
 import com.lifely.audit.AuditService;
 import com.lifely.auth.AuthUser;
+import com.lifely.auth.EmailVerificationGuard;
 import com.lifely.common.AppException;
 import com.lifely.donor.DonationHistory;
 import com.lifely.donor.DonationHistoryRepository;
@@ -22,6 +23,7 @@ import com.lifely.notify.StaffAlertService;
 import com.lifely.organization.Organization;
 import com.lifely.organization.OrganizationRepository;
 import com.lifely.request.*;
+import com.lifely.user.Role;
 import com.lifely.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,7 @@ public class MatchService {
     private final StaffAlertService staffAlerts;
     private final OrganizationRepository organizations;
     private final AbuseGuardService abuseGuard;
+    private final EmailVerificationGuard emailGuard;
 
     public MatchService(MatchRepository matchRepository, MatchEventRepository eventRepository,
                         DonorProfileRepository donorRepository, DonationHistoryRepository historyRepository,
@@ -63,7 +66,8 @@ public class MatchService {
                         MatchingService matchingService, NotificationService notifications,
                         UserRepository userRepository, AuditService audit, EntityManager entityManager,
                         DonorVerificationService verification, InventoryService inventory,
-                        StaffAlertService staffAlerts, OrganizationRepository organizations, AbuseGuardService abuseGuard) {
+                        StaffAlertService staffAlerts, OrganizationRepository organizations, AbuseGuardService abuseGuard,
+                        EmailVerificationGuard emailGuard) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.donorRepository = donorRepository;
@@ -81,6 +85,7 @@ public class MatchService {
         this.staffAlerts = staffAlerts;
         this.organizations = organizations;
         this.abuseGuard = abuseGuard;
+        this.emailGuard = emailGuard;
     }
 
     /**
@@ -91,6 +96,7 @@ public class MatchService {
      */
     @Transactional
     public DonorMatchResponse accept(AuthUser user, UUID matchId) {
+        emailGuard.requireVerified(user.getId());   // tài khoản người hiến ảo chưa xác minh email không được nhận lời
         Match first = ownMatch(user, matchId);
         BloodRequest r = requestRepository.findByIdForUpdate(first.getRequestId())
                 .orElseThrow(() -> AppException.notFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu"));
@@ -106,7 +112,8 @@ public class MatchService {
             throw AppException.conflict("MATCH_ALREADY_RESPONDED", "Bạn đã phản hồi yêu cầu này rồi");
         }
         if (r.getUnitsConfirmed() >= r.getUnitsRequired() || r.getStatus() == RequestStatus.FULFILLED) {
-            throw AppException.conflict("REQUEST_FULFILLED", "Yêu cầu này đã đủ người nhận lời, không nhận thêm");
+            throw AppException.conflict("REQUEST_FULFILLED",
+                    "Yêu cầu này đang đủ người nhận lời. Nếu có người rút lui, bạn sẽ được báo để nhận lời thay");
         }
         if (!r.getStatus().isActive() || r.getDeadline().isBefore(Instant.now())) {
             throw AppException.conflict("REQUEST_CLOSED", "Yêu cầu này đã đóng");
@@ -132,7 +139,10 @@ public class MatchService {
             lifecycle.publish(r);
         }
         if (confirmed >= required) {
-            matchingService.closeRemainingAfterFulfilled(r);
+            // Chỉ dừng gửi thêm lời mời. KHÔNG làm hết hiệu lực các lượt đang chờ: người nhận lời chưa chắc đã đến
+            // (có thể là tài khoản ảo chiếm chỗ), nên những người đã được mời giữ vai trò dự phòng cho tới khi đủ số
+            // đơn vị được xác nhận hiến thực tế (xem countReceived) hoặc có chỗ trống (xem markNoShow).
+            matchingService.pauseInvitesWhenFull(r);
         }
         notifications.notify(r.getRequesterId(), NotificationType.REQUEST_ACCEPTED,
                 confirmed >= required ? "Đã đủ người nhận lời" : "Có người hiến máu đã nhận lời yêu cầu của bạn",
@@ -184,7 +194,7 @@ public class MatchService {
         if (first.getStatus() == MatchStatus.COMPLETED && facility) {
             // Người nhà đã ghi nhận trước: cơ sở y tế của yêu cầu nâng mức xác nhận (idempotent).
             upgradeToFacilityVerified(first, r, user, confirmation);
-            return requesterEntry(first, 0);
+            return requesterEntry(first, 0, staffView(user, r));
         }
         if (first.getStatus() != MatchStatus.ACCEPTED) {
             throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ người hiến máu đã nhận lời mới được đánh dấu là đã hiến");
@@ -225,7 +235,7 @@ public class MatchService {
                 "Lần hiến máu của bạn tại " + r.getHospitalName() + " đã được ghi nhận" + by + ".", "MATCH", first.getId());
         audit.log(user.getId(), AuditAction.MATCH_COMPLETED, "MATCH", first.getId(),
                 Map.of("verificationLevel", confirmation.level().name()));
-        return requesterEntry(first, 0);
+        return requesterEntry(first, 0, staffView(user, r));
     }
 
     /**
@@ -253,12 +263,15 @@ public class MatchService {
         lifecycle.note(r, "Một người nhận lời không đến/rút lui: " + r.getUnitsConfirmed() + " / "
                 + r.getUnitsRequired() + " người nhận lời", user.getId());
         lifecycle.publish(r);
+        if (r.getStatus().isActive() && r.getUnitsConfirmed() < r.getUnitsRequired()) {
+            matchingService.notifyStandbyDonors(r);   // có chỗ trống: báo người đã được mời nhưng chưa kịp nhận lời
+        }
         donorRepository.findById(first.getDonorId()).ifPresent(d -> notifications.notify(d.getUserId(),
                 NotificationType.SYSTEM, "Lượt nhận lời đã được đóng",
                 "Lượt nhận lời cho yêu cầu " + r.getBloodType().getCode() + " tại " + r.getHospitalName()
                         + " đã được đóng. Cảm ơn bạn đã sẵn sàng giúp đỡ.", "REQUEST", r.getId()));
         audit.log(user.getId(), "MATCH_NO_SHOW", "MATCH", first.getId(), Map.of("requestId", r.getId().toString()));
-        return requesterEntry(first, 0);
+        return requesterEntry(first, 0, staffView(user, r));
     }
 
     /**
@@ -279,6 +292,12 @@ public class MatchService {
         if (!contactable(first.getStatus())) {
             throw AppException.conflict("MATCH_NOT_ACCEPTED", "Chỉ ghi nhận liên hệ với người hiến đang tham gia yêu cầu");
         }
+        boolean staffView = staffView(user, r);
+        if (!staffView && MatchStatus.AWAITING_RESPONSE.contains(first.getStatus())) {
+            // Người nhà chưa thấy liên hệ của người hiến chưa nhận lời nên cũng không có gì để ghi nhận.
+            throw AppException.forbidden("CONTACT_NOT_AVAILABLE",
+                    "Người hiến chưa nhận lời. Chỉ nhân viên cơ sở y tế của yêu cầu mới ghi nhận liên hệ ở bước này");
+        }
         if (result == ContactResult.CONFIRMED_CAN_JOIN && MatchStatus.AWAITING_RESPONSE.contains(first.getStatus())) {
             // Cơ sở đã gọi và người hiến xác nhận tham gia: tính như người hiến nhận lời để tiến độ yêu cầu được cập nhật.
             applyAcceptance(first, r, user.getId());
@@ -289,7 +308,7 @@ public class MatchService {
         matchRepository.save(first);
         audit.log(user.getId(), AuditAction.MATCH_CONTACT_RESULT, "MATCH", first.getId(),
                 Map.of("requestId", r.getId().toString(), "result", result.name()));
-        return requesterEntry(first, 0);
+        return requesterEntry(first, 0, staffView);
     }
 
     /** Tăng lượng đã nhận (có xác nhận hiến thực tế). Đủ số đơn vị mới chuyển yêu cầu sang FULFILLED. Gọi khi đã giữ khóa dòng yêu cầu. */
@@ -374,7 +393,8 @@ public class MatchService {
 
     @Transactional(readOnly = true)
     public List<RequestMatchEntry> listForRequest(AuthUser user, UUID requestId) {
-        access.requireViewable(user.getId(), requestId);
+        BloodRequest request = access.requireViewable(user.getId(), requestId);
+        boolean staffView = staffView(user, request);
         List<Match> matches = matchRepository.findByRequestIdOrderByMatchingScoreDesc(requestId);
         List<RequestMatchEntry> out = new ArrayList<>();
         // Thống kê nhắc lại theo từng người (một truy vấn cho cả danh sách).
@@ -387,7 +407,8 @@ public class MatchService {
         for (int i = 0; i < matches.size(); i++) {
             Match m = matches.get(i);
             Object[] st = remind.get(m.getId());
-            out.add(requesterEntry(m, i + 1, st == null ? 0 : ((Number) st[1]).intValue(), st == null ? null : (Instant) st[2]));
+            out.add(requesterEntry(m, i + 1, st == null ? 0 : ((Number) st[1]).intValue(), st == null ? null : (Instant) st[2],
+                    staffView));
         }
         return out;
     }
@@ -431,13 +452,26 @@ public class MatchService {
                 m.getTravelSupportPaidVnd());
     }
 
-    private RequestMatchEntry requesterEntry(Match m, int rank) {
-        return requesterEntry(m, rank, 0, null);
+    private RequestMatchEntry requesterEntry(Match m, int rank, boolean staffView) {
+        return requesterEntry(m, rank, 0, null, staffView);
     }
 
-    private RequestMatchEntry requesterEntry(Match m, int rank, int remindCount, Instant lastRemindedAt) {
-        // Người hiến đang hoạt động trong yêu cầu (chờ, đã mời, đã nhận lời, đã hiến) đã đồng ý cho bên có quyền xem liên hệ trực tiếp.
-        boolean reveal = contactable(m.getStatus());
+    /**
+     * Ai được xem liên hệ của người hiến CHƯA nhận lời: admin, nhân viên của cơ sở y tế đã xác minh gắn với yêu cầu
+     * (luồng gọi gấp), hoặc khi cơ sở đã xác nhận yêu cầu là thật. Người nhà tự đăng ký chỉ thấy sau khi người hiến
+     * bấm nhận lời, để không ai tạo yêu cầu giả chỉ để gom tên và số điện thoại.
+     */
+    private boolean staffView(AuthUser user, BloodRequest r) {
+        if (user.hasRole(Role.ADMIN) || "CONFIRMED".equals(r.getFacilityReview())) {
+            return true;
+        }
+        return verification.confirmation(user.getId(), r).level() == VerificationLevel.ORG_VERIFIED;
+    }
+
+    private RequestMatchEntry requesterEntry(Match m, int rank, int remindCount, Instant lastRemindedAt, boolean staffView) {
+        // Đã nhận lời / đã hiến: người hiến đồng ý cho bên liên quan xem liên hệ. Chưa nhận lời: chỉ nhân viên (staffView).
+        boolean accepted = m.getStatus() == MatchStatus.ACCEPTED || m.getStatus() == MatchStatus.COMPLETED;
+        boolean reveal = accepted || (staffView && contactable(m.getStatus()));
         String name = null;
         String phone = null;
         if (reveal) {

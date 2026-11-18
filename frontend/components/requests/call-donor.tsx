@@ -33,6 +33,15 @@ export function CallDonor({ m, onChanged }: { m: RequestMatchEntry; onChanged: (
   const href = telHref(m.donorPhone);
   const callable = m.status === "PENDING" || m.status === "CONTACTED" || m.status === "ACCEPTED" || m.status === "COMPLETED";
   if (!callable) return null;
+  // Người nhà chưa thấy liên hệ của người hiến chưa nhận lời (máy chủ ẩn cả tên và số): không có gì để gọi hay ghi nhận.
+  const masked = (m.status === "PENDING" || m.status === "CONTACTED") && m.donorName == null && m.donorPhone == null;
+  if (masked) {
+    return (
+      <p role="status" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+        <PhoneOff className="size-4" aria-hidden />Tên và số điện thoại sẽ hiện sau khi người hiến nhận lời.
+      </p>
+    );
+  }
 
   async function record(result: ContactResult) {
     setBusy(true);

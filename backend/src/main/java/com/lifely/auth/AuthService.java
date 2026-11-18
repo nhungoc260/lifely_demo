@@ -31,8 +31,11 @@ import java.util.UUID;
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
+    /** Ngưỡng khóa cả tài khoản cao và ngắn: chỉ để chặn dò mật khẩu quy mô lớn, không để khóa người khác dễ dàng. */
+    private static final int MAX_FAILED_ATTEMPTS = 20;
+    private static final Duration LOCK_DURATION = Duration.ofMinutes(5);
+    /** Khóa theo (email + IP), 5 lần sai / 15 phút: kẻ tấn công chỉ khóa được IP của chính mình. */
+    private final LoginThrottle throttle = new LoginThrottle();
     /** Hash hợp lệ dùng để so sánh giả khi email không tồn tại, tránh lộ email qua thời gian phản hồi. */
     private final String dummyHash;
 
@@ -41,6 +44,7 @@ public class AuthService {
     private final PrivacySettingsRepository privacyRepository;
     private final DonorProfileRepository donorProfileRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
+    private final EmailVerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditService auditService;
@@ -53,7 +57,8 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                        PrivacySettingsRepository privacyRepository, DonorProfileRepository donorProfileRepository,
-                       PasswordResetTokenRepository resetTokenRepository, PasswordEncoder passwordEncoder,
+                       PasswordResetTokenRepository resetTokenRepository,
+                       EmailVerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder,
                        JwtService jwtService, AuditService auditService, MailService mailService,
                        RefreshTokenService refreshTokens, GoogleIdTokenVerifier googleVerifier,
                        @Value("${lifely.auth.log-reset-link:false}") boolean logResetLink,
@@ -63,6 +68,7 @@ public class AuthService {
         this.privacyRepository = privacyRepository;
         this.donorProfileRepository = donorProfileRepository;
         this.resetTokenRepository = resetTokenRepository;
+        this.verificationTokenRepository = verificationTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.auditService = auditService;
@@ -84,7 +90,8 @@ public class AuthService {
             throw AppException.conflict("EMAIL_TAKEN", "Email này đã được đăng ký");
         }
         User user = createUser(email, req.fullName().trim(), req.phone().trim(),
-                passwordEncoder.encode(req.password()), req.role(), "password");
+                passwordEncoder.encode(req.password()), req.role(), "password", false);
+        sendVerificationEmail(user);
         return buildAuthResponse(user);
     }
 
@@ -106,7 +113,77 @@ public class AuthService {
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw AppException.forbidden("ACCOUNT_SUSPENDED", "Tài khoản này đã bị khóa. Vui lòng liên hệ nhân viên hỗ trợ.");
         }
+        if (!user.isEmailVerified()) {
+            claimUnverifiedAccount(user);
+        }
         return new GoogleOutcome(onLoginSuccess(user), profile.email(), profile.name());
+    }
+
+    /**
+     * Chống chiếm tài khoản: tài khoản này được tạo bằng mật khẩu nhưng CHƯA từng xác minh email. Người vừa đăng nhập
+     * Google đã chứng minh họ sở hữu email đó, còn người đặt mật khẩu lúc đăng ký thì chưa chắc. Vì vậy vô hiệu mật khẩu cũ
+     * và mọi phiên đang có, rồi đánh dấu đã xác minh. Người dùng thật đặt lại mật khẩu bằng "Quên mật khẩu" nếu cần.
+     */
+    private void claimUnverifiedAccount(User user) {
+        user.setPasswordHash(passwordEncoder.encode(randomSecret()));
+        user.setEmailVerified(true);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        userRepository.save(user);
+        refreshTokens.revokeAll(user.getId());
+        resetTokenRepository.deleteByUserId(user.getId());
+        verificationTokenRepository.deleteByUserId(user.getId());
+        auditService.log(user.getId(), "ACCOUNT_CLAIMED_VIA_GOOGLE", "USER", user.getId(),
+                Map.of("reason", "unverified_password_account"));
+    }
+
+    /** Gửi email xác minh (hiệu lực 24 giờ). Lỗi gửi mail không làm hỏng đăng ký. */
+    private void sendVerificationEmail(User user) {
+        verificationTokenRepository.deleteByUserId(user.getId());   // chỉ giữ link mới nhất
+        byte[] raw = new byte[32];
+        random.nextBytes(raw);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
+        EmailVerificationToken entity = new EmailVerificationToken();
+        entity.setUserId(user.getId());
+        entity.setTokenHash(sha256(token));
+        entity.setExpiresAt(Instant.now().plus(Duration.ofHours(24)));
+        verificationTokenRepository.save(entity);
+        String link = frontendUrl + "/verify-email?token=" + token;
+        try {
+            if (mailService.isEnabled()) {
+                mailService.send(user.getEmail(), "Xác minh email LIFELY",
+                        "Xin chào " + user.getFullName() + ",\n\nBấm vào liên kết sau để xác minh email (có hiệu lực 24 giờ):\n"
+                                + link + "\n\nNếu bạn không đăng ký LIFELY, hãy bỏ qua email này.");
+            } else if (logResetLink) {
+                log.info("[DEV ONLY] Email verification link for {}: {}", user.getEmail(), link);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Không gửi được email xác minh cho người dùng {}", user.getId(), e);
+        }
+    }
+
+    @Transactional
+    public void verifyEmail(String rawToken) {
+        EmailVerificationToken token = verificationTokenRepository.findByTokenHash(sha256(rawToken))
+                .filter(t -> t.getUsedAt() == null && t.getExpiresAt().isAfter(Instant.now()))
+                .orElseThrow(() -> AppException.badRequest("INVALID_VERIFICATION_TOKEN",
+                        "Liên kết xác minh không hợp lệ hoặc đã hết hạn"));
+        User user = userRepository.findById(token.getUserId())
+                .orElseThrow(() -> AppException.badRequest("INVALID_VERIFICATION_TOKEN",
+                        "Liên kết xác minh không hợp lệ hoặc đã hết hạn"));
+        user.setEmailVerified(true);
+        token.setUsedAt(Instant.now());
+        userRepository.save(user);
+        verificationTokenRepository.save(token);
+        auditService.log(user.getId(), "EMAIL_VERIFIED", "USER", user.getId(), Map.of());
+    }
+
+    /** Luôn trả cùng một kết quả để không lộ email nào đã đăng ký. */
+    @Transactional
+    public void resendVerification(String email) {
+        userRepository.findByEmailIgnoreCase(email.trim())
+                .filter(u -> !u.isEmailVerified())
+                .ifPresent(this::sendVerificationEmail);
     }
 
     /** Tạo tài khoản từ Google sau khi người dùng chọn vai trò. Tài khoản không có mật khẩu dùng được (hash ngẫu nhiên). */
@@ -121,12 +198,12 @@ public class AuthService {
             throw AppException.badRequest("FULL_NAME_REQUIRED", "Vui lòng nhập họ và tên");
         }
         User user = createUser(profile.email(), fullName, req.phone().trim(),
-                passwordEncoder.encode(randomSecret()), req.role(), "google");
+                passwordEncoder.encode(randomSecret()), req.role(), "google", true);   // Google đã xác minh email
         return buildAuthResponse(user);
     }
 
     private User createUser(String email, String fullName, String phone, String passwordHash,
-                            String roleKey, String provider) {
+                            String roleKey, String provider, boolean emailVerified) {
         String roleName = "ROLE_" + roleKey;
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> AppException.badRequest("INVALID_ROLE", "Vai trò không hợp lệ"));
@@ -136,6 +213,7 @@ public class AuthService {
         user.setFullName(fullName);
         user.setPhone(phone);
         user.setPasswordHash(passwordHash);
+        user.setEmailVerified(emailVerified);
         user.setRoles(new HashSet<>(java.util.List.of(role)));
         user = userRepository.save(user);
 
@@ -156,20 +234,33 @@ public class AuthService {
 
     /** Không @Transactional ở mức method để bộ đếm đăng nhập sai vẫn được lưu khi ném lỗi. */
     public AuthResponse login(LoginRequest req) {
-        User user = userRepository.findByEmailIgnoreCase(req.email().trim()).orElse(null);
+        return login(req, "unknown");
+    }
+
+    public AuthResponse login(LoginRequest req, String clientIp) {
+        String email = req.email().trim();
+        String throttleKey = email.toLowerCase(java.util.Locale.ROOT) + "|" + clientIp;
+        Instant now = Instant.now();
+        if (throttle.isLocked(throttleKey, now)) {
+            throw new AppException(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "LOGIN_THROTTLED",
+                    "Bạn đã nhập sai quá nhiều lần từ thiết bị này. Hãy thử lại sau 15 phút hoặc đặt lại mật khẩu.");
+        }
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
         if (user == null) {
             passwordEncoder.matches(req.password(), dummyHash);
+            throttle.recordFailure(throttleKey, now);
             throw AppException.unauthorized("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
         }
-        Instant now = Instant.now();
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             throw new AppException(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "ACCOUNT_LOCKED",
                     "Đăng nhập sai quá nhiều lần. Hãy thử lại sau vài phút hoặc đặt lại mật khẩu.");
         }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            throttle.recordFailure(throttleKey, now);
             registerFailure(user, now);
             throw AppException.unauthorized("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
         }
+        throttle.clear(throttleKey);
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw AppException.forbidden("ACCOUNT_SUSPENDED", "Tài khoản này đã bị khóa. Vui lòng liên hệ nhân viên hỗ trợ.");
         }
@@ -228,6 +319,7 @@ public class AuthService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> AppException.badRequest("INVALID_RESET_TOKEN", "Liên kết đặt lại không hợp lệ hoặc đã hết hạn"));
         user.setPasswordHash(passwordEncoder.encode(req.password()));
+        user.setEmailVerified(true);   // link đặt lại chỉ gửi tới hộp thư của chủ email nên cũng là bằng chứng sở hữu email
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
         token.setUsedAt(Instant.now());

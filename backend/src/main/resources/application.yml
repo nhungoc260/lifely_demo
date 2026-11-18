@@ -69,6 +69,8 @@ lifely:
   auth:
     # Prototype chưa có email/SMS. true = in link đặt lại mật khẩu vào log máy chủ (CHỈ dev). Production: false.
     log-reset-link: ${LOG_RESET_LINK:true}
+    # true = tài khoản chưa xác minh email không tạo được yêu cầu và không nhận lời hiến. Bật cùng MAIL_ENABLED=true khi chạy thật.
+    require-verified-email: ${REQUIRE_VERIFIED_EMAIL:false}
     # Refresh token nằm trong cookie httpOnly. HTTPS thật: COOKIE_SECURE=true. Frontend/backend khác site: COOKIE_SAME_SITE=None (kèm Secure).
     refresh-days: ${REFRESH_DAYS:14}
     cookie-secure: ${COOKIE_SECURE:false}
@@ -79,6 +81,7 @@ lifely:
     client-id: ${GOOGLE_CLIENT_ID:1097555342952-i6h01m6bt4k5j06s4kts2t24tuavk9g0.apps.googleusercontent.com}
   rate-limit:
     per-minute: 30
+    proxy-hops: ${RATE_LIMIT_PROXY_HOPS:0}   # số proxy tin cậy trước app (Vercel→Render = 2, gọi thẳng Render = 1); 0 = không tin X-Forwarded-For
   storage:
     dir: ${UPLOAD_DIR:./uploads}
   jobs:

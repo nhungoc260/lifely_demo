@@ -4,6 +4,7 @@ import com.lifely.auth.dto.*;
 import com.lifely.common.ApiResponse;
 import com.lifely.common.AppException;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshCookie refreshCookie;
+    private final ClientIp clientIp;
 
-    public AuthController(AuthService authService, RefreshCookie refreshCookie) {
+    public AuthController(AuthService authService, RefreshCookie refreshCookie, ClientIp clientIp) {
         this.authService = authService;
         this.refreshCookie = refreshCookie;
+        this.clientIp = clientIp;
     }
 
     @PostMapping("/register")
@@ -35,8 +38,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        AuthResponse auth = authService.login(request);
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest,
+                                           HttpServletResponse response) {
+        AuthResponse auth = authService.login(request, clientIp.resolve(httpRequest));
         refreshCookie.write(response, authService.startSession(auth.user().id()), authService.refreshTtl());
         return ApiResponse.ok("Đăng nhập thành công", auth);
     }
@@ -99,6 +103,18 @@ public class AuthController {
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ApiResponse.ok("Đã cập nhật mật khẩu. Bạn có thể đăng nhập ngay", null);
+    }
+
+    @PostMapping("/verify-email")
+    public ApiResponse<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request.token());
+        return ApiResponse.ok("Đã xác minh email", null);
+    }
+
+    @PostMapping("/resend-verification")
+    public ApiResponse<Void> resendVerification(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.resendVerification(request.email());
+        return ApiResponse.ok("Nếu email này cần xác minh, liên kết xác minh đã được gửi", null);
     }
 
     private static void requireClientHeader(String client) {

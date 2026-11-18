@@ -3,6 +3,7 @@ package com.lifely.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lifely.auth.JwtAuthFilter;
 import com.lifely.auth.JwtService;
+import com.lifely.auth.ClientIp;
 import com.lifely.auth.RateLimitFilter;
 import com.lifely.common.ApiResponse;
 import com.lifely.user.UserRepository;
@@ -46,6 +47,7 @@ public class SecurityConfig {
                                             JwtService jwtService,
                                             UserRepository userRepository,
                                             ObjectMapper mapper,
+                                            ClientIp clientIp,
                                             @Value("${lifely.rate-limit.per-minute:30}") int rateLimitPerMinute) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)   // API dùng Bearer token; cookie refresh chỉ dùng cho /api/auth/refresh|logout và được bảo vệ bằng SameSite + header X-Lifely-Client
@@ -65,13 +67,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/health", "/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login",
                                 "/api/auth/forgot-password", "/api/auth/reset-password",
+                                "/api/auth/verify-email", "/api/auth/resend-verification",
                                 "/api/auth/refresh", "/api/auth/logout",
                                 "/api/auth/google", "/api/auth/google/register").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()   // handshake; kênh STOMP được xác thực bằng JWT ở CONNECT
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .addFilterBefore(new RateLimitFilter(rateLimitPerMinute, mapper), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(rateLimitPerMinute, mapper, clientIp), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthFilter(jwtService, userRepository), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
