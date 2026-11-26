@@ -1,5 +1,6 @@
 package com.lifely.appointment;
 
+import com.lifely.config.ActivityTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,9 @@ public class AppointmentReminderJob {
 
     @Scheduled(fixedDelayString = "${lifely.jobs.reminder-interval-ms:300000}", initialDelay = 60000)
     public void run() {
+        if (!ActivityTracker.shouldRunJobs()) {
+            return;
+        }
         try {
             int n = service.sendDueReminders();
             if (n > 0) {

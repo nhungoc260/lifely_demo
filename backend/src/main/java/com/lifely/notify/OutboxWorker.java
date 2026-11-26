@@ -1,5 +1,6 @@
 package com.lifely.notify;
 
+import com.lifely.config.ActivityTracker;
 import com.lifely.push.PushService;
 import com.lifely.push.WebPushSender;
 import org.slf4j.Logger;
@@ -50,6 +51,9 @@ public class OutboxWorker {
     @Scheduled(fixedDelayString = "${lifely.notify.worker-interval-ms:10000}",
                initialDelayString = "${lifely.notify.worker-initial-delay-ms:20000}")
     public void run() {
+        if (!ActivityTracker.shouldRunJobs()) {
+            return;
+        }
         try {
             runOnce();
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package com.lifely.screening;
 
+import com.lifely.config.ActivityTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,6 +22,9 @@ public class RejoinReminderJob {
 
     @Scheduled(fixedDelayString = "${lifely.jobs.rejoin-interval-ms:3600000}", initialDelayString = "${lifely.jobs.rejoin-initial-delay-ms:90000}")
     public void run() {
+        if (!ActivityTracker.shouldRunJobs()) {
+            return;
+        }
         try {
             int n = service.sendDue(LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")));
             if (n > 0) {

@@ -8,6 +8,9 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lifely}
     username: ${DB_USERNAME:lifely}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}   # gói free của Neon/Supabase giới hạn số kết nối
+      minimum-idle: 1
   jpa:
     open-in-view: false
     hibernate:

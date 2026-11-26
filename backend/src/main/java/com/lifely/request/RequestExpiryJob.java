@@ -1,5 +1,6 @@
 package com.lifely.request;
 
+import com.lifely.config.ActivityTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,9 @@ public class RequestExpiryJob {
 
     @Scheduled(fixedDelayString = "${lifely.jobs.expiry-interval-ms:60000}", initialDelay = 20000)
     public void run() {
+        if (!ActivityTracker.shouldRunJobs()) {
+            return;
+        }
         for (BloodRequest r : requestRepository.findByStatusInAndDeadlineBefore(
                 RequestStatus.AWAITING_OR_ACTIVE, Instant.now())) {
             try {

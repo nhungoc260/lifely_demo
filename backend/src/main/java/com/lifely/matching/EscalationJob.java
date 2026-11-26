@@ -1,5 +1,6 @@
 package com.lifely.matching;
 
+import com.lifely.config.ActivityTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,6 +22,9 @@ public class EscalationJob {
 
     @Scheduled(fixedDelayString = "${lifely.jobs.escalation-interval-ms:30000}", initialDelay = 25000)
     public void run() {
+        if (!ActivityTracker.shouldRunJobs()) {
+            return;
+        }
         for (UUID id : matchingService.findEscalationDue()) {
             try {
                 matchingService.escalate(id);
